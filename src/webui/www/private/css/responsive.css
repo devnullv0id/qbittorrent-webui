@@ -10,6 +10,10 @@
     --responsive-drawer-width: min(320px, 86vw);
     /* the rows of tables on touch screens, also read by responsive.js */
     --responsive-touch-row-height: 30px;
+    /* between buttons side by side or stacked */
+    --responsive-gap: 8px;
+    /* a window's button row: from its line to its buttons, and from them to the window's edge */
+    --responsive-row-space: 6px;
 }
 
 /* override Layout.css's 400px */
@@ -109,6 +113,122 @@
     & select,
     & textarea {
         max-width: 100%;
+    }
+}
+
+/* Window button rows */
+
+/* where pages are laid out anew, a window's buttons stay in view while its page scrolls, below a line and as far from
+    the window's edge as from the line */
+:root.responsiveRelayout
+    :where(.dialogFooter, #submitbutton:has(> #saveTorrent)) {
+    background-color: var(--color-background-popup);
+    border-top: var(--responsive-separator);
+    bottom: 0;
+    padding-bottom: var(--responsive-row-space);
+    /* override the inline paddings and positions */
+    padding-top: var(--responsive-row-space) !important;
+    position: sticky !important;
+    z-index: 1;
+
+    /* the row's space is the buttons' only one */
+    & :is(button, input) {
+        margin-block: 0;
+    }
+}
+
+/* Create Torrent's button keeps no margins of its own there */
+:root.responsiveRelayout .dialogFooter > #createTorrentButton {
+    margin-block: 0;
+}
+
+/* Add Torrent's row keeps the height of its centered Download */
+:root.responsiveRelayout #submitbutton:has(> #saveTorrent) {
+    min-height: calc(
+        var(--responsive-touch-target, 26px) + (2 * var(--responsive-row-space))
+    );
+}
+
+/* RSS Downloader's Save is a button of its own */
+:root.responsiveRelayout #RssDownloader #saveButton {
+    bottom: var(--responsive-row-space);
+    position: sticky;
+    z-index: 1;
+}
+
+/* windows that end with their button row: its space is the window's last */
+:root.responsiveRelayout
+    :is(
+        .modalDialog,
+        #globalSpeedLimitsPage,
+        #installSearchPlugin,
+        #cookiesPage,
+        #createTorrentPage,
+        #searchPlugins,
+        #preferencesPage
+    )
+    .mochaContent {
+    padding-bottom: 0 !important; /* override Mocha's padding */
+
+    & :is(#installSearchPluginContainer, #manageCookiesContainer) {
+        margin-bottom: 0;
+    }
+}
+
+/* Options: a column at least as tall as the window, its Save row at the bottom; the space a tab doesn't need goes
+    above the row, and a tab keeps the 1em the row had from it */
+:root.responsiveRelayout #preferencesPage .mochaContent {
+    display: flex !important; /* override Mocha's inline display */
+    flex-direction: column;
+    min-height: 100%;
+
+    & > .PrefTab {
+        margin-bottom: 1em;
+    }
+
+    & > .dialogFooter {
+        margin-top: auto !important; /* override the inline margin */
+    }
+}
+
+/* a modal dialog's row spans its window like the others, its buttons at the end where the dialog puts them */
+:root.responsiveRelayout .modalDialog .mochaContent.pad > .dialogFooter {
+    align-self: stretch;
+    text-align: right;
+}
+
+/* window buttons stack on phones, full width, in the page's order */
+:root.responsivePhone :where(.dialogFooter) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--responsive-gap);
+
+    & > :is(button, input) {
+        margin: 0;
+        width: 100% !important; /* override the inline widths */
+    }
+}
+
+/* Add Torrent's buttons share the row on phones */
+:root.responsivePhone #submitbutton:has(> #saveTorrent) {
+    flex-wrap: wrap;
+    gap: var(--responsive-gap);
+
+    & > div:has(> button[type="submit"]),
+    & > #saveTorrent:not(.invisible) {
+        flex: 1 1 auto;
+        margin: 0;
+        position: static !important; /* override the inline centering */
+        transform: none !important;
+    }
+
+    & > div > button {
+        width: 100%;
+    }
+
+    /* spacer */
+    & > span:not([id]) {
+        display: none;
     }
 }
 
