@@ -1140,6 +1140,14 @@ window.qBittorrent.Responsive ??= (() => {
         });
     };
 
+    /* Properties panel */
+
+    // phones and short touch screens open with the properties panel collapsed, until the user opens it
+    const initPropertiesPanel = () => {
+        if (queries.small.matches && (localPreferences.get("properties_panel_collapsed") === null))
+            localPreferences.set("properties_panel_collapsed", "true");
+    };
+
     // called by client.js once the main window is built
     const init = () => {
         initLayout();
@@ -1152,6 +1160,7 @@ window.qBittorrent.Responsive ??= (() => {
         initCardCheckboxes();
         initCardSorting();
         initMenuDrawer();
+        initPropertiesPanel();
     };
 
     return exports();
