@@ -254,6 +254,42 @@
             font-weight: bold;
             white-space: nowrap;
         }
+
+        & #torrentsSortSelect {
+            flex: 0 1 auto;
+            min-width: 0;
+            width: 100%;
+        }
+
+        & #torrentsSortOrder {
+            flex: none;
+            padding-inline: 6px;
+
+            &::before {
+                content: "\2191"; /* for browsers without alternative text */
+                content: "\2191" / "";
+            }
+
+            &[aria-pressed="true"]::before {
+                content: "\2193"; /* for browsers without alternative text */
+                content: "\2193" / "";
+            }
+        }
+
+        & #torrentsColumnsButton {
+            flex: none;
+        }
+    }
+
+    /* cards have no column widths to resize */
+    #torrentsTableDiv_headerMenu {
+        & li:has(> a[href^="#autoResize"]) {
+            display: none;
+        }
+
+        & li.separator {
+            border-top: 0;
+        }
     }
 
     #transferList #torrentsTableDiv {
