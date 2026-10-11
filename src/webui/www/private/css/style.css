@@ -19,6 +19,8 @@
     --color-border-default: hsl(0deg 0% 85%);
     --color-icon-hover: brightness(0) invert(100%) sepia(100%) saturate(0%)
         hue-rotate(108deg) brightness(104%) contrast(104%);
+    --color-button-face: var(--color-background-default);
+    --color-button-border: var(--color-border-default);
 
     & #torrentTrackersTableDiv tr {
         --color-tracker-disabled: hsl(240deg 4% 46%);
@@ -43,6 +45,9 @@
         --color-background-default: hsl(0deg 0% 25%);
         --color-background-hover: hsl(26deg 50% 55%);
         --color-border-default: hsl(0deg 0% 33%);
+        /* a face a step lighter than the window, and a border that stands out from both */
+        --color-button-face: hsl(0deg 0% 30%);
+        --color-button-border: hsl(0deg 0% 50%);
 
         & #torrentTrackersTableDiv tr {
             --color-tracker-disabled: hsl(240deg 6% 83%);
@@ -139,13 +144,45 @@ input[type="range"] {
 input[type="button"],
 input[type="submit"],
 button {
+    background-color: var(--button-background);
+    border-color: var(--color-button-border);
     cursor: pointer;
     padding-left: 10px;
     padding-right: 10px;
 }
 
-button:disabled {
+button:disabled,
+input[type="button"]:disabled {
+    color: var(--color-text-disabled);
     cursor: initial;
+}
+
+/* a button's face: the theme's rather than each browser's own, darker or lighter towards the text on hover and press;
+    with no specificity, so a button that looks different keeps its look */
+:where(input[type="button"], input[type="submit"], button) {
+    --button-background: var(--color-button-face);
+}
+
+@media (hover: hover) {
+    :where(input[type="button"], input[type="submit"], button):where(
+        :hover:not(:disabled)
+    ) {
+        --button-background: color-mix(
+            in srgb,
+            var(--color-button-face),
+            var(--color-text-default) 8%
+        );
+    }
+}
+
+:where(input[type="button"], input[type="submit"], button):where(
+    :active:not(:disabled)
+) {
+    --button-background: color-mix(
+        in srgb,
+        var(--color-button-face),
+        var(--color-text-default) 14%
+    );
 }
 
 :focus {
@@ -905,6 +942,34 @@ td.statusBarSeparator {
 
 #rememberBtn.disabled {
     filter: grayscale(100%);
+}
+
+/* icon buttons: squares as high as a text button, with its face and border, their icon centered at one size */
+:is(
+    #webUIAPIKeyCopyButton,
+    #webUIAPIKeyRotateButton,
+    #webUIAPIKeyDeleteButton,
+    #RssDownloader .imageButton,
+    #rememberBtn
+) {
+    align-items: center;
+    background-color: var(--button-background);
+    background-repeat: no-repeat;
+    background-size: 16px;
+    border-color: var(--color-button-border);
+    display: inline-flex;
+    height: 26px;
+    justify-content: center;
+    padding: 0;
+    vertical-align: middle;
+    width: 26px;
+
+    & img {
+        height: 16px;
+        margin: 0 !important; /* override the inline offsets */
+        position: static !important;
+        width: 16px;
+    }
 }
 
 #deleteFromDiskCB {

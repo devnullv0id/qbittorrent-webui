@@ -1321,11 +1321,6 @@
         min-width: var(--responsive-touch-target);
     }
 
-    /* RSS Downloader's rule buttons show their icon once */
-    #RssDownloader .imageButton {
-        background-repeat: no-repeat;
-    }
-
     /* Renaming's menu of replace options, beside its Replace button: as wide as a touch, still showing its arrow
         only */
     #renameOptions {
