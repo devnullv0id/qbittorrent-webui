@@ -88,6 +88,10 @@ window.qBittorrent.ContextMenu ??= (() => {
             this.menu.style.left = "-999em";
             this.menu.style.top = "-999em";
 
+            // a menu taller than the screen scrolls
+            this.menu.classList.remove("scrollingMenu");
+            this.menu.classList.toggle("scrollingMenu", (this.menu.offsetHeight > document.documentElement.clientHeight));
+
             // position the menu
             const point = e.changedTouches?.[0] ?? e;
             let xPosMenu = point.clientX + this.options.offsets.x;
