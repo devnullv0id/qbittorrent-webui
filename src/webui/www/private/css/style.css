@@ -421,6 +421,24 @@ a.propButton img {
     left: auto;
 }
 
+/* a menu taller than where it can be seen scrolls (contextmenu.js), and its lists open inside it */
+.contextMenu.scrollingMenu {
+    overflow: hidden auto;
+
+    & li ul {
+        border-width: 1px 0 0;
+        display: none;
+        margin: 0 !important; /* override the inline margins */
+        padding-left: 16px;
+        position: static;
+        width: auto;
+    }
+
+    & li:not(.disabled):hover > ul {
+        display: block;
+    }
+}
+
 .contextMenu li img {
     height: 16px;
     margin-right: 0.5em;

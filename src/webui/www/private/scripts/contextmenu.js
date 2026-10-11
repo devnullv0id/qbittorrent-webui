@@ -46,6 +46,41 @@ window.qBittorrent.ContextMenu ??= (() => {
     };
 
     let lastShownContextMenu = null;
+
+    // the part of the screen where a menu placed in the given box can be seen: the box, and every box around it that
+    // cuts off its content, within the screen
+    const visibleArea = (box) => {
+        const area = {
+            left: 0,
+            top: 0,
+            right: document.documentElement.clientWidth,
+            bottom: document.documentElement.clientHeight
+        };
+        for (let element = box; element?.isConnected && (element !== document.body); element = element.parentElement) {
+            if (getComputedStyle(element).overflow === "visible")
+                continue;
+
+            const rect = element.getBoundingClientRect();
+            area.left = Math.max(area.left, (rect.left + element.clientLeft));
+            area.top = Math.max(area.top, (rect.top + element.clientTop));
+            area.right = Math.min(area.right, (rect.left + element.clientLeft + element.clientWidth));
+            area.bottom = Math.min(area.bottom, (rect.top + element.clientTop + element.clientHeight));
+        }
+        return area;
+    };
+
+    // where on the screen the given box's content starts, from which a menu placed in it is positioned
+    const contentOrigin = (box) => {
+        if ((box === null) || (box === document.body))
+            return { x: -window.scrollX, y: -window.scrollY };
+
+        const rect = box.getBoundingClientRect();
+        return {
+            x: rect.left + box.clientLeft - box.scrollLeft,
+            y: rect.top + box.clientTop - box.scrollTop
+        };
+    };
+
     class ContextMenu {
         constructor(options) {
             this.options = {
@@ -88,20 +123,32 @@ window.qBittorrent.ContextMenu ??= (() => {
             this.menu.style.left = "-999em";
             this.menu.style.top = "-999em";
 
+            // a view's or a window's menu is placed in a box that cuts it off; a menu taller than the part of it that
+            // can be seen scrolls
+            const parent = this.menu.offsetParent;
+            const area = visibleArea(parent);
+            if (!this.menu.classList.contains("scrollableMenu"))
+                this.menu.style.removeProperty("max-height");
+            const isScrolling = this.menu.offsetHeight > (area.bottom - area.top);
+            this.menu.classList.toggle("scrollingMenu", isScrolling);
+            if (isScrolling)
+                this.menu.style.maxHeight = `${area.bottom - area.top}px`;
+
             // position the menu (at the finger for a long press)
             const point = e.changedTouches?.[0] ?? e;
-            let xPosMenu = point.pageX + this.options.offsets.x;
-            let yPosMenu = point.pageY + this.options.offsets.y;
-            if ((xPosMenu + this.menu.offsetWidth) > document.documentElement.clientWidth)
+            let xPosMenu = point.clientX + this.options.offsets.x;
+            let yPosMenu = point.clientY + this.options.offsets.y;
+            if ((xPosMenu + this.menu.offsetWidth) > area.right)
                 xPosMenu -= this.menu.offsetWidth;
-            if ((yPosMenu + this.menu.offsetHeight) > document.documentElement.clientHeight)
-                yPosMenu = document.documentElement.clientHeight - this.menu.offsetHeight;
-            if (xPosMenu < 0)
-                xPosMenu = 0;
-            if (yPosMenu < 0)
-                yPosMenu = 0;
-            this.menu.style.left = `${xPosMenu}px`;
-            this.menu.style.top = `${yPosMenu}px`;
+            if ((yPosMenu + this.menu.offsetHeight) > area.bottom)
+                yPosMenu = area.bottom - this.menu.offsetHeight;
+            if (xPosMenu < area.left)
+                xPosMenu = area.left;
+            if (yPosMenu < area.top)
+                yPosMenu = area.top;
+            const origin = contentOrigin(parent);
+            this.menu.style.left = `${xPosMenu - origin.x}px`;
+            this.menu.style.top = `${yPosMenu - origin.y}px`;
             this.menu.style.position = "absolute";
             this.menu.style.zIndex = "2000";
 
@@ -115,14 +162,14 @@ window.qBittorrent.ContextMenu ??= (() => {
                 const yPosOrigin = rectParent.bottom;
                 let xPos = xPosOrigin + rectParent.width - 1;
                 let yPos = yPosOrigin - rectParent.height - 1;
-                if ((xPos + ul.offsetWidth) > document.documentElement.clientWidth)
+                if ((xPos + ul.offsetWidth) > area.right)
                     xPos -= (ul.offsetWidth + rectParent.width - 2);
-                if ((yPos + ul.offsetHeight) > document.documentElement.clientHeight)
-                    yPos = document.documentElement.clientHeight - ul.offsetHeight;
-                if (xPos < 0)
-                    xPos = 0;
-                if (yPos < 0)
-                    yPos = 0;
+                if ((yPos + ul.offsetHeight) > area.bottom)
+                    yPos = area.bottom - ul.offsetHeight;
+                if (xPos < area.left)
+                    xPos = area.left;
+                if (yPos < area.top)
+                    yPos = area.top;
                 ul.style.marginLeft = `${xPos - xPosOrigin}px`;
                 ul.style.marginTop = `${yPos - yPosOrigin}px`;
             }
@@ -751,28 +798,6 @@ window.qBittorrent.ContextMenu ??= (() => {
     }
 
     class RssDownloaderRuleContextMenu extends ContextMenu {
-        adjustMenuPosition(e) {
-            const rssDownloaderPage = document.getElementById("rssdownloaderpage");
-            this.updateMenuItems();
-
-            // draw the menu off-screen to know the menu dimensions
-            this.menu.style.left = "-999em";
-            this.menu.style.top = "-999em";
-            // position the menu
-            let xPosMenu = e.pageX + this.options.offsets.x - rssDownloaderPage.offsetLeft;
-            let yPosMenu = e.pageY + this.options.offsets.y - rssDownloaderPage.offsetTop;
-            if ((xPosMenu + this.menu.offsetWidth) > rssDownloaderPage.clientWidth)
-                xPosMenu -= this.menu.offsetWidth;
-            if ((yPosMenu + this.menu.offsetHeight) > rssDownloaderPage.clientHeight)
-                yPosMenu = rssDownloaderPage.clientHeight - this.menu.offsetHeight;
-            xPosMenu = Math.max(xPosMenu, 0);
-            yPosMenu = Math.max(yPosMenu, 0);
-
-            this.menu.style.left = `${xPosMenu}px`;
-            this.menu.style.top = `${yPosMenu}px`;
-            this.menu.style.position = "absolute";
-            this.menu.style.zIndex = "2000";
-        }
         updateMenuItems() {
             const selectedRows = window.qBittorrent.RssDownloader.rssDownloaderRulesTable.selectedRowsIds();
             this.showItem("addRule");
