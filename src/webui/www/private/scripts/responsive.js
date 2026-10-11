@@ -1072,6 +1072,22 @@ window.qBittorrent.Responsive ??= (() => {
         });
     };
 
+    // small screens start with the properties panel collapsed; larger ones undo a collapse that only this made
+    const initPropertiesPanel = () => {
+        const collapsed = localPreferences.get("properties_panel_collapsed");
+        if (queries.small.matches) {
+            if (collapsed === null) {
+                localPreferences.set("properties_panel_collapsed", "true");
+                localPreferences.set("properties_panel_collapsed_by_layout", "true");
+            }
+        }
+        else if (localPreferences.get("properties_panel_collapsed_by_layout") !== null) {
+            localPreferences.remove("properties_panel_collapsed_by_layout");
+            if (collapsed === "true")
+                localPreferences.remove("properties_panel_collapsed");
+        }
+    };
+
     // called by client.js once the main window is built
     const init = () => {
         initLayout();
@@ -1084,6 +1100,7 @@ window.qBittorrent.Responsive ??= (() => {
         initCardCheckboxes();
         initCardSorting();
         initMenuDrawer();
+        initPropertiesPanel();
     };
 
     return exports();

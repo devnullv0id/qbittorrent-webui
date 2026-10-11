@@ -1382,3 +1382,34 @@
         padding-left: 0;
     }
 }
+
+/* Toolbar on phones */
+#toolbarButtons {
+    display: contents;
+}
+
+@media (width < 760px) {
+    #mochaToolbar {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    #toolbarButtons {
+        display: block;
+        flex: 1 1 0;
+        min-width: 0;
+        overflow: auto hidden;
+        scrollbar-width: none;
+        white-space: nowrap;
+    }
+
+    #mainWindowTabs {
+        flex: none;
+        float: none;
+    }
+
+    #torrentsFilterToolbar {
+        flex: 1 1 100%;
+    }
+}
