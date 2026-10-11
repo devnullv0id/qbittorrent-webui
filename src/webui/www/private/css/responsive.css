@@ -100,6 +100,18 @@
     }
 }
 
+/* fields in dialog frames stay within the page */
+:root.responsiveRelayout body:not(:has(#desktop)) {
+    & input[type="text"],
+    & input[type="number"],
+    & input[type="password"],
+    & input:not([type]),
+    & select,
+    & textarea {
+        max-width: 100%;
+    }
+}
+
 /* Windows on phones: no maximize button; full screen where they don't fit as a card (responsive.js) */
 :root.responsivePhone .mochaMaximizeButton {
     display: none;
@@ -157,6 +169,12 @@
             max-width: 100%;
         }
     }
+}
+
+/* About keeps one size across its tabs */
+:root.responsiveRelayout #aboutpage .aboutTabContent {
+    height: 100%;
+    overflow: auto;
 }
 
 /* Touch sizes */

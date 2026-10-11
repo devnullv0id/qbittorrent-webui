@@ -416,6 +416,15 @@ window.qBittorrent.Responsive ??= (() => {
     // distance from the screen's edges
     const WINDOW_MARGIN = 8;
     const PHONE_WINDOW_MARGIN = 12;
+    // the least width of a window, and the least height of a page that scrolls anyway or fills whatever height it is
+    // given
+    const MIN_WINDOW_WIDTH = 300;
+    const MIN_WINDOW_HEIGHT = 240;
+    // the largest a window grows to fit its page
+    const MAX_WINDOW_WIDTH = 1200;
+    const MAX_WINDOW_HEIGHT = 800;
+    // windows whose pages share them and differ in height, as Options' tabs do: they keep the fitted height
+    const ONE_SIZE_WINDOWS = new Set(["preferencesPage"]);
 
     // resizes like a drag of the edge, without storing the size as the user's
     const setContentSize = (instance, width, height) => {
@@ -443,6 +452,105 @@ window.qBittorrent.Responsive ??= (() => {
         return instance.responsiveWantedSize;
     };
 
+    // the page of a window: its frame's document, or its content box; null while it loads
+    const pageOf = (instance) => {
+        const iframe = instance.iframeEl;
+        if (iframe) {
+            const loading = (iframe.contentDocument?.readyState !== "complete") || (iframe.contentWindow.location.href === "about:blank");
+            return loading ? null : iframe.contentDocument.documentElement;
+        }
+        return (instance.contentEl.childElementCount === 0) ? null : instance.contentWrapperEl;
+    };
+
+    // measure(page) at the given size, or null while the page loads; the page is left as it was, scrolled where it was
+    const measurePage = (instance, width, height, measure) => {
+        const page = pageOf(instance);
+        if (page === null)
+            return null;
+
+        const box = instance.iframeEl ?? page;
+        const scrolled = [box, page, ...page.querySelectorAll("*")]
+            .filter((element) => (element.scrollTop > 0) || (element.scrollLeft > 0))
+            .map((element) => ({ element: element, top: element.scrollTop, left: element.scrollLeft }));
+        const { width: oldWidth, height: oldHeight } = box.style;
+        const oldOverflow = [page.style.getPropertyValue("overflow"), page.style.getPropertyPriority("overflow")];
+        box.style.width = `${width}px`;
+        box.style.height = `${height}px`;
+        // a scrollbar would narrow the page; also over a stylesheet's !important
+        page.style.setProperty("overflow", "hidden", "important");
+        const result = measure(page);
+        page.style.setProperty("overflow", ...oldOverflow);
+        box.style.width = oldWidth;
+        box.style.height = oldHeight;
+        for (const { element, top, left } of scrolled) {
+            element.scrollTop = top;
+            element.scrollLeft = left;
+        }
+        return result;
+    };
+
+    // heights of the scrolling boxes and leaf elements
+    const contentHeights = (page) => {
+        const view = page.ownerDocument.defaultView;
+        const heights = [];
+        for (const el of page.querySelectorAll("*")) {
+            if ((el === page.ownerDocument.body) || ((el.firstElementChild !== null) && !/auto|scroll/.test(view.getComputedStyle(el).overflowY)))
+                continue;
+
+            heights.push(el.getBoundingClientRect().height);
+        }
+        return heights;
+    };
+
+    // the bottom padding of a content box the page runs past
+    const pageBottomPadding = (instance) => {
+        const content = instance.iframeEl ? null : instance.contentEl;
+        if ((content === null) || (content.scrollHeight <= content.clientHeight))
+            return 0;
+
+        return Number.parseFloat(getComputedStyle(content).paddingBottom) || 0;
+    };
+
+    // whether a page takes whatever height it is given (a list or a field that fills the rest) rather than a height of
+    // its own: some of its lists or fields grow with the height. Decided once for each page the window loads, or null
+    // while it loads
+    const pageFills = (instance, width, tallHeight) => {
+        if (instance.responsiveFills === undefined) {
+            const short = measurePage(instance, width, 1, contentHeights);
+            if (short === null)
+                return null;
+
+            const tall = measurePage(instance, width, tallHeight, contentHeights);
+            instance.responsiveFills = tall.some((height, i) => Math.abs(height - short[i]) > 1);
+        }
+        return instance.responsiveFills;
+    };
+
+    // a page's own height at the given width, 0 if it fills whatever height it is given, or null while it loads
+    const pageHeight = (instance, width, tallHeight) => {
+        const fills = pageFills(instance, width, tallHeight);
+        if (fills === null)
+            return null;
+        if (fills)
+            return 0;
+
+        return measurePage(instance, width, 1, (page) => page.scrollHeight + pageBottomPadding(instance));
+    };
+
+    // the size a page needs not to scroll, 0 where it fits
+    const pageOverflow = (instance, width, height) => measurePage(instance, width, height, (page) => ({
+        width: (page.scrollWidth > page.clientWidth) ? page.scrollWidth : 0,
+        height: (page.scrollHeight > page.clientHeight) ? page.scrollHeight : 0
+    })) ?? { width: 0, height: 0 };
+
+    // the width a vertical scrollbar takes where it would make the page scroll sideways, else 0 (also where scrollbars
+    // are drawn over the page)
+    const sidewaysScrollbarWidth = (instance, width, height) => measurePage(instance, width, height, (page) => {
+        const fullWidth = page.clientWidth;
+        page.style.overflowY = "scroll";
+        return (page.scrollWidth > page.clientWidth) ? (fullWidth - page.clientWidth) : 0;
+    }) ?? 0;
+
     // the largest content size a window has room for on the screen
     const roomOnScreen = (instance) => {
         const wrapper = instance.contentWrapperEl;
@@ -453,10 +561,78 @@ window.qBittorrent.Responsive ??= (() => {
         };
     };
 
+    // a drag can't make a window smaller than its page needs or its own limit, unless it already is; the limits are
+    // measured as the drag starts
+    const limitResize = (instance) => {
+        const wrapper = instance.contentWrapperEl;
+        const room = roomOnScreen(instance);
+        // a page that a fitted window shows whole keeps all of its height, else MIN_WINDOW_HEIGHT of it
+        const ownHeight = pageHeight(instance, wrapper.offsetWidth, room.height) ?? 0;
+        instance.responsivePageFits = (ownHeight > 0) && (ownHeight <= Math.min(room.height, MAX_WINDOW_HEIGHT));
+        const page = {
+            width: Math.min(room.width, Math.max(MIN_WINDOW_WIDTH, pageOverflow(instance, MIN_WINDOW_WIDTH, wrapper.offsetHeight).width)),
+            height: Math.min(room.height, (instance.responsivePageFits ? ownHeight : MIN_WINDOW_HEIGHT))
+        };
+        const frameWidth = instance.windowEl.offsetWidth - wrapper.offsetWidth;
+        const frameHeight = instance.windowEl.offsetHeight - wrapper.offsetHeight;
+        // the limits the window was opened with
+        const own = instance.responsiveResizeLimit ??= { x: [...instance.options.resizeLimit.x], y: [...instance.options.resizeLimit.y] };
+        const min = {
+            width: Math.min(wrapper.offsetWidth, Math.max(page.width, own.x[0] - frameWidth)),
+            height: Math.min(wrapper.offsetHeight, Math.max(page.height, own.y[0] - frameHeight))
+        };
+        instance.options.resizeLimit = { x: [min.width + frameWidth, own.x[1]], y: [min.height + frameHeight, own.y[1]] };
+        for (const drag of [instance.resizable2, instance.resizable3, instance.resizable4]) {
+            if (drag?.options.limit.x)
+                drag.options.limit.x[0] = min.width;
+            if (drag?.options.limit.y)
+                drag.options.limit.y[0] = min.height;
+        }
+    };
+
+    // a page the window shows whole needs more height as a drag makes it narrower
+    const keepPageHeight = (instance) => {
+        if (!instance.responsivePageFits)
+            return;
+
+        const wrapper = instance.contentWrapperEl;
+        const height = measurePage(instance, wrapper.offsetWidth, 1, (page) => page.scrollHeight + pageBottomPadding(instance)) ?? 0;
+        const minHeight = Math.min(roomOnScreen(instance).height, height);
+        if (wrapper.offsetHeight >= minHeight)
+            return;
+
+        wrapper.style.height = `${minHeight}px`;
+        instance.drawWindow();
+    };
+
+    // the name a window's size is stored under (saveWindowSize): its id, without the source that Add Torrent adds
+    const storageName = (instance) => instance.options.id.split("-", 1)[0];
+
+    // a size stored by an earlier resize
+    const hasStoredSize = (instance) => {
+        const name = storageName(instance);
+        return (localPreferences.get(`window_${name}_width`) !== null) || (localPreferences.get(`window_${name}_height`) !== null);
+    };
+
+    // a stored size from before windows kept a minimum can be too small to show the window: it opens at least
+    // MIN_WINDOW_WIDTH wide and MIN_WINDOW_HEIGHT high, as the screen allows
+    const raiseStoredSize = (instance) => {
+        if (!hasStoredSize(instance))
+            return;
+
+        const wrapper = instance.contentWrapperEl;
+        const room = roomOnScreen(instance);
+        const width = Math.max(wrapper.offsetWidth, Math.min(room.width, MIN_WINDOW_WIDTH));
+        const height = Math.max(wrapper.offsetHeight, Math.min(room.height, MIN_WINDOW_HEIGHT));
+        if ((width !== wrapper.offsetWidth) || (height !== wrapper.offsetHeight))
+            setContentSize(instance, `${width}px`, `${height}px`);
+    };
+
     // what a window's fit follows: the screen, the window's size and its page's size
     const fitState = (instance) => {
         const sizes = [root.clientWidth, root.clientHeight, instance.contentWrapperEl.style.width, instance.contentWrapperEl.style.height];
-        const page = [...instance.contentEl.children];
+        // the pages that share a window don't change its size
+        const page = ONE_SIZE_WINDOWS.has(instance.windowEl.id) ? [] : [...instance.contentEl.children];
         for (const element of [...page, instance.iframeEl?.contentDocument?.body, instance.toolbarWrapperEl]) {
             if (element)
                 sizes.push(element.offsetWidth, element.offsetHeight);
@@ -501,7 +677,8 @@ window.qBittorrent.Responsive ??= (() => {
         instance.responsiveFitState = fitState(instance);
     };
 
-    // the size a window asks for, within the screen; on phones it fills the screen, and returns true
+    // the size a window asks for, as large as its page needs where pages are laid out anew, within the screen;
+    // returns whether it fills the screen
     const fitWindowSize = (instance, phone) => {
         const windowEl = instance.windowEl;
         const wrapper = instance.contentWrapperEl;
@@ -524,10 +701,33 @@ window.qBittorrent.Responsive ??= (() => {
         const margin = phone ? PHONE_WINDOW_MARGIN : WINDOW_MARGIN;
         const maxWidth = root.clientWidth - (2 * margin) - frameWidth;
         const maxHeight = root.clientHeight - (2 * margin) - frameHeight;
+        const fitWidth = Math.min(maxWidth, MAX_WINDOW_WIDTH);
+        const fitHeight = Math.min(maxHeight, MAX_WINDOW_HEIGHT);
 
         let width = phone ? maxWidth : Math.min(maxWidth, wantedWidth);
         let height = Math.min(maxHeight, wantedHeight);
-        const fullScreen = phone;
+        // null while unknown: a window the user sized, or a page still loading, isn't taken full screen
+        let ownHeight = null;
+        // a size the user gave a window, now or before, is kept, except on phones
+        const userSized = instance.responsiveUserResized || hasStoredSize(instance);
+        if (queries.relayout.matches && (phone || !userSized)) {
+            width = phone ? maxWidth : Math.min(fitWidth, Math.max(width, MIN_WINDOW_WIDTH, pageOverflow(instance, width, wantedHeight).width));
+            // pages that share one window take all of its fitted height, so it doesn't change from page to page
+            if (ONE_SIZE_WINDOWS.has(windowEl.id)) {
+                ownHeight = (pageOf(instance) === null) ? null : 0;
+                height = fitHeight;
+            }
+            else {
+                ownHeight = pageHeight(instance, width, maxHeight);
+                height = Math.min(fitHeight, (ownHeight > 0) ? ownHeight : Math.max(wantedHeight, pageOverflow(instance, width, wantedHeight).height));
+            }
+            // a page that scrolls keeps its width beside the scrollbar
+            if (pageOverflow(instance, width, height).height > 0)
+                width = Math.min(fitWidth, width + sidewaysScrollbarWidth(instance, width, height));
+        }
+        // a phone shows a window whose page fits as a card, else it fills the screen, as it does the pages that share a
+        // window (0)
+        const fullScreen = phone && (ownHeight !== null) && ((ownHeight === 0) || (ownHeight > fitHeight));
         if (fullScreen) {
             width = root.clientWidth - frameWidth;
             height = root.clientHeight - frameHeight;
@@ -557,6 +757,8 @@ window.qBittorrent.Responsive ??= (() => {
 
         // a window opened from the drawer would open behind it
         closeFiltersDrawer();
+        if (queries.relayout.matches)
+            raiseStoredSize(instance);
         fitWindow(instance);
 
         // the page's own boxes change size as it loads and changes; skipped where nothing a fit follows has changed
@@ -578,6 +780,7 @@ window.qBittorrent.Responsive ??= (() => {
             }
             // another page
             instance.responsiveFitState = null;
+            instance.responsiveFills = undefined;
             fitSoon();
         });
         for (const child of instance.contentEl.children)
@@ -598,7 +801,14 @@ window.qBittorrent.Responsive ??= (() => {
             drag?.addEvent("start", () => {
                 instance.responsiveUserMoved = true;
             });
+            drag?.addEvent("beforeStart", () => {
+                if (queries.relayout.matches)
+                    limitResize(instance);
+            });
         }
+        // the edges that change the width
+        for (const drag of [instance.resizable2, instance.resizable3, instance.resizable5])
+            drag?.addEvent("drag", () => keepPageHeight(instance));
         instance.windowDrag?.addEvent("start", () => {
             instance.responsiveUserMoved = true;
         });
@@ -606,6 +816,7 @@ window.qBittorrent.Responsive ??= (() => {
         // dialog pages
         const iframe = instance.iframeEl;
         iframe?.addEventListener("load", (event) => {
+            instance.responsiveFills = undefined;
             fitWindow(instance);
             new iframe.contentWindow.ResizeObserver(fitSoon).observe(iframe.contentDocument.body);
         });
