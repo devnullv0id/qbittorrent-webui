@@ -630,6 +630,11 @@ window.qBittorrent.Responsive ??= (() => {
             setContentSize(instance, `${width}px`, `${height}px`);
     };
 
+    // on the desktop a dialog is fitted to its page: a frame, a window that can't be resized, or one ending with a
+    // dialog's buttons, but not one whose pages share it
+    const isDialog = (instance) => !ONE_SIZE_WINDOWS.has(instance.windowEl.id)
+        && (Boolean(instance.iframeEl) || !instance.options.resizable || (instance.contentEl.querySelector(".dialogFooter") !== null));
+
     // what a window's fit follows: the screen, the window's size and its page's size
     const fitState = (instance) => {
         const sizes = [root.clientWidth, root.clientHeight, instance.contentWrapperEl.style.width, instance.contentWrapperEl.style.height];
@@ -649,7 +654,7 @@ window.qBittorrent.Responsive ??= (() => {
             return;
 
         const phone = queries.phone.matches;
-        const fullScreen = fitWindowSize(instance, phone);
+        const { fullScreen, fitted } = fitWindowSize(instance, phone);
 
         // no dragging on phones
         if (phone)
@@ -668,7 +673,7 @@ window.qBittorrent.Responsive ??= (() => {
         }
         // Mocha centers a window at the size it opens with: where windows are fitted, a window is centered again,
         // until the user moves it
-        else if (phone || wasFullScreen || (queries.relayout.matches && !instance.responsiveUserMoved)) {
+        else if (phone || wasFullScreen || ((queries.relayout.matches || fitted) && !instance.responsiveUserMoved)) {
             windowEl.style.left = `${Math.max(margin, Math.round((maxLeft + margin) / 2))}px`;
             windowEl.style.top = `${Math.max(margin, Math.round((maxTop + margin) / 2))}px`;
         }
@@ -679,8 +684,8 @@ window.qBittorrent.Responsive ??= (() => {
         instance.responsiveFitState = fitState(instance);
     };
 
-    // the size a window asks for, as large as its page needs where pages are laid out anew, within the screen;
-    // returns whether it fills the screen
+    // the size a window asks for, as large as its page needs where pages are laid out anew, or a dialog's page's
+    // height, within the screen; returns whether it fills the screen, and whether it was fitted to its page
     const fitWindowSize = (instance, phone) => {
         const windowEl = instance.windowEl;
         const wrapper = instance.contentWrapperEl;
@@ -708,6 +713,7 @@ window.qBittorrent.Responsive ??= (() => {
 
         let width = phone ? maxWidth : Math.min(maxWidth, wantedWidth);
         let height = Math.min(maxHeight, wantedHeight);
+        let fitted = false;
         // null while unknown: a window the user sized, or a page still loading, isn't taken full screen
         let ownHeight = null;
         // a size the user gave a window, now or before, is kept, except on phones
@@ -726,6 +732,17 @@ window.qBittorrent.Responsive ??= (() => {
             // a page that scrolls keeps its width beside the scrollbar
             if (pageOverflow(instance, width, height).height > 0)
                 width = Math.min(fitWidth, width + sidewaysScrollbarWidth(instance, width, height));
+            fitted = true;
+        }
+        // the desktop layout keeps a window's size, but a dialog takes its page's height where the screen has room for
+        // all of it: its button row then ends the window, as far from its edge as from the page, and doesn't cover the
+        // page's end
+        else if (!queries.relayout.matches && !userSized && isDialog(instance)) {
+            const pageNeeds = pageHeight(instance, width, maxHeight);
+            if ((pageNeeds > 0) && (pageNeeds <= fitHeight)) {
+                height = pageNeeds;
+                fitted = true;
+            }
         }
         // a phone shows a window whose page fits as a card, else it fills the screen, as it does the pages that share a
         // window (0)
@@ -740,7 +757,7 @@ window.qBittorrent.Responsive ??= (() => {
         wrapper.style.height = instance.responsiveFittedSize?.height ?? wanted.height;
         setContentSize(instance, `${width}px`, `${height}px`);
         instance.responsiveFittedSize = { width: `${width}px`, height: `${height}px` };
-        return fullScreen;
+        return { fullScreen: fullScreen, fitted: fitted };
     };
 
     const fitWindows = () => {
@@ -759,8 +776,7 @@ window.qBittorrent.Responsive ??= (() => {
 
         // a window opened from the drawer would open behind it
         closeFiltersDrawer();
-        if (queries.relayout.matches)
-            raiseStoredSize(instance);
+        raiseStoredSize(instance);
         fitWindow(instance);
 
         // the page's own boxes change size as it loads and changes; skipped where nothing a fit follows has changed
@@ -803,10 +819,7 @@ window.qBittorrent.Responsive ??= (() => {
             drag?.addEvent("start", () => {
                 instance.responsiveUserMoved = true;
             });
-            drag?.addEvent("beforeStart", () => {
-                if (queries.relayout.matches)
-                    limitResize(instance);
-            });
+            drag?.addEvent("beforeStart", () => limitResize(instance));
         }
         // the edges that change the width
         for (const drag of [instance.resizable2, instance.resizable3, instance.resizable5])
