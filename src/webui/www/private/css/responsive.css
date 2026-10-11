@@ -584,10 +584,9 @@
 
 /* Window button rows */
 
-/* where pages are laid out anew, a window's buttons stay in view while its page scrolls, below a line and as far from
-    the window's edge as from the line */
-:root.responsiveRelayout
-    :where(.dialogFooter, #submitbutton:has(> #saveTorrent)) {
+/* a window's buttons stay in view while its page scrolls, below a line and as far from the window's edge as from the
+    line */
+:where(.dialogFooter, #submitbutton:has(> #saveTorrent)) {
     background-color: var(--color-background-popup);
     border-top: var(--responsive-separator);
     bottom: 0;
@@ -604,27 +603,26 @@
 }
 
 /* Create Torrent's button keeps no margins of its own there */
-:root.responsiveRelayout .dialogFooter > #createTorrentButton {
+.dialogFooter > #createTorrentButton {
     margin-block: 0;
 }
 
 /* Add Torrent's row keeps the height of its centered Download */
-:root.responsiveRelayout #submitbutton:has(> #saveTorrent) {
+#submitbutton:has(> #saveTorrent) {
     min-height: calc(
         var(--responsive-touch-target, 26px) + (2 * var(--responsive-row-space))
     );
 }
 
 /* RSS Downloader's Save is a button of its own */
-:root.responsiveRelayout #RssDownloader #saveButton {
+#RssDownloader #saveButton {
     bottom: var(--responsive-row-space);
     position: sticky;
     z-index: 1;
 }
 
 /* windows that end with their button row: its space is the window's last */
-:root.responsiveRelayout
-    :is(
+:is(
         .modalDialog,
         #globalSpeedLimitsPage,
         #installSearchPlugin,
@@ -643,7 +641,7 @@
 
 /* Options: a column at least as tall as the window, its Save row at the bottom; the space a tab doesn't need goes
     above the row, and a tab keeps the 1em the row had from it */
-:root.responsiveRelayout #preferencesPage .mochaContent {
+#preferencesPage .mochaContent {
     display: flex !important; /* override Mocha's inline display */
     flex-direction: column;
     min-height: 100%;
@@ -657,10 +655,22 @@
     }
 }
 
-/* a modal dialog's row spans its window like the others, its buttons at the end where the dialog puts them */
-:root.responsiveRelayout .modalDialog .mochaContent.pad > .dialogFooter {
+/* a window's buttons side by side a gap apart, centered or at the end where the dialog puts them; a modal dialog's
+    row spans its window like the others */
+.dialogFooter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--responsive-gap);
+    justify-content: center;
+}
+
+.dialogFooter.alignEnd,
+.modalDialog .dialogFooter {
+    justify-content: flex-end;
+}
+
+.modalDialog .mochaContent.pad > .dialogFooter {
     align-self: stretch;
-    text-align: right;
 }
 
 /* window buttons stack on phones, full width, in the page's order */
@@ -852,18 +862,22 @@
     }
 }
 
-/* RSS: the button bar grows, its buttons a gap apart, the filter at its end */
-:root.responsiveRelayout #rssView #rssButtonBar {
+/* RSS: its buttons a gap apart, the filter at the bar's end */
+#rssView #rssButtonBar {
     align-items: flex-start;
     display: flex;
     flex-wrap: wrap;
     gap: var(--responsive-gap);
-    height: auto;
-    overflow: visible;
 
     & #rssFilterToolbar {
         margin-left: auto;
     }
+}
+
+/* the bar grows */
+:root.responsiveRelayout #rssView #rssButtonBar {
+    height: auto;
+    overflow: visible;
 }
 
 /* RSS on phones: feeds, articles and details stack */
@@ -912,7 +926,7 @@
 }
 
 /* Search plugins: the list takes the height left, the button row ends the window */
-:root.responsiveRelayout .mocha #searchPluginsContainer {
+.mocha #searchPluginsContainer {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -935,10 +949,7 @@
 }
 
 /* its buttons share their row a gap apart, at equal widths; on phones they stack, as every window's do */
-:root.responsiveRelayout:not(.responsivePhone)
-    .mocha
-    #searchPluginsContainer
-    > .dialogFooter {
+:root:not(.responsivePhone) .mocha #searchPluginsContainer > .dialogFooter {
     display: flex;
     gap: var(--responsive-gap);
 
@@ -986,7 +997,7 @@
 }
 
 /* RSS Downloader: a grid of its three columns, no shorter than the rule's settings and Save need */
-:root.responsiveRelayout #RssDownloader {
+#RssDownloader {
     display: grid;
     grid-template-columns: 25% 50% 25%;
     grid-template-rows: auto minmax(min-content, 1fr);
@@ -1040,7 +1051,7 @@
 }
 
 /* the page fills the window (it grows where the screen has room) and ends a row's space below Save */
-:root.responsiveRelayout #rssdownloaderpage {
+#rssdownloaderpage {
     & .mochaContent {
         display: flex !important; /* override Mocha's inline display */
         flex-direction: column;
@@ -1205,6 +1216,38 @@
 :root.responsivePhone .vsb-menu {
     max-width: calc(100vw - 20px);
     right: 0;
+}
+
+/* Renaming: the page in a column at least as tall as the window, the buttons at its end, a row's space below the
+    page's line like the other rows (stacked below on phones and short touch screens) */
+#multiRenamePage .mochaContent {
+    display: flex !important; /* override Mocha's inline display */
+    flex-direction: column;
+    min-height: 100%;
+    padding-bottom: 0 !important; /* override Mocha's padding */
+}
+
+#multiRenamePage_content {
+    & > div {
+        display: flex;
+        flex: 1 0 auto;
+        flex-direction: column;
+    }
+
+    & #operation_btns {
+        margin: auto 0 0 !important; /* override the inline margins */
+        padding-bottom: var(--responsive-row-space);
+        position: static !important; /* override the inline position */
+
+        & > hr {
+            margin-bottom: var(--responsive-row-space);
+        }
+    }
+
+    & #torrentFiles {
+        /* override the inline margin */
+        margin-bottom: var(--responsive-row-space) !important;
+    }
 }
 
 /* Renaming on phones and short touch screens: everything stacks and the window scrolls */
