@@ -91,6 +91,18 @@
     }
 }
 
+/* targets dialog windows loaded via iframes */
+:root.responsiveRelayout body:not(:has(#desktop)) {
+    & input[type="text"],
+    & input[type="number"],
+    & input[type="password"],
+    & input:not([type]),
+    & select,
+    & textarea {
+        max-width: 100%;
+    }
+}
+
 /* Windows on phones */
 :root.responsivePhone .mochaMaximizeButton {
     display: none;
@@ -146,6 +158,12 @@
             max-width: 100%;
         }
     }
+}
+
+/* About: same size for every tab */
+:root.responsiveRelayout #aboutpage .aboutTabContent {
+    height: 100%;
+    overflow: auto;
 }
 
 /* Touch screens */
