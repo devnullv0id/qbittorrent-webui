@@ -864,6 +864,8 @@ window.qBittorrent.Responsive ??= (() => {
 
         const point = event.changedTouches?.[0] ?? event;
         const box = tr.getBoundingClientRect();
+        if (point.clientX < (box.left + cssLength("--responsive-card-check-width")))
+            return "check";
         if ((point.clientX >= (box.right - cssLength("--responsive-card-menu-width"))) && (point.clientY <= (box.top + cssLength("--responsive-card-menu-height"))))
             return "menu";
         return null;
@@ -915,6 +917,54 @@ window.qBittorrent.Responsive ??= (() => {
         }, true);
     };
 
+    // a card's checkbox toggles its torrent's selection, as a Ctrl+click does
+    const initCardCheckboxes = async () => {
+        const tableDiv = await whenElement("torrentsTableDiv");
+        const table = window.torrentsTable;
+
+        // a touch on the checkbox doesn't select the card alone or start a long press
+        tableDiv.addEventListener("touchstart", (event) => {
+            if (cardZone(event) === "check")
+                event.stopPropagation();
+        }, { capture: true, passive: true });
+        tableDiv.addEventListener("click", (event) => {
+            if (event.ctrlKey || (cardZone(event) !== "check"))
+                return;
+
+            event.stopPropagation();
+            event.target.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, ctrlKey: true, clientX: event.clientX, clientY: event.clientY }));
+        }, true);
+
+        const selectAll = document.getElementById("torrentsSelectAll");
+        const count = document.getElementById("torrentsSelectionCount");
+        const update = () => {
+            if (!queries.phone.matches)
+                return;
+
+            const selected = table.selectedRowsIds().length;
+            const all = (selected > 0) ? table.filteredRowCount : 0;
+            selectAll.checked = (selected > 0) && (selected >= all);
+            selectAll.indeterminate = (selected > 0) && (selected < all);
+            count.textContent = (selected > 0) ? count.dataset.format.replace("%1", selected) : "";
+            for (const tr of table.tableBody.children)
+                tr.setAttribute("aria-selected", tr.classList.contains("selected"));
+        };
+        selectAll.addEventListener("click", (event) => {
+            if (selectAll.checked) {
+                table.selectAll();
+            }
+            else {
+                table.deselectAll();
+                table.setRowClass();
+            }
+            update();
+        });
+        const updateSoon = window.qBittorrent.Misc.createDebounceHandler(100, update);
+        new MutationObserver(updateSoon).observe(table.tableBody, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+        queries.phone.addEventListener("change", (_event) => update());
+        update();
+    };
+
     // called by client.js once the main window is built
     const init = () => {
         initLayout();
@@ -924,6 +974,7 @@ window.qBittorrent.Responsive ??= (() => {
         initViewTabs();
         initHeaderAutoHide();
         initCards();
+        initCardCheckboxes();
     };
 
     return exports();
