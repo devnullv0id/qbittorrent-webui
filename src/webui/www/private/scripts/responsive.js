@@ -35,7 +35,8 @@ window.qBittorrent.Responsive ??= (() => {
         return {
             init: init,
             queries: queries,
-            addFrame: addFrame
+            addFrame: addFrame,
+            rowHeight: rowHeight
         };
     };
 
@@ -58,6 +59,9 @@ window.qBittorrent.Responsive ??= (() => {
     // window.innerHeight
     const root = document.documentElement;
     const localPreferences = new window.qBittorrent.LocalPreferences.LocalPreferences();
+
+    // a length responsive.css sets on the root, in pixels
+    const cssLength = (name) => Number.parseFloat(getComputedStyle(root).getPropertyValue(name));
 
     /* Pages */
 
@@ -98,6 +102,24 @@ window.qBittorrent.Responsive ??= (() => {
         document.body.append(scrim);
         return scrim;
     };
+
+    // client.js builds the transfer list after this script starts
+    const whenElement = (id) => new Promise((resolve) => {
+        const found = document.getElementById(id);
+        if (found !== null) {
+            resolve(found);
+            return;
+        }
+        const observer = new MutationObserver(() => {
+            const element = document.getElementById(id);
+            if (element === null)
+                return;
+
+            observer.disconnect();
+            resolve(element);
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    });
 
     /* Focus */
 
@@ -325,6 +347,70 @@ window.qBittorrent.Responsive ??= (() => {
         placeButton();
     };
 
+    /* Touch sizes */
+
+    // the rows of the virtual list are positioned at this height (dynamicTable.js asks), else undefined
+    const rowHeight = (table) => {
+        if (queries.coarse.matches)
+            return cssLength("--responsive-touch-row-height");
+        return undefined;
+    };
+
+    // the list keeps its first row in view as its rows change height, also while the page's layout follows the change
+    const FIRST_ROW_TIME = 1000;
+    let shownRowHeight = null;
+    let firstRow = null;
+
+    const measureRowHeight = (table) => {
+        if (table.useVirtualList)
+            return table.rowHeight;
+        return table.tableBody.querySelector("tr")?.offsetHeight || table.rowHeight;
+    };
+
+    const scrollToFirstRow = () => {
+        if ((firstRow === null) || (performance.now() > firstRow.until)) {
+            firstRow = null;
+            return;
+        }
+        window.torrentsTable.dynamicTableDiv.scrollTop = Math.round(firstRow.index * shownRowHeight);
+    };
+
+    const keepFirstRow = () => {
+        const table = window.torrentsTable;
+        if (shownRowHeight === null)
+            return;
+
+        firstRow = { index: table.dynamicTableDiv.scrollTop / shownRowHeight, until: performance.now() + FIRST_ROW_TIME };
+        // the rows of a list that isn't virtual take their height from responsive.css
+        if (table.useVirtualList)
+            table.rerender();
+        shownRowHeight = measureRowHeight(table);
+        scrollToFirstRow();
+    };
+
+    // taller title bars on touch screens (responsive.css), as Mocha's height for new windows
+    let mochaTitleHeights = null;
+
+    const applyWindowTitleHeight = () => {
+        mochaTitleHeights ??= {
+            window: MochaUI.Window.prototype.options.headerHeight,
+            modal: MochaUI.Modal.prototype.options.headerHeight
+        };
+        const height = cssLength("--responsive-window-title-height");
+        MochaUI.Window.prototype.options.headerHeight = (height > 0) ? height : mochaTitleHeights.window;
+        MochaUI.Modal.prototype.options.headerHeight = (height > 0) ? height : mochaTitleHeights.modal;
+    };
+
+    const initTouch = async () => {
+        applyWindowTitleHeight();
+        queries.coarse.addEventListener("change", (_event) => applyWindowTitleHeight());
+
+        const tableDiv = await whenElement("torrentsTableDiv");
+        shownRowHeight = measureRowHeight(window.torrentsTable);
+        queries.coarse.addEventListener("change", (_event) => keepFirstRow());
+        new ResizeObserver(scrollToFirstRow).observe(tableDiv);
+    };
+
     /* Windows */
 
     // a window opened from the drawer would open behind it
@@ -341,6 +427,7 @@ window.qBittorrent.Responsive ??= (() => {
     const init = () => {
         initLayout();
         initFiltersDrawer();
+        initTouch();
         initWindows();
     };
 

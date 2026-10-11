@@ -71,9 +71,15 @@ window.qBittorrent.DynamicTable ??= (() => {
 
     const localPreferences = new window.qBittorrent.LocalPreferences.LocalPreferences();
     const clientData = window.qBittorrent.ClientData ?? window.parent.qBittorrent.ClientData;
+    const responsive = window.qBittorrent.Responsive ?? window.parent.qBittorrent.Responsive;
 
     class DynamicTable {
         #DynamicTableHeaderContextMenuClass = null;
+
+        // touch screens and phones can change it (responsive.js)
+        get rowHeight() {
+            return responsive?.rowHeight(this) ?? this.densityRowHeight;
+        }
 
         setup(dynamicTableDivId, dynamicTableFixedHeaderDivId, contextMenu) {
             this.dynamicTableDivId = dynamicTableDivId;
@@ -89,7 +95,7 @@ window.qBittorrent.DynamicTable ??= (() => {
             this.fixedTableHeaderColgroup = document.createElement("colgroup");
             this.fixedTableHeader.closest("table").prepend(this.fixedTableHeaderColgroup);
             this.tableBody = this.table.querySelector("tbody");
-            this.rowHeight = (clientData.get("display_density") === "compact") ? 22 : 26;
+            this.densityRowHeight = (clientData.get("display_density") === "compact") ? 22 : 26;
             this.rows = new Map();
             this.cachedElements = [];
             this.selectedRows = [];
@@ -1191,7 +1197,7 @@ window.qBittorrent.DynamicTable ??= (() => {
     class TorrentsTable extends DynamicTable {
         setupVirtualList() {
             super.setupVirtualList();
-            this.rowHeight = (clientData.get("display_density") === "compact") ? 18 : 22;
+            this.densityRowHeight = (clientData.get("display_density") === "compact") ? 18 : 22;
         }
 
         initColumns() {
