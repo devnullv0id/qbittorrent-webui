@@ -918,7 +918,7 @@ window.qBittorrent.Responsive ??= (() => {
 
     /* Torrent cards on phones */
 
-    // a card's ⋯ at its top right (responsive.css), or null
+    // a card's zones (responsive.css): the checkbox at its left and the ⋯ at its top right, or null
     const cardZone = (event) => {
         const tr = queries.phone.matches ? event.target.closest?.("#torrentsTableDiv tbody tr") : null;
         if (!tr)
@@ -926,6 +926,8 @@ window.qBittorrent.Responsive ??= (() => {
 
         const point = event.changedTouches?.[0] ?? event;
         const box = tr.getBoundingClientRect();
+        if (point.clientX < (box.left + cssLength("--responsive-card-check-width")))
+            return "check";
         if ((point.clientX >= (box.right - cssLength("--responsive-card-menu-width"))) && (point.clientY <= (box.top + cssLength("--responsive-card-menu-height"))))
             return "menu";
         return null;
@@ -978,6 +980,56 @@ window.qBittorrent.Responsive ??= (() => {
         }, true);
     };
 
+    // a card's checkbox adds its torrent to the selection or takes it out, as a Ctrl+click on a row does; the bar above
+    // the cards selects all or none and counts the selected torrents
+    const initCardCheckboxes = async () => {
+        const tableDiv = await whenElement("torrentsTableDiv");
+        const table = window.torrentsTable;
+
+        // a touch on the checkbox neither selects the card alone nor starts a long press
+        tableDiv.addEventListener("touchstart", (event) => {
+            if (cardZone(event) === "check")
+                event.stopPropagation();
+        }, { capture: true, passive: true });
+        tableDiv.addEventListener("click", (event) => {
+            if (event.ctrlKey || (cardZone(event) !== "check"))
+                return;
+
+            event.stopPropagation();
+            event.target.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, ctrlKey: true, clientX: event.clientX, clientY: event.clientY }));
+        }, true);
+
+        const selectAll = document.getElementById("torrentsSelectAll");
+        const count = document.getElementById("torrentsSelectionCount");
+        const update = () => {
+            if (!queries.phone.matches)
+                return;
+
+            const selected = table.selectedRowsIds().length;
+            const all = (selected > 0) ? table.getFilteredAndSortedRows().length : 0;
+            selectAll.checked = (selected > 0) && (selected >= all);
+            selectAll.indeterminate = (selected > 0) && (selected < all);
+            count.textContent = (selected > 0) ? count.dataset.format.replace("%1", selected) : "";
+            for (const tr of table.tableBody.children)
+                tr.setAttribute("aria-selected", tr.classList.contains("selected"));
+        };
+        selectAll.addEventListener("click", (event) => {
+            if (selectAll.checked) {
+                table.selectAll();
+            }
+            else {
+                table.deselectAll();
+                table.setRowClass();
+            }
+            update();
+        });
+        // the cards show the selection, and the list renders them anew as it scrolls and updates
+        const updateSoon = window.qBittorrent.Misc.createDebounceHandler(100, update);
+        new MutationObserver(updateSoon).observe(table.tableBody, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+        queries.phone.addEventListener("change", (_event) => update());
+        update();
+    };
+
     // called by client.js once the main window is built
     const init = () => {
         initLayout();
@@ -987,6 +1039,7 @@ window.qBittorrent.Responsive ??= (() => {
         initViewTabs();
         initHeaderAutoHide();
         initCards();
+        initCardCheckboxes();
     };
 
     return exports();
