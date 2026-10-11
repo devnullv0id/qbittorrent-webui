@@ -104,6 +104,149 @@
     }
 }
 
+/* View tabs and filter bar on phones */
+@media (width < 760px) {
+    #mainWindowTabs {
+        margin: 0;
+
+        & .tab-menu {
+            display: inline-flex;
+            margin: 0;
+        }
+
+        /* only the icons, named on hover (responsive.js) */
+        & .tab-menu li a {
+            font-size: 0;
+            gap: 0;
+            justify-content: center;
+            margin-left: 4px;
+            min-width: var(--responsive-touch-target, 32px);
+        }
+    }
+
+    #torrentsFilterToolbar {
+        align-items: center;
+        display: flex;
+        gap: 4px;
+        padding: 2px 4px;
+        width: 100%;
+
+        & #filtersButton {
+            flex: none;
+            margin-right: 0;
+        }
+
+        & #torrentsFilterInput {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        & label[for="torrentsFilterRegexBox"] {
+            flex: none;
+            margin-bottom: 0;
+        }
+
+        & #torrentsFilterSelect {
+            flex: 0 1 auto;
+            min-width: 0;
+        }
+    }
+
+    /* a row of its own while the top toolbar is off: beside the menus it doesn't fit every language */
+    #desktopNavbar > #filtersButton {
+        clear: both;
+        display: flex;
+        float: none;
+        justify-content: center;
+        margin: 0 4px 4px;
+        width: calc(100% - 8px);
+    }
+}
+
+@media (width < 480px) {
+    /* the select keeps its accessible name */
+    #torrentsFilterToolbar label[for="torrentsFilterSelect"] {
+        clip-path: inset(50%);
+        height: 1px;
+        overflow: hidden;
+        position: absolute;
+        white-space: nowrap;
+        width: 1px;
+    }
+}
+
+/* menubar menus scroll on short screens */
+#desktopNavbar li ul {
+    max-height: calc(100dvh - 30px);
+    overflow-y: auto;
+}
+
+/* Context menus on phones */
+:root.responsivePhone .contextMenu {
+    max-width: 100vw;
+
+    /* a hidden menu takes no room past the screen: a long translation can make it wider than a phone */
+    &:not(.visible) {
+        overflow: clip;
+    }
+
+    /* a long item wraps */
+    & li a {
+        white-space: normal;
+    }
+
+    & li ul {
+        max-width: 100vw;
+    }
+}
+
+/* Status bar that wraps where pages are laid out anew */
+:root.responsiveRelayout {
+    & #desktopFooterWrapper {
+        height: auto;
+    }
+
+    & #desktopFooter {
+        height: auto;
+        min-height: 28px;
+        overflow: visible !important; /* override the inline scrolling */
+
+        & > table,
+        & > table > tbody {
+            display: block;
+            width: auto !important;
+        }
+
+        /* spaced like the table's cells */
+        & > table > tbody > tr {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            justify-content: flex-end;
+            min-height: 24px;
+            padding: 0 2px;
+        }
+
+        /* the separators, and the speeds' fields that take a click anywhere between them, as high as the row */
+        & :is(td.statusBarSeparator, td.speedLabel) {
+            align-self: stretch;
+        }
+
+        & td.speedLabel {
+            align-content: center;
+        }
+    }
+}
+
+@media (width < 760px) {
+    /* the fixed width would cost phones a row */
+    #desktopFooter td.speedLabel {
+        min-width: 0;
+        white-space: nowrap;
+    }
+}
+
 /* fields in dialog frames stay within the page */
 :root.responsiveRelayout body:not(:has(#desktop)) {
     & input[type="text"],
@@ -292,6 +435,160 @@
 
         & :is(input:not([type="checkbox"], [type="radio"]), select, textarea) {
             max-width: 100%;
+        }
+    }
+}
+
+/* phones: the General tab one label and value per row */
+@media (width < 760px) {
+    #propGeneral {
+        & table {
+            display: block;
+        }
+
+        & tbody {
+            column-gap: 8px;
+            display: grid;
+            grid-template-columns: max-content minmax(0, 1fr);
+        }
+
+        & tr {
+            display: contents;
+        }
+
+        & td {
+            display: block;
+            min-width: 0;
+            overflow-wrap: anywhere;
+            width: auto; /* override style.css's 1px */
+        }
+    }
+
+    /* the Content tab's file filter takes a row of its own below the tabs */
+    #propertiesPanel_header {
+        height: auto;
+
+        & .toolbarTabs {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        & #propertiesTabs {
+            flex: 1 1 0;
+            min-width: 0;
+        }
+
+        & #torrentFilesFilterToolbar {
+            flex: 1 1 100%;
+            float: none;
+            margin: 0 4px 4px;
+            order: 1;
+        }
+
+        & #torrentFilesFilterInput {
+            width: 100%;
+        }
+    }
+}
+
+/* Pages laid out anew on touch and narrow screens */
+
+/* Search: the bars take their height, the results the rest */
+:root.responsiveRelayout #searchResults {
+    display: flex;
+    flex-direction: column;
+
+    & > * {
+        flex: none;
+    }
+
+    & > #searchResultsHeader,
+    & > #searchResultsFilters,
+    & #searchResultsHeaderContainer {
+        height: auto;
+    }
+
+    /* the plugins button's row, its height set inline */
+    & > :last-child {
+        display: flow-root;
+        height: auto !important;
+    }
+
+    & > #searchResultsTableContainer,
+    & > #searchResultsNoPlugins,
+    & > #searchResultsNoSearches {
+        flex: 1 1 0;
+        height: auto;
+        min-height: 0;
+    }
+}
+
+/* Execution Log: the filter bar wraps */
+:root.responsiveRelayout #logView #logFilterBar {
+    height: auto;
+
+    & #filterTextInput {
+        flex: 1 1 160px;
+        min-width: 0;
+        width: auto;
+    }
+}
+
+/* RSS: the button bar grows, its buttons a gap apart, the filter at its end */
+:root.responsiveRelayout #rssView #rssButtonBar {
+    align-items: flex-start;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--responsive-gap);
+    height: auto;
+    overflow: visible;
+
+    & #rssFilterToolbar {
+        margin-left: auto;
+    }
+}
+
+/* RSS on phones: feeds, articles and details stack */
+@media (width < 760px) {
+    #rssView {
+        padding: 10px 10px 0;
+
+        /* buttons two by two, the filter below them */
+        & #rssButtonBar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            width: 100%;
+
+            & button {
+                margin: 0;
+                width: 100%;
+            }
+        }
+
+        & #rssFilterToolbar {
+            display: contents;
+        }
+
+        & #rssFilterInput {
+            grid-column: 1 / -1;
+            min-width: 0;
+            order: 1;
+            width: 100%;
+        }
+
+        & :is(#leftRssColumn, #centerRssColumn, #rightRssColumn) {
+            float: none;
+            height: auto;
+            margin: 0 0 10px;
+            width: 100%;
+        }
+
+        & #rssFeedTableDiv {
+            height: 30dvh;
+        }
+
+        & #rssArticleTableDiv {
+            height: 40dvh;
         }
     }
 }
@@ -646,6 +943,10 @@
     #desktopNavbar > ul > li > a {
         padding-bottom: 9px;
         padding-top: 9px;
+    }
+
+    #desktopNavbar li ul {
+        max-height: calc(100dvh - var(--responsive-touch-target) - 4px);
     }
 
     /* menu entries, tabs and filters at least a touch target high */

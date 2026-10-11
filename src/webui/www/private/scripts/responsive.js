@@ -838,12 +838,29 @@ window.qBittorrent.Responsive ??= (() => {
         window.addEventListener("resize", window.qBittorrent.Misc.createDebounceHandler(50, fitWindows));
     };
 
+    /* View tabs */
+
+    // view tabs that show only their icons on phones are named on hover
+    const initViewTabs = () => {
+        const name = () => {
+            for (const img of document.querySelectorAll("#mainWindowTabsList img")) {
+                if (queries.phone.matches)
+                    img.parentElement.title = img.alt;
+                else
+                    img.parentElement.removeAttribute("title");
+            }
+        };
+        queries.phone.addEventListener("change", (_event) => name());
+        name();
+    };
+
     // called by client.js once the main window is built
     const init = () => {
         initLayout();
         initFiltersDrawer();
         initTouch();
         initWindows();
+        initViewTabs();
     };
 
     return exports();
