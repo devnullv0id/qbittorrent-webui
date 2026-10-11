@@ -538,6 +538,7 @@ a.propButton img {
     width: 26px;
 }
 
+/* vertical padding would make Safari clip the text at this height */
 #torrentsFilterSelect {
     padding: 2px 4px;
 }
@@ -734,6 +735,11 @@ td.noWrap {
 
 .propBarLabel {
     text-align: right;
+}
+
+/* keep the content from shifting sideways between tabs that scroll and tabs that don't */
+#preferencesPage .mochaContentWrapper {
+    scrollbar-gutter: stable;
 }
 
 #watched_folders_tab {
