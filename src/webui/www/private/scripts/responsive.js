@@ -351,6 +351,8 @@ window.qBittorrent.Responsive ??= (() => {
 
     // the rows of the virtual list are positioned at this height (dynamicTable.js asks), else undefined
     const rowHeight = (table) => {
+        if (queries.phone.matches && (table.dynamicTableDivId === "torrentsTableDiv"))
+            return cssLength("--responsive-card-height");
         if (queries.coarse.matches)
             return cssLength("--responsive-touch-row-height");
         return undefined;
@@ -914,6 +916,68 @@ window.qBittorrent.Responsive ??= (() => {
         header.addEventListener("focusin", (event) => setHidden(false));
     };
 
+    /* Torrent cards on phones */
+
+    // a card's ⋯ at its top right (responsive.css), or null
+    const cardZone = (event) => {
+        const tr = queries.phone.matches ? event.target.closest?.("#torrentsTableDiv tbody tr") : null;
+        if (!tr)
+            return null;
+
+        const point = event.changedTouches?.[0] ?? event;
+        const box = tr.getBoundingClientRect();
+        if ((point.clientX >= (box.right - cssLength("--responsive-card-menu-width"))) && (point.clientY <= (box.top + cssLength("--responsive-card-menu-height"))))
+            return "menu";
+        return null;
+    };
+
+    // on phones each torrent is a card, laid out by the column of each cell
+    const initCards = async () => {
+        const tableDiv = await whenElement("torrentsTableDiv");
+        const table = window.torrentsTable;
+        const tag = (rows, force = false) => {
+            if (!queries.phone.matches)
+                return;
+
+            for (const tr of rows) {
+                if (!force && (tr.dataset.cardCells === "1"))
+                    continue;
+
+                for (const [i, td] of [...tr.children].entries()) {
+                    td.dataset.col = table.columns[i].name;
+                    td.dataset.label = table.columns[i].caption;
+                }
+                tr.dataset.cardCells = "1";
+            }
+        };
+
+        // rows the list renders anew keep their cells
+        new MutationObserver((mutations) => {
+            tag(mutations.flatMap((mutation) => [...mutation.addedNodes]));
+        }).observe(table.tableBody, { childList: true });
+        // rows and cards differ in height
+        queries.phone.addEventListener("change", (_event) => {
+            keepFirstRow();
+            tag(table.tableBody.children, true);
+        });
+        tag(table.tableBody.children, true);
+
+        // the ⋯ opens the torrent's menu, as a long press does
+        tableDiv.addEventListener("click", (event) => {
+            if (cardZone(event) !== "menu")
+                return;
+
+            event.preventDefault();
+            event.stopPropagation();
+            event.target.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2, clientX: event.clientX, clientY: event.clientY }));
+        }, true);
+        // and a double click on a zone doesn't start or stop the torrent
+        tableDiv.addEventListener("dblclick", (event) => {
+            if (cardZone(event) !== null)
+                event.stopPropagation();
+        }, true);
+    };
+
     // called by client.js once the main window is built
     const init = () => {
         initLayout();
@@ -922,6 +986,7 @@ window.qBittorrent.Responsive ??= (() => {
         initWindows();
         initViewTabs();
         initHeaderAutoHide();
+        initCards();
     };
 
     return exports();
