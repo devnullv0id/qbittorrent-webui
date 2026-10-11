@@ -754,6 +754,12 @@ td.noWrap {
     text-align: right;
 }
 
+/* every tab of Options keeps a scrollbar's room, so its content doesn't shift sideways between a tab that scrolls and
+    one that doesn't */
+#preferencesPage .mochaContentWrapper {
+    scrollbar-gutter: stable;
+}
+
 #watched_folders_tab {
     border-collapse: collapse;
 }
