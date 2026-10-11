@@ -587,6 +587,10 @@ window.qBittorrent.Responsive ??= (() => {
             setContentSize(instance, `${width}px`, `${height}px`);
     };
 
+    // on the desktop, dialogs are fitted to their page
+    const isDialog = (instance) => !ONE_SIZE_WINDOWS.has(instance.windowEl.id)
+        && (Boolean(instance.iframeEl) || !instance.options.resizable || (instance.contentEl.querySelector(".dialogFooter") !== null));
+
     // what a window's fit depends on
     const fitState = (instance) => {
         const sizes = [root.clientWidth, root.clientHeight, instance.contentWrapperEl.style.width, instance.contentWrapperEl.style.height];
@@ -604,7 +608,7 @@ window.qBittorrent.Responsive ??= (() => {
             return;
 
         const phone = queries.phone.matches;
-        const fullScreen = fitWindowSize(instance, phone);
+        const { fullScreen, fitted } = fitWindowSize(instance, phone);
 
         // no dragging on phones
         if (phone)
@@ -621,7 +625,8 @@ window.qBittorrent.Responsive ??= (() => {
             windowEl.style.left = "0px";
             windowEl.style.top = "0px";
         }
-        else if (phone || wasFullScreen || (queries.relayout.matches && !instance.responsiveUserMoved)) {
+        // Mocha centers a window at its opening size: recenter fitted windows until the user moves them
+        else if (phone || wasFullScreen || ((queries.relayout.matches || fitted) && !instance.responsiveUserMoved)) {
             windowEl.style.left = `${Math.max(margin, Math.round((maxLeft + margin) / 2))}px`;
             windowEl.style.top = `${Math.max(margin, Math.round((maxTop + margin) / 2))}px`;
         }
@@ -658,6 +663,7 @@ window.qBittorrent.Responsive ??= (() => {
 
         let width = phone ? maxWidth : Math.min(maxWidth, wantedWidth);
         let height = Math.min(maxHeight, wantedHeight);
+        let fitted = false;
         let ownHeight = null;
         // a size the user gave a window is kept, except on phones
         const userSized = instance.responsiveUserResized || hasStoredSize(instance);
@@ -674,6 +680,15 @@ window.qBittorrent.Responsive ??= (() => {
             // room for the scrollbar
             if (pageOverflow(instance, width, height).height > 0)
                 width = Math.min(fitWidth, width + sidewaysScrollbarWidth(instance, width, height));
+            fitted = true;
+        }
+        // on the desktop, a dialog takes its page's height where it fits
+        else if (!queries.relayout.matches && !userSized && isDialog(instance)) {
+            const pageNeeds = pageHeight(instance, width, maxHeight);
+            if ((pageNeeds > 0) && (pageNeeds <= fitHeight)) {
+                height = pageNeeds;
+                fitted = true;
+            }
         }
         // a phone shows a page that fits as a card, else full screen
         const fullScreen = phone && (ownHeight !== null) && ((ownHeight === 0) || (ownHeight > fitHeight));
@@ -687,7 +702,7 @@ window.qBittorrent.Responsive ??= (() => {
         wrapper.style.height = instance.responsiveFittedSize?.height ?? wanted.height;
         setContentSize(instance, `${width}px`, `${height}px`);
         instance.responsiveFittedSize = { width: `${width}px`, height: `${height}px` };
-        return fullScreen;
+        return { fullScreen: fullScreen, fitted: fitted };
     };
 
     const fitWindows = () => {
@@ -706,8 +721,7 @@ window.qBittorrent.Responsive ??= (() => {
 
         // a window opened from the drawer would open behind it
         closeFiltersDrawer();
-        if (queries.relayout.matches)
-            raiseStoredSize(instance);
+        raiseStoredSize(instance);
         fitWindow(instance);
 
         // refit only when something the fit depends on has changed
@@ -749,10 +763,7 @@ window.qBittorrent.Responsive ??= (() => {
             drag?.addEvent("start", () => {
                 instance.responsiveUserMoved = true;
             });
-            drag?.addEvent("beforeStart", () => {
-                if (queries.relayout.matches)
-                    limitResize(instance);
-            });
+            drag?.addEvent("beforeStart", () => limitResize(instance));
         }
         // the edges that change the width
         for (const drag of [instance.resizable2, instance.resizable3, instance.resizable5])
