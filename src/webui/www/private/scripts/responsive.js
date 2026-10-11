@@ -413,14 +413,218 @@ window.qBittorrent.Responsive ??= (() => {
 
     /* Windows */
 
-    // a window opened from the drawer would open behind it
+    // distance from the screen's edges
+    const WINDOW_MARGIN = 8;
+    const PHONE_WINDOW_MARGIN = 12;
+
+    // resizes like a drag of the edge, without storing the size as the user's
+    const setContentSize = (instance, width, height) => {
+        const wrapper = instance.contentWrapperEl;
+        if ((wrapper.style.width === width) && (wrapper.style.height === height))
+            return;
+
+        wrapper.style.width = width;
+        wrapper.style.height = height;
+        instance.drawWindow();
+        // only resizable windows have handles
+        if (instance.options.resizable)
+            instance.adjustHandles();
+        MochaUI.rWidth(wrapper);
+        for (const column of wrapper.querySelectorAll(":scope > .column"))
+            MochaUI.panelHeight(column);
+    };
+
+    // the size a window asks for; an empty width or height fits its content
+    const wantedSize = (instance) => {
+        const { width, height } = instance.contentWrapperEl.style;
+        const fitted = instance.responsiveFittedSize;
+        if ((fitted === undefined) || (width !== fitted.width) || (height !== fitted.height))
+            instance.responsiveWantedSize = { width: width, height: height };
+        return instance.responsiveWantedSize;
+    };
+
+    // the largest content size a window has room for on the screen
+    const roomOnScreen = (instance) => {
+        const wrapper = instance.contentWrapperEl;
+        const margin = queries.phone.matches ? PHONE_WINDOW_MARGIN : WINDOW_MARGIN;
+        return {
+            width: root.clientWidth - (2 * margin) - (instance.windowEl.offsetWidth - wrapper.offsetWidth),
+            height: root.clientHeight - (2 * margin) - (instance.windowEl.offsetHeight - wrapper.offsetHeight)
+        };
+    };
+
+    // what a window's fit follows: the screen, the window's size and its page's size
+    const fitState = (instance) => {
+        const sizes = [root.clientWidth, root.clientHeight, instance.contentWrapperEl.style.width, instance.contentWrapperEl.style.height];
+        const page = [...instance.contentEl.children];
+        for (const element of [...page, instance.iframeEl?.contentDocument?.body, instance.toolbarWrapperEl]) {
+            if (element)
+                sizes.push(element.offsetWidth, element.offsetHeight);
+        }
+        return sizes.join();
+    };
+
+    // fits a window to the screen, and keeps it on it
+    const fitWindow = (instance) => {
+        const windowEl = instance.windowEl;
+        if (!windowEl.isConnected || (windowEl.style.display === "none") || instance.isMaximized)
+            return;
+
+        const phone = queries.phone.matches;
+        const fullScreen = fitWindowSize(instance, phone);
+
+        // no dragging on phones
+        if (phone)
+            instance.windowDrag?.detach();
+        else
+            instance.windowDrag?.attach();
+
+        const margin = fullScreen ? 0 : (phone ? PHONE_WINDOW_MARGIN : WINDOW_MARGIN);
+        const wasFullScreen = windowEl.classList.contains("responsiveFullScreen");
+        windowEl.classList.toggle("responsiveFullScreen", fullScreen);
+        const maxLeft = root.clientWidth - windowEl.offsetWidth - margin;
+        const maxTop = root.clientHeight - windowEl.offsetHeight - margin;
+        if (fullScreen) {
+            windowEl.style.left = "0px";
+            windowEl.style.top = "0px";
+        }
+        // Mocha centers a window at the size it opens with: where windows are fitted, a window is centered again,
+        // until the user moves it
+        else if (phone || wasFullScreen || (queries.relayout.matches && !instance.responsiveUserMoved)) {
+            windowEl.style.left = `${Math.max(margin, Math.round((maxLeft + margin) / 2))}px`;
+            windowEl.style.top = `${Math.max(margin, Math.round((maxTop + margin) / 2))}px`;
+        }
+        else {
+            windowEl.style.left = `${Math.max(margin, Math.min(windowEl.offsetLeft, maxLeft))}px`;
+            windowEl.style.top = `${Math.max(margin, Math.min(windowEl.offsetTop, maxTop))}px`;
+        }
+        instance.responsiveFitState = fitState(instance);
+    };
+
+    // the size a window asks for, within the screen; on phones it fills the screen, and returns true
+    const fitWindowSize = (instance, phone) => {
+        const windowEl = instance.windowEl;
+        const wrapper = instance.contentWrapperEl;
+        // Mocha draws the window around the toolbar's inline height, while touch-sized tabs and tabs that wrap make it
+        // taller
+        const toolbar = instance.toolbarWrapperEl;
+        if (queries.relayout.matches && toolbar && (toolbar.style.height !== `${toolbar.offsetHeight}px`)) {
+            toolbar.style.height = `${toolbar.offsetHeight}px`;
+            instance.drawWindow();
+        }
+        const wanted = wantedSize(instance);
+        // title bar, toolbar and borders
+        const frameWidth = windowEl.offsetWidth - wrapper.offsetWidth;
+        const frameHeight = windowEl.offsetHeight - wrapper.offsetHeight;
+        // measure the wanted size
+        wrapper.style.width = wanted.width;
+        wrapper.style.height = wanted.height;
+        const wantedWidth = wrapper.offsetWidth;
+        const wantedHeight = wrapper.offsetHeight;
+        const margin = phone ? PHONE_WINDOW_MARGIN : WINDOW_MARGIN;
+        const maxWidth = root.clientWidth - (2 * margin) - frameWidth;
+        const maxHeight = root.clientHeight - (2 * margin) - frameHeight;
+
+        let width = phone ? maxWidth : Math.min(maxWidth, wantedWidth);
+        let height = Math.min(maxHeight, wantedHeight);
+        const fullScreen = phone;
+        if (fullScreen) {
+            width = root.clientWidth - frameWidth;
+            height = root.clientHeight - frameHeight;
+        }
+
+        // restore, so the window is only redrawn on a change
+        wrapper.style.width = instance.responsiveFittedSize?.width ?? wanted.width;
+        wrapper.style.height = instance.responsiveFittedSize?.height ?? wanted.height;
+        setContentSize(instance, `${width}px`, `${height}px`);
+        instance.responsiveFittedSize = { width: `${width}px`, height: `${height}px` };
+        return fullScreen;
+    };
+
+    const fitWindows = () => {
+        for (const instance of Object.values(MochaUI.Windows.instances))
+            fitWindow(instance);
+    };
+
+    // a window as it opens: fitted now, and as its page or the screen changes
+    const watch = (node) => {
+        if (!node.classList?.contains("mocha"))
+            return;
+
+        const instance = MochaUI.Windows.instances[node.id];
+        if (instance === undefined)
+            return;
+
+        // a window opened from the drawer would open behind it
+        closeFiltersDrawer();
+        fitWindow(instance);
+
+        // the page's own boxes change size as it loads and changes; skipped where nothing a fit follows has changed
+        const fitSoon = window.qBittorrent.Misc.createDebounceHandler(50, () => {
+            if (fitState(instance) !== instance.responsiveFitState)
+                fitWindow(instance);
+        });
+        const sizeObserver = new ResizeObserver(fitSoon);
+        const pageObserver = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                for (const added of mutation.addedNodes) {
+                    if (added.nodeType === Node.ELEMENT_NODE)
+                        sizeObserver.observe(added);
+                }
+                for (const removed of mutation.removedNodes) {
+                    if (removed.nodeType === Node.ELEMENT_NODE)
+                        sizeObserver.unobserve(removed);
+                }
+            }
+            // another page
+            instance.responsiveFitState = null;
+            fitSoon();
+        });
+        for (const child of instance.contentEl.children)
+            sizeObserver.observe(child);
+        pageObserver.observe(instance.contentEl, { childList: true });
+        if (instance.toolbarWrapperEl)
+            sizeObserver.observe(instance.toolbarWrapperEl);
+        instance.addEvent("closeComplete", () => {
+            sizeObserver.disconnect();
+            pageObserver.disconnect();
+        });
+
+        // a size or place the user chose is kept, from the start of the drag
+        instance.addEvent("resize", () => {
+            instance.responsiveUserResized = true;
+        });
+        for (const drag of [instance.resizable1, instance.resizable2, instance.resizable3, instance.resizable4, instance.resizable5]) {
+            drag?.addEvent("start", () => {
+                instance.responsiveUserMoved = true;
+            });
+        }
+        instance.windowDrag?.addEvent("start", () => {
+            instance.responsiveUserMoved = true;
+        });
+
+        // dialog pages
+        const iframe = instance.iframeEl;
+        iframe?.addEventListener("load", (event) => {
+            fitWindow(instance);
+            new iframe.contentWindow.ResizeObserver(fitSoon).observe(iframe.contentDocument.body);
+        });
+    };
+
     const initWindows = () => {
         const windowObserver = new MutationObserver((mutations) => {
-            if (mutations.some((mutation) => [...mutation.addedNodes].some((node) => node.classList?.contains("mocha"))))
-                closeFiltersDrawer();
+            for (const mutation of mutations) {
+                for (const node of mutation.addedNodes)
+                    watch(node);
+            }
         });
         for (const container of new Set([document.getElementById("desktop"), document.body]))
             windowObserver.observe(container, { childList: true });
+        for (const node of document.querySelectorAll(".mocha"))
+            watch(node);
+
+        // after Mocha's own resize handling
+        window.addEventListener("resize", window.qBittorrent.Misc.createDebounceHandler(50, fitWindows));
     };
 
     // called by client.js once the main window is built
