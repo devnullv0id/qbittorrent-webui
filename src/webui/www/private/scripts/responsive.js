@@ -854,6 +854,66 @@ window.qBittorrent.Responsive ??= (() => {
         name();
     };
 
+    /* Header that slides away */
+
+    // a little longer than the slide (responsive.css)
+    const SLIDE_TIME = 250;
+
+    // on phones and short touch screens the header slides away once the first torrent has scrolled out of view, unless
+    // a field in it has focus
+    const initHeaderAutoHide = async () => {
+        const header = document.getElementById("desktopHeader");
+        const list = await whenElement("torrentsTableDiv");
+        let lockedUntil = 0;
+        let slideTimer = -1;
+
+        // the page takes the header's room as soon as it has slid
+        const endSlide = () => {
+            clearTimeout(slideTimer);
+            header.classList.remove("sliding");
+            header.style.removeProperty("height");
+            relayout();
+        };
+
+        const setHidden = (hidden) => {
+            if (root.classList.contains("headerHidden") === hidden)
+                return;
+
+            // slide between fixed heights, as auto can't be animated
+            clearTimeout(slideTimer);
+            header.classList.add("sliding");
+            header.style.height = `${header.offsetHeight}px`;
+            void header.offsetHeight;
+            root.classList.toggle("headerHidden", hidden);
+            if (!hidden)
+                header.style.height = `${header.scrollHeight}px`;
+            if (getComputedStyle(header).transitionDuration === "0s")
+                endSlide();
+            else
+                slideTimer = setTimeout(endSlide, SLIDE_TIME);
+            // ignore the scroll the relayout causes
+            lockedUntil = performance.now() + SLIDE_TIME;
+        };
+
+        const busy = () => header.contains(document.activeElement) && document.activeElement.matches("input, select");
+
+        // capturing, before the list renders its rows, so nothing has to be laid out again to be read
+        list.parentElement.addEventListener("scroll", (event) => {
+            if ((event.target !== list) || !queries.small.matches || (performance.now() < lockedUntil))
+                return;
+
+            if (list.scrollTop <= window.torrentsTable.rowHeight)
+                setHidden(false);
+            else if (!root.classList.contains("headerHidden") && !busy() && ((list.scrollHeight - list.clientHeight) > (header.offsetHeight + 24)))
+                setHidden(true);
+        }, { capture: true, passive: true });
+        queries.small.addEventListener("change", (_event) => {
+            if (!queries.small.matches)
+                setHidden(false);
+        });
+        header.addEventListener("focusin", (event) => setHidden(false));
+    };
+
     // called by client.js once the main window is built
     const init = () => {
         initLayout();
@@ -861,6 +921,7 @@ window.qBittorrent.Responsive ??= (() => {
         initTouch();
         initWindows();
         initViewTabs();
+        initHeaderAutoHide();
     };
 
     return exports();
