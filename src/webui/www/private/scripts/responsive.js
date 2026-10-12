@@ -44,6 +44,7 @@ window.qBittorrent.Responsive ??= (() => {
             addWindowHook: addWindowHook,
             addFrameHook: addFrameHook,
             fitWindow: fitWindow,
+            addScrim: addScrim,
             rowHeight: rowHeight
         };
     };
@@ -156,9 +157,11 @@ window.qBittorrent.Responsive ??= (() => {
     }
     setClasses(document);
 
-    const addScrim = (onClick) => {
+    const addScrim = (onClick, className = null) => {
         const scrim = document.createElement("div");
         scrim.className = "responsiveScrim";
+        if (className !== null)
+            scrim.classList.add(className);
         scrim.addEventListener("click", (_event) => onClick());
         document.body.append(scrim);
         return scrim;
