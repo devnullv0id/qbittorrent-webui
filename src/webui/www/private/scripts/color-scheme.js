@@ -42,7 +42,8 @@ window.qBittorrent.ColorScheme ??= (() => {
     // only the main page loads responsive.js; a framed WebUI's main page has a parent too
     const isMainWindow = window.qBittorrent.Responsive !== undefined;
 
-    const LOOK_SETTINGS = ["color_scheme", "display_density", "display_mode"];
+    // the look of the last visit, stored while Modern is on, so the page shows Modern before the client data arrives
+    const LOOK_SETTINGS = ["accent_color", "color_scheme", "display_density", "display_mode"];
     const localPreferences = isMainWindow ? new window.qBittorrent.LocalPreferences.LocalPreferences() : null;
     const readStoredLook = () => {
         try {
@@ -72,11 +73,21 @@ window.qBittorrent.ColorScheme ??= (() => {
             localPreferences.remove("display_look");
     };
 
+    // Modern's accent color, read by the stylesheet
+    const applyAccent = () => {
+        const accent = (setting("display_mode") === "modern") ? (setting("accent_color") ?? null) : null;
+        if (accent === null)
+            delete document.documentElement.dataset.accent;
+        else
+            document.documentElement.dataset.accent = accent;
+    };
+
     // called by client.js with the client data, and by Options as it saves them; the display mode changes only on reload
     let displayModeSet = false;
     const applyClientData = () => {
         storedLook = null;
         update();
+        applyAccent();
         if (!displayModeSet) {
             displayModeSet = true;
             window.qBittorrent.Responsive.setDisplayMode(clientData.get("display_mode") === "modern");
@@ -92,6 +103,7 @@ window.qBittorrent.ColorScheme ??= (() => {
     if (storedLook !== null) {
         window.qBittorrent.Responsive.setDisplayMode(true);
         document.documentElement.classList.toggle("compact", (storedLook.display_density === "compact"));
+        applyAccent();
     }
 
     // dialog frames take the responsive layout from the main window, the only page that loads responsive.js (a
