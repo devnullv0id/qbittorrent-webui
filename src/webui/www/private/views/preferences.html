@@ -3008,7 +3008,8 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
                 });
         };
 
-        const applyPreferences = () => {
+        // Modern's Apply saves without closing Options
+        const applyPreferences = (close = true) => {
             modernBeforeSave();
             const settings = {};
             const clientData = {};
@@ -3572,6 +3573,9 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
                 window.parent.qBittorrent.Cache.preferences.set(settings)
             ]).then((results) => {
                 if (results.every((result) => result.status === "fulfilled")) {
+                    if (modernSaved(close))
+                        return;
+
                     // the next page starts with the look just saved
                     window.parent.qBittorrent.ColorScheme.applyClientData();
                     window.parent.location.reload();
@@ -4035,6 +4039,40 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             update();
         };
 
+        // Cancel, Apply and OK in place of Save: Apply saves while there are changes. Where the buttons stack, on
+        // phones, OK comes first and Cancel last; they are moved in the page, so the keyboard goes through them in the
+        // order they are shown
+        const addDialogButtons = (state) => {
+            const footer = state.page.querySelector(":scope > .dialogFooter");
+            const ok = footer.querySelector(":scope > input[type='button']");
+            ok.value = "QBT_TR(OK)QBT_TR[CONTEXT=HttpServer]";
+            ok.classList.add("dialogPrimary");
+            const apply = document.createElement("button");
+            apply.type = "button";
+            apply.textContent = "QBT_TR(Apply)QBT_TR[CONTEXT=HttpServer]";
+            apply.disabled = true;
+            apply.addEventListener("click", (_event) => applyPreferences(false));
+            const cancel = document.createElement("button");
+            cancel.type = "button";
+            cancel.className = "dialogCancel";
+            cancel.textContent = "QBT_TR(Cancel)QBT_TR[CONTEXT=MainWindow]";
+            cancel.addEventListener("click", (_event) => window.parent.qBittorrent.Client.closeWindow(document.getElementById("preferencesPage")));
+            state.applyButton = apply;
+
+            const phone = window.parent.qBittorrent.Responsive.queries.phone;
+            const place = () => {
+                if (phone.matches)
+                    footer.append(ok, apply, cancel);
+                else
+                    footer.append(cancel, apply, ok);
+            };
+            phone.addEventListener("change", (_event) => place(), { signal: state.listening.signal });
+            place();
+
+            for (const type of ["input", "change"])
+                state.page.addEventListener(type, (_event) => { apply.disabled = false; }, { signal: state.listening.signal });
+        };
+
         // what a switch shows or hides in its card slides open and shut; the sizes before and after are measured, as
         // not every browser animates a height to auto
         const slideWithSwitches = (state) => {
@@ -4100,6 +4138,9 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
                     observer.disconnect();
                 if (modernOptions === state)
                     modernOptions = null;
+                // what Apply saved
+                if (state.reloadOnClose)
+                    window.parent.location.reload();
             });
 
             splitSchedule();
@@ -4114,6 +4155,7 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             splitWideSettings(state);
             slideWithSwitches(state);
             fadeAboveFooter(state);
+            addDialogButtons(state);
         };
 
         // once loadPreferences() has filled the page
@@ -4130,6 +4172,21 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
         const modernBeforeSave = () => {
             for (const save of modernOptions?.beforeSave ?? [])
                 save();
+        };
+
+        // as a save succeeds: OK's reloads the page now; Apply's keeps Options open, shows the new look at once, and
+        // has the page reload as Options closes. False where applyPreferences() goes on as it would in Classic
+        const modernSaved = (close) => {
+            if (modernOptions === null)
+                return false;
+
+            modernOptions.reloadOnClose = !close;
+            if (close)
+                return false;
+
+            modernOptions.applyButton.disabled = true;
+            window.parent.qBittorrent.ColorScheme.applyClientData();
+            return true;
         };
 
         const setup = () => {
