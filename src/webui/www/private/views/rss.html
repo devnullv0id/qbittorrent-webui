@@ -371,8 +371,100 @@
                 }
             });
             rssArticleTable.setup("rssArticleTableDiv", "rssArticleFixedHeaderDiv", rssArticleContextMenu);
+            setupModern();
             updateRssFeedList();
             load();
+        };
+
+        // Modern: the notice that fetching is off opens Options at its settings, and a hint stands where no article is
+        // shown; on phones one card at a time
+        const setupModern = () => {
+            if (!window.qBittorrent.Responsive.isModern())
+                return;
+
+            const optionsButton = document.createElement("button");
+            optionsButton.type = "button";
+            optionsButton.textContent = "QBT_TR(Options...)QBT_TR[CONTEXT=MainWindow]";
+            optionsButton.addEventListener("click", (_event) => {
+                window.qBittorrent.Modern.openOptionsPage("PrefRSSLink", ["enable_fetching_rss_feeds_checkbox", "enable_auto_downloading_rss_torrents_checkbox"]);
+            });
+            document.getElementById("rssFetchingDisabled").append(optionsButton);
+
+            const hint = document.createElement("div");
+            hint.id = "rssDetailsHint";
+            hint.textContent = "QBT_TR(Select an article to see its details.)QBT_TR[CONTEXT=RSSWidget]";
+            document.getElementById("rssDetailsView").before(hint);
+
+            setupPhoneSteps();
+        };
+
+        // phones: the feeds, a feed's articles or an article (modern.css); a tap or Enter on a row goes on, and the focus
+        // to Back, which goes back to the row
+        const setupPhoneSteps = () => {
+            const view = document.getElementById("rssView");
+            const phone = window.qBittorrent.Responsive.queries.phone;
+            const bar = document.createElement("div");
+            bar.id = "rssPhoneBar";
+            const back = document.createElement("button");
+            back.type = "button";
+            back.id = "rssPhoneBack";
+            back.className = "modernSheetBack";
+            back.title = "QBT_TR(Back)QBT_TR[CONTEXT=MainWindow]";
+            back.setAttribute("aria-label", back.title);
+            const title = document.createElement("span");
+            title.id = "rssPhoneTitle";
+            bar.append(back, title);
+            document.getElementById("rssTopBar").prepend(bar);
+            view.dataset.phoneStep = "feeds";
+
+            const selectedRow = (table) => table.getTrByRowId(table.getSelectedRowId()) ?? null;
+            const show = (step, focus) => {
+                view.dataset.phoneStep = step;
+                focus?.focus({ preventScroll: true });
+            };
+            const goOn = (event, table, step) => {
+                const tr = event.target.closest("tbody tr");
+                if (!phone.matches || (tr === null))
+                    return;
+
+                // as a tap does
+                if (!table.isRowSelected(tr.rowId)) {
+                    table.deselectAll();
+                    table.selectRow(tr.rowId);
+                }
+                if (step === "articles")
+                    title.textContent = table.getRow(tr.rowId).full_data.name;
+                show(step, back);
+            };
+            const nextSteps = [
+                [rssFeedTable, "articles"],
+                [rssArticleTable, "details"]
+            ];
+            for (const [table, step] of nextSteps) {
+                table.dynamicTableDiv.addEventListener("click", (event) => goOn(event, table, step));
+                table.dynamicTableDiv.addEventListener("keydown", (event) => {
+                    if (event.key !== "Enter")
+                        return;
+
+                    // not Back's Enter as well, which has the focus by then
+                    event.preventDefault();
+                    goOn(event, table, step);
+                });
+            }
+            back.addEventListener("click", (_event) => {
+                if (view.dataset.phoneStep === "details")
+                    show("articles", selectedRow(rssArticleTable));
+                else
+                    show("feeds", selectedRow(rssFeedTable));
+            });
+        };
+
+        // the description's page in Modern: the font, text color and accent of the page around it, without Modern's
+        // stylesheet; a frame's background (style.css) gives way to its card's
+        const modernDescriptionStyle = () => {
+            const page = getComputedStyle(document.body);
+            const accent = getComputedStyle(document.documentElement).getPropertyValue("--modern-accent-text");
+            return `<style>:root, :root.dark { --color-background-popup: transparent; } body { color: ${page.color}; font-family: ${page.fontFamily}; font-size: ${page.fontSize}; margin: 0; } a { color: ${accent}; }</style>`;
         };
 
         const unload = () => {
@@ -573,12 +665,13 @@
             const articleDescription = article.description;
             if (articleDescription !== undefined) {
                 const rootColor = document.documentElement.classList.contains("dark") ? "class='dark'" : "";
+                const modernStyle = window.qBittorrent.Responsive.isModern() ? modernDescriptionStyle() : "";
 
                 // Place in iframe with sandbox attribute to prevent js execution
                 const iframeElement = document.createElement("iframe");
                 iframeElement.id = "rssDescription";
                 iframeElement.sandbox = "allow-same-origin"; // allowed to get parent css
-                iframeElement.srcdoc = `<html ${rootColor}><head><meta charset="utf-8"><meta name="referrer" content="same-origin"><link rel="stylesheet" type="text/css" href="css/style.css?v=${CACHEID}"></head><body>${articleDescription}</body></html>`;
+                iframeElement.srcdoc = `<html ${rootColor}><head><meta charset="utf-8"><meta name="referrer" content="same-origin"><link rel="stylesheet" type="text/css" href="css/style.css?v=${CACHEID}">${modernStyle}</head><body>${articleDescription}</body></html>`;
 
                 detailsView.append(iframeElement);
             }

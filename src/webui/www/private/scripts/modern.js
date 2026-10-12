@@ -37,6 +37,7 @@ window.qBittorrent.Modern ??= (() => {
             init: init,
             addSpeedSlider: addSpeedSlider,
             addSpeedUnitPicker: addSpeedUnitPicker,
+            openOptionsPage: openOptionsPage,
         };
     };
 
@@ -1605,6 +1606,102 @@ window.qBittorrent.Modern ??= (() => {
         downloadLimit.before(item);
     };
 
+    /* Options at a page */
+
+    // settings pointed out: a ring around a setting's card where it is the card's only one, else around its row across
+    // the card, which fades out (modern.css) and goes once the time is up, also where motion is reduced and it stays
+    // still
+    const POINT_OUT_TIME = 2400;
+    let pointedOut = [];
+    let pointOutTimer = -1;
+
+    const pointOut = (settings) => {
+        for (const section of pointedOut)
+            section.classList.remove("modernHighlight");
+        clearTimeout(pointOutTimer);
+
+        const sections = settings.map((setting) => {
+            const row = setting.closest(".formRow, tr");
+            const card = row?.closest("fieldset") ?? null;
+            if ((card !== null) && (card.querySelectorAll(".formRow, tr").length === 1))
+                return { section: card, card: null };
+            return (row === null) ? null : { section: row, card: card };
+        }).filter(Boolean);
+        sections[0]?.section.scrollIntoView({ block: "center" });
+
+        // measured, then set
+        const spans = sections.map(({ section, card }) => {
+            if (card === null)
+                return null;
+
+            const cardBox = card.getBoundingClientRect();
+            const box = section.getBoundingClientRect();
+            return { left: cardBox.left - box.left, right: box.right - cardBox.right, top: ((box.top - cardBox.top) < 12) ? (cardBox.top - box.top) : 0 };
+        });
+        for (const [i, { section }] of sections.entries()) {
+            if (spans[i] !== null) {
+                section.style.setProperty("--modern-highlight-left", `${spans[i].left}px`);
+                section.style.setProperty("--modern-highlight-right", `${spans[i].right}px`);
+                section.style.setProperty("--modern-highlight-top", `${spans[i].top}px`);
+            }
+            section.classList.add("modernHighlight");
+        }
+        pointedOut = sections.map(({ section }) => section);
+        pointOutTimer = setTimeout(() => {
+            for (const section of pointedOut)
+                section.classList.remove("modernHighlight");
+            pointedOut = [];
+        }, POINT_OUT_TIME);
+    };
+
+    // opens Options at a page (the link to it) and points out settings on it: at once where Options shows them, else
+    // once its window, which opens a moment after it is asked to, has loaded them
+    let showWhenLoaded = null;
+    const watchedOptions = new WeakSet();
+
+    const openOptionsPage = (linkId, settingIds) => {
+        const show = () => {
+            const link = document.getElementById(linkId);
+            const settings = settingIds.map((id) => document.getElementById(id));
+            if ((link === null) || settings.includes(null))
+                return false;
+
+            link.click();
+            pointOut(settings);
+            return true;
+        };
+        if (show())
+            return;
+
+        showWhenLoaded = show;
+        const instance = MochaUI.Windows.instances["preferencesPage"];
+        if (instance === undefined)
+            document.getElementById("preferencesLink").click();
+        else
+            watchOptionsWindow(instance);
+    };
+
+    // the Options window as it opens (a window hook): it says when it has loaded its page and its tabs, with an event
+    // for each; what was asked for is dropped with the window
+    const watchOptionsWindow = (instance) => {
+        if ((instance.options.id !== "preferencesPage") || (showWhenLoaded === null))
+            return;
+
+        const tryShow = () => {
+            if ((showWhenLoaded !== null) && showWhenLoaded())
+                showWhenLoaded = null;
+        };
+        tryShow();
+        if (watchedOptions.has(instance))
+            return;
+
+        watchedOptions.add(instance);
+        instance.addEvent("contentLoaded", tryShow);
+        instance.addEvent("close", () => {
+            showWhenLoaded = null;
+        });
+    };
+
     const init = () => {
         if (!responsive.isModern())
             return;
@@ -1623,6 +1720,7 @@ window.qBittorrent.Modern ??= (() => {
         initSelectionCheckboxes();
         initStatusBar();
         initTorrentSpeedLimits();
+        responsive.addWindowHook(watchOptionsWindow);
     };
 
     return exports();
