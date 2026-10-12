@@ -45,6 +45,7 @@ window.qBittorrent.Responsive ??= (() => {
             addFrameHook: addFrameHook,
             fitWindow: fitWindow,
             addScrim: addScrim,
+            trapFocus: trapFocus,
             rowHeight: rowHeight
         };
     };
