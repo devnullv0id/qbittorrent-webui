@@ -2330,6 +2330,51 @@ window.qBittorrent.Modern ??= (() => {
             update();
         };
 
+        // Cancel, Apply and OK in place of Save; Apply saves while there are changes
+        const addDialogButtons = (state) => {
+            const footer = state.page.querySelector(":scope > .dialogFooter");
+            const ok = footer.querySelector(":scope > input[type='button']");
+            ok.value = "QBT_TR(OK)QBT_TR[CONTEXT=HttpServer]";
+            ok.classList.add("dialogPrimary");
+            const apply = document.createElement("button");
+            apply.type = "button";
+            apply.textContent = "QBT_TR(Apply)QBT_TR[CONTEXT=HttpServer]";
+            apply.disabled = true;
+            apply.addEventListener("click", (_event) => {
+                applyPreferences(false);
+                // after the page is read, which adds the list entries typed but not added
+                state.changedSinceApply = false;
+            });
+            const cancel = document.createElement("button");
+            cancel.type = "button";
+            cancel.className = "dialogCancel";
+            cancel.textContent = "QBT_TR(Cancel)QBT_TR[CONTEXT=MainWindow]";
+            cancel.addEventListener("click", (_event) => window.qBittorrent.Client.closeWindow(document.getElementById("preferencesPage")));
+            labelButton(apply);
+            labelButton(cancel);
+            state.applyButton = apply;
+            state.changedSinceApply = false;
+
+            const phone = window.qBittorrent.Responsive.queries.phone;
+            const place = () => {
+                if (phone.matches)
+                    footer.append(ok, apply, cancel);
+                else
+                    footer.append(cancel, apply, ok);
+            };
+            phone.addEventListener("change", (_event) => place(), { signal: state.listening.signal });
+            place();
+
+            const changed = () => {
+                apply.disabled = false;
+                state.changedSinceApply = true;
+            };
+            for (const type of ["input", "change"])
+                state.page.addEventListener(type, (_event) => changed(), { signal: state.listening.signal });
+            // Random sets the port without either
+            state.page.querySelector("[onclick*='generateRandomPort']").addEventListener("click", (_event) => changed(), { signal: state.listening.signal });
+        };
+
         // what a switch shows or hides slides open and shut; the sizes are measured, as not every browser animates a height
         // to auto
         const slideWithSwitches = (state) => {
@@ -2395,6 +2440,8 @@ window.qBittorrent.Modern ??= (() => {
                     observer.disconnect();
                 if (modernOptions === state)
                     modernOptions = null;
+                if (state.reloadOnClose === true)
+                    window.location.reload();
             });
 
             splitSchedule();
@@ -2409,6 +2456,7 @@ window.qBittorrent.Modern ??= (() => {
             splitWideSettings(state);
             slideWithSwitches(state);
             fadeAboveFooter(state);
+            addDialogButtons(state);
         };
 
         // once loadPreferences() has filled the page
@@ -2427,7 +2475,24 @@ window.qBittorrent.Modern ??= (() => {
                 save();
         };
 
-        return { setupModern: setupModern, modernFilled: modernFilled, modernBeforeSave: modernBeforeSave };
+        // after a save: OK reloads the page; Apply keeps Options open and has the page reload as Options closes. False where
+        // applyPreferences() goes on as in Classic
+        const modernSaved = (close) => {
+            if (modernOptions === null)
+                return false;
+
+            modernOptions.reloadOnClose = !close;
+            if (close)
+                return false;
+
+            // unless edited while the save was on its way
+            if (!modernOptions.changedSinceApply)
+                modernOptions.applyButton.disabled = true;
+            window.qBittorrent.ColorScheme.applyClientData();
+            return true;
+        };
+
+        return { setupModern: setupModern, modernFilled: modernFilled, modernBeforeSave: modernBeforeSave, modernSaved: modernSaved };
     };
 
     // the torrents' upload and download limits; where the torrents' limits differ the field is mixed
