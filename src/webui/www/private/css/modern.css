@@ -973,6 +973,9 @@
     }
 }
 
+:root.modern #searchPattern,
+:root.modern #searchInNameFilter,
+:root.modern #filterTextInput,
 :root.modern #torrentsFilterInput,
 :root.modern #torrentFilesFilterInput {
     background: var(--color-background-primary) var(--modern-search) 10px
@@ -1882,6 +1885,7 @@
 }
 
 /* Section labels: small muted capitals */
+:root.modern .mocha #searchPluginsContainer > h2,
 :root.modern #statisticsContent h3,
 :root.modern #manageCookiesTable thead td,
 :root.modern fieldset > legend {
@@ -5311,4 +5315,246 @@
         flex: none;
         width: 7.5em;
     }
+}
+
+/* Search (search.js) and the Execution Log */
+
+:root.modern #searchResults {
+    padding: 0 16px;
+}
+
+/* the search bar: the field takes the room the dropdowns leave, up to a reading width; the plugins button ends the
+    bar, in place of the row below the results */
+:root.modern #searchResultsHeaderContainer {
+    align-items: center;
+    margin: 12px 0 10px;
+
+    & > #searchPattern {
+        flex: 1 1 260px;
+        max-width: 560px;
+        width: auto;
+    }
+}
+
+/* a button's gap spaces its icon */
+:root.modern :is(#startSearchButton, #addTaskButton) > img {
+    margin: 0;
+}
+
+:root.modern #searchPluginsBarButton {
+    flex: none;
+    padding: 0;
+    width: var(--modern-control-height);
+}
+
+:root.modern #searchResults > div:has(> #manageSearchPlugins) {
+    display: none;
+}
+
+/* the filter, the count and where to search, a row above the results */
+:root.modern #searchResultsFilters {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    height: auto;
+    padding: 6px 0;
+
+    &.invisible {
+        display: none;
+    }
+}
+
+/* the notices where a list would be */
+:root.modern #searchResultsNoPlugins,
+:root.modern #searchResultsNoSearches,
+:root.modern #torrentCreatorEmpty {
+    color: var(--color-text-muted);
+}
+
+/* no plugins: nothing to search with, and a button for them below the notice */
+:root.modern
+    #searchResults:has(> #searchResultsNoPlugins:not(.invisible))
+    > #searchResultsHeader {
+    display: none;
+}
+
+:root.modern #searchNoPluginsButton {
+    display: flex;
+    margin: 14px auto 0;
+    width: fit-content;
+}
+
+/* phones: the field and its buttons on one row, the dropdowns sharing the next; the filter beside where to search,
+    the count below them */
+@media (width < 760px) {
+    :root.modern #searchResultsHeaderContainer {
+        gap: 8px;
+
+        & > * {
+            box-sizing: border-box;
+            margin: 0;
+            min-width: 0;
+        }
+
+        /* at least half the row, so the dropdowns go below */
+        & > #searchPattern {
+            flex-basis: 50%;
+        }
+
+        & > :is(#categorySelect, #pluginsSelect) {
+            flex: 1 1 calc(50% - 4px);
+            width: auto;
+        }
+    }
+
+    :root.modern #searchResultsFilters:not(.invisible) {
+        display: grid;
+        gap: 4px 8px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        & > #searchInNameFilter {
+            box-sizing: border-box;
+            grid-area: 1 / 1;
+            margin: 0;
+            min-width: 0;
+            width: 100%;
+        }
+
+        & > span {
+            color: var(--color-text-muted);
+            font-size: 12px;
+            grid-area: 2 / 1 / auto / -1;
+        }
+
+        /* the dropdown keeps its name */
+        & label[for="searchInTorrentName"] {
+            clip-path: inset(50%);
+            height: 1px;
+            overflow: hidden;
+            position: absolute;
+            white-space: nowrap;
+            width: 1px;
+        }
+
+        & #searchInTorrentName {
+            box-sizing: border-box;
+            margin: 0;
+            width: 100%;
+        }
+
+        /* no room for more filters on a phone */
+        &
+            :is(
+                #searchResultsGranularFiltersWarning,
+                #searchResultsGranularFilters
+            ) {
+            display: none;
+        }
+    }
+}
+
+/* Search plugins: the menu's actions above the list (searchplugins.html), the list a card, the warning a notice.
+    The page doesn't scroll in its box: the window opens as tall as the page needs (responsive.js), and scrolls where
+    the screen is shorter */
+:root.modern .mocha #searchPluginsContainer {
+    overflow: visible;
+
+    & > h2 {
+        margin: 2px 0 8px;
+    }
+
+    & button {
+        padding: 3px 14px;
+    }
+
+    & > #searchPluginsActions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    & > #searchPluginsTable {
+        border: var(--modern-border);
+        border-radius: var(--modern-radius-card);
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    & > span:first-of-type {
+        background-color: color-mix(
+            in srgb,
+            var(--color-text-orange) 10%,
+            transparent
+        );
+        border: 1px solid
+            color-mix(in srgb, var(--color-text-orange) 40%, transparent);
+        border-radius: var(--modern-radius-card);
+        margin-top: 12px;
+        padding: 8px 12px;
+    }
+
+    & > span:nth-of-type(2) {
+        color: var(--color-text-muted);
+        /* override the inline italics */
+        font-style: normal !important;
+        margin-top: 8px;
+    }
+}
+
+:root.modern .mocha #searchPlugins_contentWrapper {
+    overflow-y: auto !important; /* override Mocha's inline overflow */
+}
+
+/* beside phones: room for a few plugins; the buttons at their widths, Close at the row's end */
+:root.modern:not(.responsivePhone) .mocha #searchPluginsContainer {
+    & > #searchPluginsTable {
+        min-height: 200px;
+    }
+
+    & > .dialogFooter > button {
+        flex: none;
+
+        &:last-child {
+            margin-left: auto;
+        }
+    }
+}
+
+/* Install plugin */
+:root.modern .mocha #installSearchPluginContainer {
+    margin: 14px 16px;
+
+    & > label {
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    & > div > #newPluginPath {
+        box-sizing: border-box;
+    }
+}
+
+/* the bars above the Execution Log's list and the Torrent Creator's: a band, the log's count at its end */
+:root.modern #logTopBar,
+:root.modern #torrentCreatorTopBar {
+    align-items: center;
+    background-color: var(--color-background-default);
+    border-bottom: var(--modern-divider);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 10px;
+}
+
+:root.modern #logFilterBar {
+    gap: 6px;
+    /* its field narrows on a phone */
+    min-width: 0;
+}
+
+:root.modern #logFilterSummary {
+    color: var(--color-text-muted);
+    margin-left: auto;
 }
