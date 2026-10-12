@@ -38,6 +38,8 @@ window.qBittorrent.Modern ??= (() => {
             trimEllipsis: trimEllipsis,
             optionsPage: optionsPage,
             initTorrentLimits: initTorrentLimits,
+            searchPluginsPage: searchPluginsPage,
+            searchPage: searchPage,
             setUpOptionsTabs: setUpOptionsTabs,
         };
     };
@@ -2577,6 +2579,108 @@ window.qBittorrent.Modern ??= (() => {
                     window.parent.qBittorrent.Client.closeWindow(applyButton.closest(".mocha"));
                 });
         });
+    };
+
+    // set up by searchplugins.html with the parts of its page it uses
+    const searchPluginsPage = ({ searchPluginsTable, uninstallPlugin }) => {
+        const setupModern = () => {
+            if (!window.qBittorrent.Responsive.isModern())
+                return;
+
+            const setEnabled = (enable) => {
+                fetch("api/v2/search/enablePlugin", {
+                    method: "POST",
+                    body: new URLSearchParams({
+                        names: searchPluginsTable().selectedRowsIds().join("|"),
+                        enable: enable
+                    })
+                });
+            };
+            // a button is easier to hit than the menu's item: it asks first
+            const uninstall = () => {
+                if (confirm("QBT_TR(Are you sure you want to uninstall the selected plugins?)QBT_TR[CONTEXT=PluginSelectDlg]"))
+                    uninstallPlugin();
+            };
+
+            const buttons = [
+                ["searchPluginsEnableButton", "QBT_TR(Enable)QBT_TR[CONTEXT=PluginSelectDlg]", () => setEnabled(true)],
+                ["searchPluginsDisableButton", "QBT_TR(Disable)QBT_TR[CONTEXT=PluginSelectDlg]", () => setEnabled(false)],
+                ["searchPluginsUninstallButton", "QBT_TR(Uninstall)QBT_TR[CONTEXT=PluginSelectDlg]", uninstall]
+            ];
+            const actions = document.createElement("div");
+            actions.id = "searchPluginsActions";
+            for (const [id, label, action] of buttons) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.id = id;
+                button.textContent = label;
+                button.disabled = true;
+                button.addEventListener("click", (_event) => action());
+                actions.append(button);
+            }
+            document.getElementById("searchPluginsTable").before(actions);
+            document.querySelector("#searchPluginsContainer > .dialogFooter > button").classList.add("dialogPrimary");
+            searchPluginsTable().onSelectedRowChanged = () => updateActions();
+        };
+
+        // search.js updates the table while the window is closed as well
+        const updateActions = () => {
+            if (document.getElementById("searchPluginsActions") === null)
+                return;
+
+            const plugins = searchPluginsTable().selectedRowsIds().map((name) => window.qBittorrent.Search.getPlugin(name)).filter(Boolean);
+            document.getElementById("searchPluginsEnableButton").disabled = !plugins.some((plugin) => !plugin.enabled);
+            document.getElementById("searchPluginsDisableButton").disabled = !plugins.some((plugin) => plugin.enabled);
+            document.getElementById("searchPluginsUninstallButton").disabled = (plugins.length === 0);
+        };
+
+        return { setupModern: setupModern, updateActions: updateActions };
+    };
+
+    // set up by search.js with the function of its page it uses
+    const searchPage = ({ manageSearchPlugins }) => {
+        const setupModern = () => {
+            if (!window.qBittorrent.Responsive.isModern())
+                return;
+
+            const label = "QBT_TR(Search plugins...)QBT_TR[CONTEXT=SearchEngineWidget]";
+            const pluginsButton = (id) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.id = id;
+                const icon = document.createElement("img");
+                icon.src = "images/plugins.svg";
+                // the button is named by its label
+                icon.alt = "";
+                icon.width = 16;
+                icon.height = 16;
+                button.append(icon);
+                button.addEventListener("click", (_event) => manageSearchPlugins());
+                return button;
+            };
+
+            // moved in the page, so the tab order follows
+            const barButton = pluginsButton("searchPluginsBarButton");
+            barButton.title = label;
+            barButton.setAttribute("aria-label", label);
+            const phone = window.qBittorrent.Responsive.queries.phone;
+            const placeButtons = () => {
+                document.getElementById(phone.matches ? "searchPattern" : "pluginsSelect").after(document.getElementById("startSearchButton"), barButton);
+            };
+            placeButtons();
+            phone.addEventListener("change", (_event) => placeButtons());
+
+            const notice = document.querySelector("#searchResultsNoPlugins td");
+            const hintStart = notice.querySelector("br");
+            while (hintStart.nextSibling !== null)
+                hintStart.nextSibling.remove();
+            const noPluginsButton = pluginsButton("searchNoPluginsButton");
+            noPluginsButton.append(label);
+            hintStart.replaceWith(noPluginsButton);
+            window.qBittorrent.Modern.trimEllipsis(notice);
+        };
+
+        return { setupModern: setupModern };
     };
 
     // phones: the first four pages and More as tiles, the others in a second row while More is open

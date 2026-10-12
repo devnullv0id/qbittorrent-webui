@@ -998,6 +998,9 @@
     }
 }
 
+:root.modern #searchPattern,
+:root.modern #searchInNameFilter,
+:root.modern #filterTextInput,
 :root.modern #torrentsFilterInput,
 :root.modern #torrentFilesFilterInput {
     background: var(--color-background-primary) var(--modern-search) 10px
@@ -1880,6 +1883,8 @@
     }
 }
 
+/* Section labels */
+:root.modern .mocha #searchPluginsContainer > h2,
 :root.modern #statisticsContent h3,
 :root.modern #manageCookiesTable thead td,
 :root.modern #aboutAuthorContent > h3,
@@ -5402,4 +5407,228 @@
         flex: none;
         width: 7.5em;
     }
+}
+
+/* Search and Execution log */
+:root.modern #searchResults {
+    padding: 0 16px;
+}
+
+:root.modern #searchResultsHeaderContainer {
+    align-items: center;
+    margin: 12px 0 10px;
+
+    & > #searchPattern {
+        flex: 1 1 260px;
+        max-width: 560px;
+        width: auto;
+    }
+}
+
+:root.modern :is(#startSearchButton, #addTaskButton) > img {
+    margin: 0;
+}
+
+:root.modern #searchPluginsBarButton {
+    flex: none;
+    padding: 0;
+    width: var(--modern-control-height);
+}
+
+:root.modern #searchResults > div:has(> #manageSearchPlugins) {
+    display: none;
+}
+
+:root.modern #searchResultsFilters {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    height: auto;
+    padding: 6px 0;
+
+    &.invisible {
+        display: none;
+    }
+}
+
+:root.modern #searchResultsNoPlugins,
+:root.modern #searchResultsNoSearches,
+:root.modern #torrentCreatorEmpty {
+    color: var(--color-text-muted);
+}
+
+:root.modern
+    #searchResults:has(> #searchResultsNoPlugins:not(.invisible))
+    > #searchResultsHeader {
+    display: none;
+}
+
+:root.modern #searchNoPluginsButton {
+    display: flex;
+    margin: 14px auto 0;
+    width: fit-content;
+}
+
+@media (width < 760px) {
+    :root.modern #searchResultsHeaderContainer {
+        gap: 8px;
+
+        & > * {
+            box-sizing: border-box;
+            margin: 0;
+            min-width: 0;
+        }
+
+        & > #searchPattern {
+            flex-basis: 50%;
+        }
+
+        & > :is(#categorySelect, #pluginsSelect) {
+            flex: 1 1 calc(50% - 4px);
+            width: auto;
+        }
+    }
+
+    :root.modern #searchResultsFilters:not(.invisible) {
+        display: grid;
+        gap: 4px 8px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        & > #searchInNameFilter {
+            box-sizing: border-box;
+            grid-area: 1 / 1;
+            margin: 0;
+            min-width: 0;
+            width: 100%;
+        }
+
+        & > span {
+            color: var(--color-text-muted);
+            font-size: 12px;
+            grid-area: 2 / 1 / auto / -1;
+        }
+
+        & label[for="searchInTorrentName"] {
+            clip-path: inset(50%);
+            height: 1px;
+            overflow: hidden;
+            position: absolute;
+            white-space: nowrap;
+            width: 1px;
+        }
+
+        & #searchInTorrentName {
+            box-sizing: border-box;
+            margin: 0;
+            width: 100%;
+        }
+
+        &
+            :is(
+                #searchResultsGranularFiltersWarning,
+                #searchResultsGranularFilters
+            ) {
+            display: none;
+        }
+    }
+}
+
+/* Search plugins */
+:root.modern .mocha #searchPluginsContainer {
+    overflow: visible;
+
+    & > h2 {
+        margin: 2px 0 8px;
+    }
+
+    & button {
+        padding: 3px 14px;
+    }
+
+    & > #searchPluginsActions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    & > #searchPluginsTable {
+        border: var(--modern-border);
+        border-radius: var(--modern-radius-card);
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    & > span:first-of-type {
+        background-color: color-mix(
+            in srgb,
+            var(--color-text-orange) 10%,
+            transparent
+        );
+        border: 1px solid
+            color-mix(in srgb, var(--color-text-orange) 40%, transparent);
+        border-radius: var(--modern-radius-card);
+        margin-top: 12px;
+        padding: 8px 12px;
+    }
+
+    & > span:nth-of-type(2) {
+        color: var(--color-text-muted);
+        font-style: normal !important; /* override inline style */
+        margin-top: 8px;
+    }
+}
+
+:root.modern .mocha #searchPlugins_contentWrapper {
+    overflow-y: auto !important; /* override inline style */
+}
+
+:root.modern:not(.responsivePhone) .mocha #searchPluginsContainer {
+    & > #searchPluginsTable {
+        min-height: 200px;
+    }
+
+    & > .dialogFooter > button {
+        flex: none;
+
+        &:last-child {
+            margin-left: auto;
+        }
+    }
+}
+
+/* Install search plugin */
+:root.modern .mocha #installSearchPluginContainer {
+    margin: 14px 16px;
+
+    & > label {
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    & > div > #newPluginPath {
+        box-sizing: border-box;
+    }
+}
+
+:root.modern #logTopBar,
+:root.modern #torrentCreatorTopBar {
+    align-items: center;
+    background-color: var(--color-background-default);
+    border-bottom: var(--modern-divider);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 10px;
+}
+
+:root.modern #logFilterBar {
+    gap: 6px;
+    min-width: 0;
+}
+
+:root.modern #logFilterSummary {
+    color: var(--color-text-muted);
+    margin-left: auto;
 }

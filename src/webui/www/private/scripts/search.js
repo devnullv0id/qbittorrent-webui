@@ -183,10 +183,14 @@ window.qBittorrent.Search ??= (() => {
 
                     switch (event.target.id) {
                         case "manageSearchPlugins":
+                        case "searchPluginsBarButton":
+                        case "searchNoPluginsButton":
                             manageSearchPlugins();
                             break;
                         case "searchPattern":
-                            document.getElementById("startSearchButton").click();
+                            // an empty field starts nothing (in Modern it stands for the running search)
+                            if (event.target.value.trim() !== "")
+                                document.getElementById("startSearchButton").click();
                             break;
                     }
 
@@ -195,6 +199,7 @@ window.qBittorrent.Search ??= (() => {
         });
 
         restoreSearchJobs();
+        setupModern();
     };
 
     const restoreSearchJobs = () => {
@@ -505,6 +510,9 @@ window.qBittorrent.Search ??= (() => {
                 const responseJSON = await response.json();
                 const searchId = responseJSON.id;
                 createSearchTab(searchId, pattern, category, plugins);
+                // Modern empties the field for the next search
+                if (window.qBittorrent.Responsive.isModern())
+                    document.getElementById("searchPattern").value = "";
                 updateSearchButtonState();
             });
     };
@@ -562,7 +570,8 @@ window.qBittorrent.Search ??= (() => {
     const canStopSearch = (searchId, searchPattern) => {
         const state = searchState.get(searchId);
         // search must be running and have input matching the current pattern
-        return state && state.running && (state.searchPattern === searchPattern);
+        // or, in Modern, an empty field, as the field is emptied once a search starts
+        return state && state.running && ((state.searchPattern === searchPattern) || ((searchPattern === "") && window.qBittorrent.Responsive.isModern()));
     };
 
     const updateSearchButtonState = () => {
@@ -1070,6 +1079,11 @@ window.qBittorrent.Search ??= (() => {
                 break;
         }
     }
+
+    // Modern's plugin buttons
+    const { setupModern } = window.qBittorrent.Modern.searchPage({
+        manageSearchPlugins: manageSearchPlugins
+    });
 
     return exports();
 })();
