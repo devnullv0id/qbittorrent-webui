@@ -595,6 +595,8 @@
     for every element (*), Chromium would style each one's ::before and ::after too, at every restyle */
 @media (prefers-reduced-motion: reduce) {
     :root.modern #desktopNavbar ul,
+    :root.modern #Filters,
+    :root.modern #desktopNavbar,
     :root.modern input,
     :root.modern input::before,
     :root.modern select,
@@ -2350,5 +2352,394 @@
 
     & li:not(.modernExpanded) > ul {
         display: none;
+    }
+}
+
+/* Phone header: the menu and filters drawers (responsive.js), the toolbar's More actions (modern.js) */
+
+@keyframes modern-drawer {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: none;
+    }
+}
+
+:root.modern .responsiveScrim {
+    background-color: var(--color-background-scrim);
+}
+
+/* glyphs drawn in the text's color */
+:root.modern .modernGlyph {
+    display: block;
+    height: 16px;
+    width: 18px;
+
+    &[data-glyph="more"] {
+        background: radial-gradient(
+                circle,
+                currentcolor 1.8px,
+                transparent 2.2px
+            )
+            center / 6px 6px repeat-x;
+    }
+}
+
+/* the drawers' heads: a title and Close */
+:root.modern .responsiveDrawerHead {
+    background-color: var(--color-background-primary);
+    border-bottom: var(--modern-border);
+    min-height: 48px;
+    padding: 0 6px 0 14px;
+
+    & > button {
+        border-radius: var(--modern-radius-pill);
+    }
+}
+
+/* Filters drawer */
+:root.modern.filtersDrawerOpen #filtersColumn:not(.invisible) #Filters {
+    animation: modern-drawer 0.2s ease-out;
+    background-color: var(--color-background-primary);
+    border-right: var(--modern-border);
+    box-shadow: var(--modern-shadow);
+}
+
+/* the toolbar's round buttons: the menu drawer's and More actions */
+:root.modern
+    #mochaToolbar
+    :where(button):is(#menuDrawerButton, #toolbarOverflowButton) {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: var(--modern-radius-pill);
+    color: var(--color-text-default);
+    height: var(--modern-tool-height);
+    justify-content: center;
+    min-height: 0;
+    min-width: 0;
+    padding: 0;
+    position: relative;
+    width: 34px;
+
+    /* a circle behind the glyph */
+    &:hover {
+        background-color: var(--color-background-row-hover);
+    }
+}
+
+/* three bars */
+:root.modern #menuDrawerButton::before {
+    background:
+        linear-gradient(currentcolor 0 0) 0 2px / 100% 2px no-repeat,
+        linear-gradient(currentcolor 0 0) 0 7px / 100% 2px no-repeat,
+        linear-gradient(currentcolor 0 0) 0 12px / 100% 2px no-repeat;
+    content: "";
+    height: 16px;
+    width: 18px;
+}
+
+:root.modern #mochaToolbar #toolbarOverflowButton {
+    display: none;
+}
+
+:root.modern #toolbarOverflowMenu {
+    & a {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+    }
+
+    & img {
+        height: 16px;
+        width: 16px;
+    }
+}
+
+/* Tablets and phones: icon-only view tabs, named on hover (responsive.js) */
+@media (width < 1100px) {
+    :root.modern #mainWindowTabs {
+        --modern-tab-circle: 36px;
+
+        & .tab-menu {
+            gap: 2px;
+        }
+
+        & .tab-menu li {
+            flex: none;
+        }
+
+        & .tab-menu li a {
+            align-items: center;
+            background-color: transparent;
+            box-sizing: border-box;
+            display: flex;
+            font-size: 0;
+            gap: 0;
+            height: var(--modern-tab-circle);
+            justify-content: center;
+            margin-left: 0;
+            min-width: 0;
+            padding: 0;
+            position: relative;
+            width: var(--modern-tab-circle);
+
+            &::before {
+                border-radius: 50%;
+                content: "";
+                height: var(--modern-tab-circle);
+                position: absolute;
+                width: var(--modern-tab-circle);
+            }
+
+            & img {
+                height: 18px;
+                margin: 0;
+                position: relative;
+                width: 18px;
+            }
+        }
+
+        & .tab-menu li:not(.selected):hover a::before {
+            background-color: var(--color-background-fill);
+        }
+
+        & .tab-menu li.selected a::before {
+            background-color: var(--color-background-blue);
+        }
+    }
+}
+
+/* Phones */
+@media (width < 760px) {
+    /* lets a pull reload the page */
+    :root.modern,
+    :root.modern body {
+        overflow: visible !important; /* override Mocha's inline overflow */
+    }
+
+    :root.modern.menuDrawerOpen #desktopNavbar,
+    :root.modern.filtersDrawerOpen #Filters {
+        overscroll-behavior: contain;
+    }
+
+    /* not while a window is open: it would reload away what the window holds */
+    :root.modern:has(.mocha) {
+        overscroll-behavior-y: contain;
+    }
+
+    :root.modern #mochaToolbar {
+        gap: 6px 2px;
+        padding: 4px 6px 8px;
+
+        & #toolbarButtons > :is(a, #uploadButton) {
+            width: 38px;
+        }
+    }
+
+    :root.modern #mochaToolbar #toolbarOverflowButton {
+        display: inline-flex;
+        flex: none;
+    }
+
+    /* in More actions */
+    :root.modern
+        #mochaToolbar
+        :is(
+            #queueingButtons,
+            #toolbarButtons > :is(#torrentCreatorButton, #preferencesButton)
+        ) {
+        display: none;
+    }
+
+    /* the view tabs keep their room; a lone Transfers tab stays hidden */
+    :root.modern #mochaToolbar #mainWindowTabs:not(.invisible) {
+        display: flex;
+
+        & .tab-menu {
+            margin-left: auto;
+        }
+    }
+
+    /* Menu drawer */
+    :root.modern.menuDrawerOpen #desktopNavbar {
+        animation: modern-drawer 0.2s ease-out;
+        background-color: var(--color-background-default);
+        border-right: var(--modern-border);
+        box-shadow: var(--modern-shadow);
+        display: flex;
+        flex-direction: column;
+        padding: 0 8px 8px;
+        width: min(300px, 86vw);
+
+        & #menuDrawerHead {
+            margin: 0 -8px 6px;
+        }
+
+        & > ul {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        & > ul > li {
+            border-bottom: var(--modern-border);
+        }
+
+        & > ul > li > a {
+            align-items: center;
+            background: transparent;
+            border-radius: var(--modern-radius-button);
+            color: var(--color-text-default);
+            display: flex;
+            font-weight: 600;
+            gap: 4px;
+            min-height: 44px;
+            padding: 0 12px;
+            text-transform: uppercase;
+
+            &::before {
+                background-color: currentcolor;
+                content: "";
+                flex: none;
+                height: 20px;
+                mask: var(--modern-chevron-right) center / 20px no-repeat;
+                width: 20px;
+            }
+        }
+
+        /* another image, as some phones drew a box around a turned mask */
+        & > ul > li.menuDrawerExpanded > a::before {
+            mask-image: var(--modern-chevron-down);
+        }
+
+        & li.menuDrawerExpanded > ul {
+            animation: none;
+            background-color: var(--color-background-primary);
+            border-radius: 10px;
+            box-shadow: none;
+            margin: 0 0 6px 8px;
+            min-width: 0;
+            padding: 0 0 4px;
+        }
+
+        & li ul li :is(a, div.anchor) {
+            border-radius: 6px;
+            gap: 10px;
+            min-height: 44px;
+            padding: 0 12px 0 16px;
+        }
+
+        & li ul li img {
+            height: 18px;
+            width: 18px;
+        }
+    }
+
+    /* the filter row: an icon for Filters (its label stays its name), the regex toggle ends the field */
+    :root.modern #torrentsFilterToolbar {
+        --modern-phone-filter-height: max(36px, var(--modern-control-height));
+
+        box-sizing: border-box;
+        flex-wrap: nowrap;
+        gap: 0;
+        margin: 0;
+        min-width: 0;
+        width: 100%;
+
+        & #filtersButton {
+            font-size: 0;
+            gap: 0;
+            height: var(--modern-phone-filter-height);
+            justify-content: center;
+            margin-right: 6px;
+            min-height: 0;
+            padding: 0;
+            width: var(--modern-phone-filter-height);
+        }
+
+        & #torrentsFilterInput {
+            border-radius: var(--modern-radius-pill) 0 0
+                var(--modern-radius-pill);
+            border-right: 0;
+            flex: 1 1 auto;
+            height: var(--modern-phone-filter-height);
+            min-width: 0;
+            width: auto;
+        }
+
+        & label[for="torrentsFilterRegexBox"] {
+            background-color: var(--color-background-primary);
+            border: var(--modern-border);
+            border-left-color: var(--color-border-divider);
+            border-radius: 0 var(--modern-radius-pill) var(--modern-radius-pill)
+                0;
+            box-sizing: border-box;
+            flex: none;
+            height: var(--modern-phone-filter-height);
+            margin: 0;
+
+            &::before {
+                background-color: var(--color-text-muted);
+            }
+        }
+
+        & #torrentsFilterRegexBox:checked + label::before {
+            background-color: var(--color-accent-blue);
+        }
+
+        & #torrentsFilterSelect {
+            margin-left: 6px;
+            width: auto;
+        }
+
+        /* the select keeps its name */
+        & label[for="torrentsFilterSelect"] {
+            clip-path: inset(50%);
+            height: 1px;
+            overflow: hidden;
+            position: absolute;
+            white-space: nowrap;
+            width: 1px;
+        }
+    }
+}
+
+/* narrow phones: the toolbar in one row */
+@media (width < 420px) {
+    :root.modern #mochaToolbar {
+        column-gap: 0;
+        padding-inline: 4px;
+
+        & #toolbarButtons > :is(a, #uploadButton) {
+            width: 34px;
+        }
+
+        & .divider {
+            margin-left: 9px;
+        }
+
+        & .divider::before {
+            left: -6px;
+        }
+    }
+
+    :root.modern #mainWindowTabs {
+        --modern-tab-circle: 32px;
+    }
+}
+
+/* narrow phones: Execution Log moves into More actions (modern.js), which shows when it is the open view */
+@media (width < 480px) {
+    :root.modern #mainWindowTabs #logTabLink {
+        display: none;
+    }
+
+    :root.modern:has(#logTabLink.selected) #toolbarOverflowButton {
+        background-color: var(--color-background-blue);
+        color: var(--color-text-white);
     }
 }

@@ -122,7 +122,8 @@
     }
 
     /* the menubar stays while the toolbar, and the button with it, is off */
-    :root:has(#mochaToolbar.invisible) #desktopNavbar {
+    /* (Modern always shows the toolbar) */
+    :root:where(:not(.modern)):has(#mochaToolbar.invisible) #desktopNavbar {
         display: block;
     }
 

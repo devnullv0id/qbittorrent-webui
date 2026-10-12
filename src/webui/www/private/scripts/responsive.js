@@ -953,15 +953,18 @@ window.qBittorrent.Responsive ??= (() => {
 
     // view tabs that show only their icons on phones are named on hover
     const initViewTabs = () => {
+        // (in Modern below 1100px wide)
+        const iconsOnly = () => queries.phone.matches || (isModern() && queries.drawer.matches);
         const name = () => {
             for (const img of document.querySelectorAll("#mainWindowTabsList img")) {
-                if (queries.phone.matches)
+                if (iconsOnly())
                     img.parentElement.title = img.alt;
                 else
                     img.parentElement.removeAttribute("title");
             }
         };
         queries.phone.addEventListener("change", (_event) => name());
+        queries.drawer.addEventListener("change", (_event) => name());
         name();
     };
 

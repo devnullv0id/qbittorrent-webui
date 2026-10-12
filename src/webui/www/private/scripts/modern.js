@@ -322,6 +322,96 @@ window.qBittorrent.Modern ??= (() => {
         instance.controlsEl.append(button);
     };
 
+    /* Phone header */
+
+    // on phones the toolbar keeps the buttons used most; the others, and on narrow phones Execution Log, are in a menu
+    const NARROW_PHONE = window.matchMedia("(width < 480px)");
+    const OVERFLOW_ITEMS = [
+        ["topPrioButton", "images/go-top.svg", "QBT_TR(Top of Queue)QBT_TR[CONTEXT=MainWindow]"],
+        ["increasePrioButton", "images/go-up.svg", "QBT_TR(Move Up Queue)QBT_TR[CONTEXT=MainWindow]"],
+        ["decreasePrioButton", "images/go-down.svg", "QBT_TR(Move Down Queue)QBT_TR[CONTEXT=MainWindow]"],
+        ["bottomPrioButton", "images/go-bottom.svg", "QBT_TR(Bottom of Queue)QBT_TR[CONTEXT=MainWindow]"],
+        ["torrentCreatorButton", "images/torrent-creator.svg", "QBT_TR(Torrent Creator)QBT_TR[CONTEXT=MainWindow]"],
+        ["preferencesButton", "images/configure.svg", "QBT_TR(Options)QBT_TR[CONTEXT=OptionsDialog]"],
+        ["logTabLink", "images/help-contents.svg", "QBT_TR(Execution Log)QBT_TR[CONTEXT=MainWindow]"]
+    ];
+
+    const initPhoneHeader = () => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.id = "toolbarOverflowButton";
+        button.title = "QBT_TR(More actions)QBT_TR[CONTEXT=MainWindow]";
+        button.setAttribute("aria-label", button.title);
+        button.setAttribute("aria-haspopup", "menu");
+        button.setAttribute("aria-expanded", "false");
+        button.setAttribute("aria-controls", "toolbarOverflowMenu");
+        const glyph = document.createElement("span");
+        glyph.className = "modernGlyph";
+        glyph.dataset.glyph = "more";
+        button.append(glyph);
+        document.getElementById("mainWindowTabs").after(button);
+
+        const list = document.createElement("ul");
+        list.id = "toolbarOverflowMenu";
+        list.className = "contextMenu";
+        list.setAttribute("aria-label", button.title);
+        const actions = {};
+        for (const [target, icon, label] of OVERFLOW_ITEMS) {
+            const item = document.createElement("li");
+            const link = document.createElement("a");
+            link.href = `#${target}`;
+            const img = document.createElement("img");
+            img.src = icon;
+            img.alt = "";
+            link.append(img, label);
+            item.append(link);
+            list.append(item);
+            actions[target] = (_element, _menu) => document.getElementById(target).click();
+        }
+        list.querySelector("a[href='#torrentCreatorButton']").parentElement.classList.add("separator");
+        document.body.append(list);
+
+        const queueItems = ["topPrioButton", "increasePrioButton", "decreasePrioButton", "bottomPrioButton"];
+        const OverflowMenu = class extends window.qBittorrent.ContextMenu.ContextMenu {
+            updateMenuItems() {
+                const queueing = !document.getElementById("queueingButtons").classList.contains("invisible");
+                for (const item of queueItems) {
+                    if (queueing)
+                        this.showItem(item);
+                    else
+                        this.hideItem(item);
+                }
+                if (NARROW_PHONE.matches && !document.getElementById("logTabLink").classList.contains("invisible"))
+                    this.showItem("logTabLink");
+                else
+                    this.hideItem("logTabLink");
+            }
+        };
+        let releaseFocus = null;
+        const menu = new OverflowMenu({
+            targets: "",
+            menu: "toolbarOverflowMenu",
+            actions: actions,
+            onShow: () => {
+                button.setAttribute("aria-expanded", "true");
+                releaseFocus ??= responsive.trapFocus(list);
+            },
+            onHide: () => {
+                button.setAttribute("aria-expanded", "false");
+                releaseFocus?.();
+                releaseFocus = null;
+            }
+        });
+        button.addEventListener("click", (event) => {
+            // the page's click would close it again
+            event.stopPropagation();
+            if (list.classList.contains("visible"))
+                menu.hide();
+            else
+                menu.triggerMenu(event, button);
+        });
+    };
+
     const init = () => {
         if (!responsive.isModern())
             return;
@@ -331,6 +421,7 @@ window.qBittorrent.Modern ??= (() => {
         initPropertiesTabs();
         initDialogs();
         responsive.addWindowHook(placeWindow);
+        initPhoneHeader();
     };
 
     return exports();
