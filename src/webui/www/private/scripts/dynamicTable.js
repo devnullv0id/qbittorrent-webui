@@ -593,6 +593,15 @@ window.qBittorrent.DynamicTable ??= (() => {
             column["style"] = style;
             if (defaultWidth !== -1)
                 column["width"] = Number(localPreferences.get(`column_${name}_width_${this.dynamicTableDivId}`, defaultWidth));
+            // in Modern on touch screens a check box column is at least a touch wide, the room around its box, and in
+            // the file lists as wide again as the tree's image before the box (images/L.svg, 18px); not stored. The size
+            // is the main window's, which a dialog frame may not have yet
+            if ((name === "checked") && responsive?.isModern() && responsive.queries.coarse.matches) {
+                const touch = Number.parseFloat(getComputedStyle(window.parent.document.documentElement).getPropertyValue("--responsive-touch-target"));
+                const width = touch + ((this instanceof TorrentFilesTable) ? 18 : 0);
+                if (width > column["width"])
+                    column["width"] = width;
+            }
             column["dataProperties"] = [name];
             column["getRowValue"] = function(row, pos) {
                 if (pos === undefined)
@@ -1206,7 +1215,9 @@ window.qBittorrent.DynamicTable ??= (() => {
             this.newColumn("name", "", "QBT_TR(Name)QBT_TR[CONTEXT=TransferListModel]", 200, true);
             this.newColumn("size", "", "QBT_TR(Size)QBT_TR[CONTEXT=TransferListModel]", 100, true);
             this.newColumn("total_size", "", "QBT_TR(Total Size)QBT_TR[CONTEXT=TransferListModel]", 100, false);
-            this.newColumn("progress", "", "QBT_TR(Progress)QBT_TR[CONTEXT=TransferListModel]", 85, true);
+            // room for the percentage in Modern's taller bar
+            const progressWidth = (responsive?.isModern() && (clientData.get("display_density") !== "compact")) ? 120 : 85;
+            this.newColumn("progress", "", "QBT_TR(Progress)QBT_TR[CONTEXT=TransferListModel]", progressWidth, true);
             this.newColumn("status", "", "QBT_TR(Status)QBT_TR[CONTEXT=TransferListModel]", 100, true);
             this.newColumn("num_seeds", "", "QBT_TR(Seeds)QBT_TR[CONTEXT=TransferListModel]", 100, true);
             this.newColumn("num_leechs", "", "QBT_TR(Peers)QBT_TR[CONTEXT=TransferListModel]", 100, true);
