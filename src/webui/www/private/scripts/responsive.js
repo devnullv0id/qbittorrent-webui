@@ -46,6 +46,7 @@ window.qBittorrent.Responsive ??= (() => {
             fitWindow: fitWindow,
             addScrim: addScrim,
             trapFocus: trapFocus,
+            updateSelection: () => updateSelection(),
             rowHeight: rowHeight
         };
     };
@@ -1033,9 +1034,12 @@ window.qBittorrent.Responsive ??= (() => {
         header.addEventListener("focusin", (event) => setHidden(false));
     };
 
+    // Modern's check boxes, at every width, switched on by modern.js
+    const modernSelectMode = () => root.classList.contains("modernSelectMode");
+
     // the card's checkbox zone at its left, its menu zone at its top right, or null
     const cardZone = (event) => {
-        const tr = queries.phone.matches ? event.target.closest?.("#torrentsTableDiv tbody tr") : null;
+        const tr = (queries.phone.matches || modernSelectMode()) ? event.target.closest?.("#torrentsTableDiv tbody tr") : null;
         if ((tr === undefined) || (tr === null))
             return null;
 
@@ -1094,6 +1098,9 @@ window.qBittorrent.Responsive ??= (() => {
         }, true);
     };
 
+    // updates the check boxes and count when the selection changes outside the list
+    let updateSelection = () => {};
+
     // a card's checkbox toggles its torrent's selection, as a Ctrl+click does
     const initCardCheckboxes = async () => {
         const tableDiv = await whenElement("torrentsTableDiv");
@@ -1133,7 +1140,7 @@ window.qBittorrent.Responsive ??= (() => {
         const selectAll = document.getElementById("torrentsSelectAll");
         const count = document.getElementById("torrentsSelectionCount");
         const update = () => {
-            if (!queries.phone.matches)
+            if (!queries.phone.matches && !modernSelectMode())
                 return;
 
             const selected = table.selectedRowsIds().length;
@@ -1168,6 +1175,7 @@ window.qBittorrent.Responsive ??= (() => {
         const updateSoon = window.qBittorrent.Misc.createDebounceHandler(100, update);
         new MutationObserver(updateSoon).observe(table.tableBody, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
         queries.phone.addEventListener("change", (_event) => update());
+        updateSelection = update;
         update();
     };
 
