@@ -46,6 +46,26 @@ window.qBittorrent.ContextMenu ??= (() => {
     };
 
     let lastShownContextMenu = null;
+
+    // in Modern on touch screens and phones, menus open as sheets (not in dialog frames, which have no responsive.js)
+    const responsive = window.qBittorrent.Responsive;
+    const opensAsSheet = () => (responsive?.isModern() ?? false) && (responsive.queries.coarse.matches || responsive.queries.phone.matches);
+
+    // Escape closes a sheet, not the window below it
+    document.addEventListener("keydown", (event) => {
+        if ((event.key !== "Escape") || !lastShownContextMenu?.isSheet())
+            return;
+
+        event.stopImmediatePropagation();
+        lastShownContextMenu.hide();
+    }, true);
+    for (const query of (responsive === undefined) ? [] : [responsive.queries.coarse, responsive.queries.phone]) {
+        query.addEventListener("change", (_event) => {
+            if (lastShownContextMenu?.isSheet())
+                lastShownContextMenu.hide();
+        });
+    }
+
     class ContextMenu {
         constructor(options) {
             this.options = {
@@ -74,6 +94,17 @@ window.qBittorrent.ContextMenu ??= (() => {
             this.menu.style.position = "absolute";
             this.menu.style.top = "-900000px";
             this.menu.style.display = "block";
+
+            // in a sheet, a submenu opens below its item
+            this.menu.addEventListener("click", (event) => {
+                const arrow = this.isSheet() ? event.target.closest("a.arrow-right") : null;
+                if (arrow === null)
+                    return;
+
+                event.preventDefault();
+                event.stopPropagation();
+                arrow.parentElement.classList.toggle("modernExpanded");
+            }, true);
         }
 
         adjustMenuPosition(e) {
@@ -193,9 +224,52 @@ window.qBittorrent.ContextMenu ??= (() => {
             }
             // record this as the trigger
             this.options.element = el;
-            this.adjustMenuPosition(e);
+            if (opensAsSheet())
+                this.openSheet();
+            else
+                this.adjustMenuPosition(e);
             // show the menu
             this.show();
+        }
+
+        isSheet() {
+            return this.sheetScrim !== undefined;
+        }
+
+        // moved to the end of the page, so no window or panel cuts it off
+        openSheet() {
+            this.updateMenuItems();
+            if (this.isSheet())
+                return;
+
+            this.sheetHome = { parent: this.menu.parentElement, next: this.menu.nextSibling };
+            document.body.append(this.menu);
+            for (const property of ["left", "top", "max-height"])
+                this.menu.style.removeProperty(property);
+            for (const ul of this.menu.querySelectorAll("ul")) {
+                for (const property of ["margin-left", "margin-top", "max-height"])
+                    ul.style.removeProperty(property);
+            }
+            this.menu.classList.remove("scrollingMenu");
+            this.menu.classList.add("modernSheet");
+            this.menu.style.position = "fixed";
+            this.sheetScrim = responsive.addScrim(() => this.hide(), "modernMenuScrim");
+        }
+
+        // put back, also after its window has closed
+        closeSheet() {
+            if (!this.isSheet())
+                return;
+
+            this.sheetScrim.remove();
+            this.sheetScrim = undefined;
+            for (const li of this.menu.querySelectorAll("li.modernExpanded"))
+                li.classList.remove("modernExpanded");
+            this.menu.classList.remove("modernSheet");
+            this.menu.style.position = "absolute";
+            this.menu.style.top = "-900000px";
+            this.sheetHome.parent.insertBefore(this.menu, this.sheetHome.next);
+            this.sheetHome = null;
         }
 
         // get things started
@@ -257,6 +331,7 @@ window.qBittorrent.ContextMenu ??= (() => {
                 this.menu.classList.remove("visible");
                 this.options.onHide.call(this);
             }
+            this.closeSheet();
             return this;
         }
 
