@@ -134,6 +134,8 @@ window.qBittorrent.Responsive ??= (() => {
         if (isModern()) {
             doc.documentElement.classList.add("modern");
             doc.documentElement.classList.toggle("compact", root.classList.contains("compact"));
+            if (root.dataset.accent !== undefined)
+                doc.documentElement.dataset.accent = root.dataset.accent;
             stylesheet.after(modernStylesheet(doc));
         }
         setClasses(doc);

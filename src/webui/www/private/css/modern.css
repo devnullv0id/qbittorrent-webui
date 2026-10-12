@@ -110,6 +110,77 @@
     }
 }
 
+/* Accent colors */
+:root.modern[data-accent="indigo"] {
+    --color-background-blue: hsl(235deg 65% 58%);
+    --color-accent-blue: hsl(235deg 65% 60.5%);
+
+    &.dark {
+        --color-background-blue: hsl(235deg 42% 53.5%);
+        --color-accent-blue: hsl(235deg 45% 61%);
+    }
+}
+
+:root.modern[data-accent="purple"] {
+    --color-background-blue: hsl(270deg 65% 54.5%);
+    --color-accent-blue: hsl(270deg 65% 57.5%);
+
+    &.dark {
+        --color-background-blue: hsl(270deg 42% 51%);
+        --color-accent-blue: hsl(270deg 45% 59%);
+    }
+}
+
+:root.modern[data-accent="pink"] {
+    --color-background-blue: hsl(330deg 65% 45.5%);
+    --color-accent-blue: hsl(330deg 65% 48.5%);
+
+    &.dark {
+        --color-background-blue: hsl(330deg 42% 46.5%);
+        --color-accent-blue: hsl(330deg 45% 55.5%);
+    }
+}
+
+:root.modern[data-accent="red"] {
+    --color-background-blue: hsl(0deg 65% 47%);
+    --color-accent-blue: hsl(0deg 65% 51%);
+
+    &.dark {
+        --color-background-blue: hsl(0deg 42% 47.5%);
+        --color-accent-blue: hsl(0deg 45% 56.5%);
+    }
+}
+
+:root.modern[data-accent="orange"] {
+    --color-background-blue: hsl(25deg 65% 37.5%);
+    --color-accent-blue: hsl(25deg 65% 40.5%);
+
+    &.dark {
+        --color-background-blue: hsl(25deg 42% 39%);
+        --color-accent-blue: hsl(25deg 45% 47%);
+    }
+}
+
+:root.modern[data-accent="green"] {
+    --color-background-blue: hsl(145deg 65% 28.5%);
+    --color-accent-blue: hsl(145deg 65% 30.5%);
+
+    &.dark {
+        --color-background-blue: hsl(145deg 42% 32%);
+        --color-accent-blue: hsl(145deg 45% 38%);
+    }
+}
+
+:root.modern[data-accent="teal"] {
+    --color-background-blue: hsl(180deg 65% 27.5%);
+    --color-accent-blue: hsl(180deg 65% 29.5%);
+
+    &.dark {
+        --color-background-blue: hsl(180deg 42% 31.5%);
+        --color-accent-blue: hsl(180deg 45% 37%);
+    }
+}
+
 @media (pointer: coarse) {
     :root.modern {
         --modern-control-height: 44px;
@@ -1401,6 +1472,12 @@
 :root.modern :where(img[src$="/slow_off.svg"]) {
     --modern-icon: url("../images/slow_off.svg");
     --modern-needle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='m26.630281 6.0418607-7.071236 13.7839783-.0059-.0053a4 4 0 0 1 -.563666.836956 4 4 0 0 1 -5.647106.331963 4 4 0 0 1 -.331963-5.647105 4 4 0 0 1 .759274-.663037 4 4 0 0 1 .0081-.0061z' fill='%2332cd32'/%3E%3C/svg%3E");
+}
+
+/* amber with the red and pink accents, which would hide the red needle */
+:root.modern:is([data-accent="red"], [data-accent="pink"])
+    :where(img[src$="/slow.svg"]) {
+    --modern-needle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='m5.3697171 6.0418607 7.0712359 13.7839783.0059-.0053a4 4 0 0 0 .563666.836956 4 4 0 0 0 5.647106.331963 4 4 0 0 0 .331963-5.647105 4 4 0 0 0 -.759274-.663037 4 4 0 0 0 -.0081-.0061z' fill='%23ffb000'/%3E%3C/svg%3E");
 }
 
 :root.modern
