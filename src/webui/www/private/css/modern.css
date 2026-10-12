@@ -1899,6 +1899,7 @@
 :root.modern .mocha #searchPluginsContainer > h2,
 :root.modern #rssContentView .dynamicTable th,
 :root.modern #RssDownloader :is(#rulesTableDesc, #articleTableDesc),
+:root.modern #RssDownloader :is(#rssWizardProgress, #rssWizardRules > b),
 :root.modern #statisticsContent h3,
 :root.modern #manageCookiesTable thead td,
 :root.modern #aboutAuthorContent > h3,
@@ -5311,6 +5312,7 @@
     flex: 1 1 100%;
 }
 
+:root.modern #RssDownloader .listEditor,
 :root.modern .PrefTab .listEditor {
     border: var(--modern-border);
     border-radius: var(--modern-radius-card);
@@ -6060,7 +6062,7 @@
     --modern-icon: url("../images/edit-clear.svg");
 }
 
-:root.modern #RssDownloader.modernNoRule {
+:root.modern #RssDownloader.modernNoRule:not(.rssWizard) {
     &
         :is(
             #ruleSettings,
@@ -6268,5 +6270,138 @@
         & > div.formRow:has(#savetoDifferentDir) {
             border-top: 0;
         }
+    }
+}
+
+/* Guided new rule */
+:root.modern
+    #RssDownloader:not(.rssWizard)
+    :is(
+        #rssWizardHeader,
+        #rssWizardName,
+        #rssWizardRules,
+        #rssWizardFeeds,
+        #rssWizardFooter
+    ) {
+    display: none;
+}
+
+:root.modern #RssDownloader.rssWizard {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 460px;
+
+    & > #leftRssDownloaderColumn,
+    & #rssDownloaderFeeds,
+    & :is(#saveButton, #rssDownloaderCancel, #lastMatchDiv),
+    & #ruleSettings > legend {
+        display: none;
+    }
+
+    & > #centerRssDownloaderColumn {
+        display: contents;
+    }
+
+    & > #rssDownloaderDisabled {
+        flex: none;
+        margin: 0;
+    }
+
+    & #ruleSettings {
+        align-self: stretch;
+        display: block;
+        margin: 0;
+    }
+
+    & #rssWizardHeader {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    & #rssWizardTitle {
+        font-size: 16px;
+    }
+
+    & #rssWizardHint {
+        color: var(--color-text-muted);
+    }
+
+    & #rssWizardName {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+
+        & > input {
+            box-sizing: border-box;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+    }
+
+    & #rssWizardRules {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        & > ul {
+            color: var(--color-text-muted);
+            list-style: none;
+            margin: 0;
+            max-height: 160px;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        &.invisible {
+            display: none;
+        }
+    }
+
+    & #rssWizardFeeds {
+        flex: none;
+
+        & .listEditorItems {
+            max-height: 300px;
+        }
+
+        & li > label {
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        & li > input {
+            margin: 0 8px 0 auto;
+            order: 2;
+        }
+
+        & .listEditorAdd > label {
+            align-self: center;
+            flex: none;
+        }
+    }
+
+    & #rssWizardFooter {
+        margin-top: auto;
+    }
+
+    &:is([data-step="1"], [data-step="2"]) #rssWizardBack {
+        display: none;
+    }
+
+    &:not([data-step="1"]) :is(#rssWizardName, #rssWizardRules),
+    &:not([data-step="3"]) #rssWizardFeeds,
+    &:is([data-step="1"], [data-step="3"]) #ruleSettings,
+    &:not([data-step="2"]) #ruleSettings .rssWizardMatch,
+    &:not([data-step="4"])
+        :is(#ruleSettings .rssWizardOption, #rightRssDownloaderColumn) {
+        display: none;
+    }
+
+    &[data-step="4"] > #rightRssDownloaderColumn {
+        flex: 1 1 auto;
+        min-height: 160px;
     }
 }
