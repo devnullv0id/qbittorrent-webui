@@ -74,6 +74,7 @@ window.qBittorrent.Client ??= (() => {
     const setup = () => {
         // fetch various data and store it in memory
         clientDataPromise = window.qBittorrent.ClientData.fetch([
+            "accent_color",
             "add_new_torrent_dialog_enabled",
             "add_torrent_default_category",
             "add_torrent_separate_dialog_per_torrent",
