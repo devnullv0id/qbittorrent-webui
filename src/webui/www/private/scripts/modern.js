@@ -264,6 +264,64 @@ window.qBittorrent.Modern ??= (() => {
         });
     };
 
+    /* Window places */
+
+    // a window the user moved or resized opens where it was left (Add Torrent's windows, named by their source, share
+    // one place); a button beside Close centers it again
+    const localPreferences = new window.qBittorrent.LocalPreferences.LocalPreferences();
+    const placeKey = (instance, side) => `window_${instance.options.id.split("-", 1)[0]}_${side}`;
+
+    // responsive.js centers a window as it fits it, until the user moves it
+    const setMoved = (instance, moved) => {
+        instance.responsiveUserMoved = moved;
+        instance.windowEl.classList.toggle("modernMoved", moved);
+    };
+
+    const savePlace = (instance) => {
+        localPreferences.set(placeKey(instance, "left"), instance.windowEl.offsetLeft);
+        localPreferences.set(placeKey(instance, "top"), instance.windowEl.offsetTop);
+    };
+
+    const centerWindow = (instance) => {
+        localPreferences.remove(placeKey(instance, "left"));
+        localPreferences.remove(placeKey(instance, "top"));
+        setMoved(instance, false);
+        responsive.fitWindow(instance);
+    };
+
+    const placedWindows = new WeakSet();
+
+    // as the window opens, before it is first fitted
+    const placeWindow = (instance) => {
+        if (placedWindows.has(instance))
+            return;
+
+        placedWindows.add(instance);
+        const left = localPreferences.get(placeKey(instance, "left"));
+        const top = localPreferences.get(placeKey(instance, "top"));
+        if ((left !== null) && (top !== null)) {
+            instance.windowEl.style.left = `${Number(left)}px`;
+            instance.windowEl.style.top = `${Number(top)}px`;
+            setMoved(instance, true);
+        }
+
+        for (const drag of [instance.windowDrag, instance.resizable1, instance.resizable2, instance.resizable3, instance.resizable4, instance.resizable5]) {
+            drag?.addEvent("start", () => setMoved(instance, true));
+            drag?.addEvent("complete", () => savePlace(instance));
+        }
+
+        if (!instance.controlsEl)
+            return;
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "modernCenterButton";
+        button.title = "QBT_TR(Center window)QBT_TR[CONTEXT=MainWindow]";
+        button.setAttribute("aria-label", button.title);
+        button.addEventListener("click", (_event) => centerWindow(instance));
+        instance.controlsEl.append(button);
+    };
+
     const init = () => {
         if (!responsive.isModern())
             return;
@@ -272,6 +330,7 @@ window.qBittorrent.Modern ??= (() => {
         initMenubar();
         initPropertiesTabs();
         initDialogs();
+        responsive.addWindowHook(placeWindow);
     };
 
     return exports();
