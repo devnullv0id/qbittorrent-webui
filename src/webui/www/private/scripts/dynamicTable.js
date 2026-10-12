@@ -3339,7 +3339,21 @@ window.qBittorrent.DynamicTable ??= (() => {
                     span = document.createElement("span");
                     td.append(span);
                 }
-                span.textContent = value;
+                if (responsive?.isModern() !== true) {
+                    span.textContent = value;
+                    return;
+                }
+
+                // the unread count in a badge
+                span.textContent = name;
+                let badge = td.children[2];
+                if (badge === undefined) {
+                    badge = document.createElement("span");
+                    badge.className = "rssUnreadCount";
+                    td.append(badge);
+                }
+                badge.textContent = data.unread;
+                badge.classList.toggle("invisible", (data.unread === 0));
             };
         }
         setupHeaderMenu() {}

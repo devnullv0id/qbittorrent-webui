@@ -371,6 +371,7 @@
                 }
             });
             rssArticleTable.setup("rssArticleTableDiv", "rssArticleFixedHeaderDiv", rssArticleContextMenu);
+            setupModern();
             updateRssFeedList();
             load();
         };
@@ -573,12 +574,13 @@
             const articleDescription = article.description;
             if (articleDescription !== undefined) {
                 const rootColor = document.documentElement.classList.contains("dark") ? "class='dark'" : "";
+                const modernStyle = window.qBittorrent.Responsive.isModern() ? modernDescriptionStyle() : "";
 
                 // Place in iframe with sandbox attribute to prevent js execution
                 const iframeElement = document.createElement("iframe");
                 iframeElement.id = "rssDescription";
                 iframeElement.sandbox = "allow-same-origin"; // allowed to get parent css
-                iframeElement.srcdoc = `<html ${rootColor}><head><meta charset="utf-8"><meta name="referrer" content="same-origin"><link rel="stylesheet" type="text/css" href="css/style.css?v=${CACHEID}"></head><body>${articleDescription}</body></html>`;
+                iframeElement.srcdoc = `<html ${rootColor}><head><meta charset="utf-8"><meta name="referrer" content="same-origin"><link rel="stylesheet" type="text/css" href="css/style.css?v=${CACHEID}">${modernStyle}</head><body>${articleDescription}</body></html>`;
 
                 detailsView.append(iframeElement);
             }
@@ -1056,6 +1058,12 @@
                 }
             });
         };
+
+        // Modern's additions (modern.js)
+        const { setupModern, modernDescriptionStyle } = window.qBittorrent.Modern.rssPage({
+            rssArticleTable: rssArticleTable,
+            rssFeedTable: rssFeedTable
+        });
 
         return exports();
     })();
