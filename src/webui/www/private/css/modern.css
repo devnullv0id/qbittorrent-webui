@@ -32,6 +32,7 @@
     --modern-chevron-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6.79 4.34 12.45 10 6.79 15.66' fill='none' stroke='%23545454' stroke-width='2'/%3E%3C/svg%3E");
     --modern-tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.5 8.5 3 3 6-7' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     --modern-dash: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8h8' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+    --modern-plus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8h8M8 4v8' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
     --color-background-blue: hsl(210deg 65% 42%); /* the accent */
     --color-accent-blue: hsl(210deg 65% 45%);
     --modern-accent-text: var(--color-accent-blue);
@@ -3848,5 +3849,134 @@
 @media (width < 340px) {
     :root.modern #modernStatusBar .modernStatusSpeed {
         font-size: 12px;
+    }
+}
+
+/* Speed limits */
+:root.modern .speedGrid {
+    grid-template-columns: 36px auto minmax(0, 1fr) auto auto;
+}
+
+/* the note on a capped speed sits on the card's label line, so the card keeps its size */
+:root.modern fieldset > .modernSpeedNote {
+    bottom: calc(100% + 4px);
+    color: var(--color-text-orange);
+    font-size: 12px;
+    line-height: 16px;
+    max-width: 55%;
+    position: absolute;
+    right: 2px;
+    text-align: end;
+}
+
+:root.modern .modernSpeedStepper {
+    display: block;
+    min-width: 0;
+    position: relative;
+
+    & > .modernSpeedField {
+        box-sizing: border-box;
+        width: 100px;
+    }
+
+    & > :where(span):is(.modernSpeedUp, .modernSpeedDown) {
+        cursor: pointer;
+
+        &::before {
+            background-color: var(--color-text-muted);
+            content: "";
+            inset: 0;
+            position: absolute;
+        }
+
+        &:hover::before {
+            background-color: var(--color-text-default);
+        }
+    }
+}
+
+@media not (pointer: coarse) {
+    :root.modern .modernSpeedStepper {
+        & > .modernSpeedField {
+            padding-right: 26px;
+        }
+
+        & > :where(span):is(.modernSpeedUp, .modernSpeedDown) {
+            height: 50%;
+            position: absolute;
+            right: 8px;
+            width: 16px;
+        }
+
+        & > .modernSpeedUp {
+            top: 1px;
+
+            &::before {
+                mask: var(--modern-chevron-up) center / 10px no-repeat;
+            }
+        }
+
+        & > .modernSpeedDown {
+            bottom: 1px;
+
+            &::before {
+                mask: var(--modern-chevron-down) center / 10px no-repeat;
+            }
+        }
+    }
+}
+
+@media (pointer: coarse) {
+    :root.modern input[type="range"] {
+        height: var(--responsive-touch-target);
+    }
+
+    :root.modern .modernSpeedStepper {
+        display: flex;
+
+        & > .modernSpeedField {
+            text-align: center;
+            width: 72px;
+        }
+
+        & > :where(span):is(.modernSpeedUp, .modernSpeedDown) {
+            flex: none;
+            height: var(--responsive-touch-target);
+            position: relative;
+            width: var(--responsive-touch-target);
+        }
+
+        & > .modernSpeedUp::before {
+            mask: var(--modern-plus) center / 18px no-repeat;
+        }
+
+        & > .modernSpeedDown::before {
+            mask: var(--modern-dash) center / 18px no-repeat;
+        }
+    }
+}
+
+:root.modern.responsivePhone .speedGrid {
+    grid-auto-flow: row dense;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+
+    & > .speedIcon {
+        grid-row: span 4;
+    }
+
+    & > label {
+        grid-column: 2;
+    }
+
+    & > input[type="range"] {
+        grid-column: 2 / -1;
+    }
+
+    & > .modernSpeedStepper {
+        grid-column: 3;
+    }
+
+    & > .modernSpeedUnit {
+        grid-column: 4;
     }
 }
