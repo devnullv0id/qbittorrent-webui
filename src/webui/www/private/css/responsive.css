@@ -186,7 +186,7 @@ input[type="button"]:disabled {
         display: flow-root;
     }
 
-    :root:has(#mochaToolbar.invisible) #desktopNavbar {
+    :root:where(:not(.modern)):has(#mochaToolbar.invisible) #desktopNavbar {
         display: block;
     }
 
