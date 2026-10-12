@@ -48,7 +48,9 @@ window.qBittorrent.Client ??= (() => {
             uploadTorrentFiles: uploadTorrentFiles,
             confirmAddTorrents: confirmAddTorrents,
             categoryMap: categoryMap,
-            tagMap: tagMap
+            tagMap: tagMap,
+            addServerStateListener: addServerStateListener,
+            notifyServerState: notifyServerState
         };
     };
 
@@ -56,6 +58,16 @@ window.qBittorrent.Client ??= (() => {
     const categoryMap = new Map();
     // Map<tag: String, torrents: Set>
     const tagMap = new Map();
+
+    // what else shows the server's state (Modern's status bar), called with each state after the page shows it
+    const serverStateListeners = [];
+    const addServerStateListener = (listener) => {
+        serverStateListeners.push(listener);
+    };
+    const notifyServerState = (serverState) => {
+        for (const listener of serverStateListeners)
+            listener(serverState);
+    };
 
     let cacheAllSettled;
     let clientDataPromise;
@@ -1349,6 +1361,7 @@ window.addEventListener("DOMContentLoaded", async (event) => {
         }
 
         serverSyncMainDataInterval = Math.max(serverState.refresh_interval, 500);
+        window.qBittorrent.Client.notifyServerState(serverState);
     };
 
     const updateAltSpeedIcon = (enabled) => {
