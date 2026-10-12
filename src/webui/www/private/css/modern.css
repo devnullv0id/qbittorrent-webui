@@ -4087,3 +4087,9 @@
 :root.modern:not(.responsivePhone) .modernMoved:has(.modernAttachButton) {
     --modern-window-buttons: 3;
 }
+
+:root.modern
+    #torrentsTableMenu
+    li:has(> a:is([href="#downloadLimit"], [href="#uploadLimit"])) {
+    display: none;
+}
