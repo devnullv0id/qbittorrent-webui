@@ -1891,6 +1891,7 @@
 :root.modern .mocha #searchPluginsContainer > h2,
 :root.modern #rssContentView .dynamicTable th,
 :root.modern #RssDownloader :is(#rulesTableDesc, #articleTableDesc),
+:root.modern #RssDownloader :is(#rssWizardProgress, #rssWizardRules > b),
 :root.modern #statisticsContent h3,
 :root.modern #manageCookiesTable thead td,
 :root.modern fieldset > legend {
@@ -5162,6 +5163,7 @@
     flex: 1 1 100%;
 }
 
+:root.modern #RssDownloader .listEditor,
 :root.modern .PrefTab .listEditor {
     border: var(--modern-border);
     border-radius: var(--modern-radius-card);
@@ -5956,7 +5958,7 @@
 
 /* no rule shown: what belongs to one dimmed (a class rssDownloader.html sets, as :has(:disabled) would restyle every
     page whenever a control anywhere is turned on or off) */
-:root.modern #RssDownloader.modernNoRule {
+:root.modern #RssDownloader.modernNoRule:not(.rssWizard) {
     &
         :is(
             #ruleSettings,
@@ -6184,5 +6186,146 @@
             box-sizing: border-box;
             min-width: 1000px;
         }
+    }
+}
+
+/* RSS Downloader: the guided new rule (rssDownloader.html), a step at a time on the page's own fields */
+
+:root.modern
+    #RssDownloader:not(.rssWizard)
+    :is(
+        #rssWizardHeader,
+        #rssWizardName,
+        #rssWizardRules,
+        #rssWizardFeeds,
+        #rssWizardFooter
+    ) {
+    display: none;
+}
+
+:root.modern #RssDownloader.rssWizard {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    /* one size for every step */
+    min-height: 460px;
+
+    /* the editor's own parts */
+    & > #leftRssDownloaderColumn,
+    & #rssDownloaderFeeds,
+    & :is(#saveButton, #rssDownloaderCancel, #lastMatchDiv),
+    & #ruleSettings > legend {
+        display: none;
+    }
+
+    & > #centerRssDownloaderColumn {
+        display: contents;
+    }
+
+    & > #rssDownloaderDisabled {
+        flex: none;
+        margin: 0;
+    }
+
+    & #ruleSettings {
+        align-self: stretch;
+        display: block;
+        margin: 0;
+    }
+
+    & #rssWizardHeader {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    & #rssWizardTitle {
+        font-size: 16px;
+    }
+
+    & #rssWizardHint {
+        color: var(--color-text-muted);
+    }
+
+    & #rssWizardName {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+
+        & > input {
+            box-sizing: border-box;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+    }
+
+    /* the rules there are, by name */
+    & #rssWizardRules {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        & > ul {
+            color: var(--color-text-muted);
+            list-style: none;
+            margin: 0;
+            max-height: 160px;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        &.invisible {
+            display: none;
+        }
+    }
+
+    /* the feeds: a switch each at the row's end */
+    & #rssWizardFeeds {
+        flex: none;
+
+        & .listEditorItems {
+            max-height: 300px;
+        }
+
+        & li > label {
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        & li > input {
+            margin: 0 8px 0 auto;
+            order: 2;
+        }
+
+        & .listEditorAdd > label {
+            align-self: center;
+            flex: none;
+        }
+    }
+
+    & #rssWizardFooter {
+        margin-top: auto;
+    }
+
+    /* no going back to the name once the rule is made */
+    &:is([data-step="1"], [data-step="2"]) #rssWizardBack {
+        display: none;
+    }
+
+    /* each step shows its own part */
+    &:not([data-step="1"]) :is(#rssWizardName, #rssWizardRules),
+    &:not([data-step="3"]) #rssWizardFeeds,
+    &:is([data-step="1"], [data-step="3"]) #ruleSettings,
+    &:not([data-step="2"]) #ruleSettings .rssWizardMatch,
+    &:not([data-step="4"])
+        :is(#ruleSettings .rssWizardOption, #rightRssDownloaderColumn) {
+        display: none;
+    }
+
+    /* the last step: the articles the rule matches, below its settings */
+    &[data-step="4"] > #rightRssDownloaderColumn {
+        flex: 1 1 auto;
+        min-height: 160px;
     }
 }

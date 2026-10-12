@@ -390,6 +390,19 @@
             });
             document.getElementById("rssFetchingDisabled").append(optionsButton);
 
+            // the guided new rule, after New subscription
+            const guided = document.createElement("button");
+            guided.type = "button";
+            guided.id = "rssWizardButton";
+            const icon = document.createElement("img");
+            icon.src = "images/list-add.svg";
+            icon.alt = "";
+            icon.width = 16;
+            icon.height = 16;
+            guided.append(icon, "QBT_TR(New rule (guided))QBT_TR[CONTEXT=AutomatedRssDownloader]");
+            guided.addEventListener("click", (_event) => openRssDownloader(true));
+            document.getElementById("newSubscriptionButton").after(guided);
+
             const hint = document.createElement("div");
             hint.id = "rssDetailsHint";
             hint.textContent = "QBT_TR(Select an article to see its details.)QBT_TR[CONTEXT=RSSWidget]";
@@ -1129,8 +1142,11 @@
                 markItemAsRead(path);
         };
 
-        const openRssDownloader = () => {
+        // guided: Modern's guided new rule, once the window has loaded its page
+        const openRssDownloader = (guided = false) => {
             const id = "rssdownloaderpage";
+            // the page set up already, in this window's opening
+            const loaded = (document.getElementById("rssWizardNext") !== null);
             new MochaUI.Window({
                 id: id,
                 icon: "images/qbittorrent-tray.svg",
@@ -1148,6 +1164,13 @@
                     y: [500, 2000]
                 }
             });
+            if (!guided)
+                return;
+
+            if (loaded)
+                window.qBittorrent.RssDownloader.startWizard();
+            else
+                MochaUI.Windows.instances[id].addEvent("contentLoaded", () => window.qBittorrent.RssDownloader.startWizard());
         };
 
         return exports();
