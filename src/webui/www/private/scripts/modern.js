@@ -2263,6 +2263,44 @@ window.qBittorrent.Modern ??= (() => {
             update();
         };
 
+        // a switch for the alternative speed limits, saved with the page; unusable until their mode has been read
+        const addSpeedLimitsSwitch = (state) => {
+            const box = document.createElement("input");
+            box.type = "checkbox";
+            box.id = "modernAltSpeedLimits";
+            box.disabled = true;
+            const label = document.createElement("label");
+            label.htmlFor = box.id;
+            label.textContent = "QBT_TR(Alternative speed limits)QBT_TR[CONTEXT=MainWindow]";
+            const row = document.createElement("div");
+            row.className = "formRow";
+            row.append(box, label);
+            document.getElementById("altUpLimitValue").closest("fieldset").querySelector(":scope > legend").after(row);
+
+            const showIcon = () => {
+                const icon = document.querySelector("#PrefSpeedLink img");
+                if (icon !== null)
+                    icon.src = box.checked ? "images/slow.svg" : "images/slow_off.svg";
+            };
+            box.addEventListener("change", (_event) => showIcon());
+            state.speedLimitsMode = null;
+            fetch("api/v2/transfer/speedLimitsMode", {
+                    method: "GET",
+                    cache: "no-store",
+                    signal: state.listening.signal
+                })
+                .then(async (response) => {
+                    if (!response.ok)
+                        return;
+
+                    state.speedLimitsMode = (await response.text()) === "1";
+                    box.checked = state.speedLimitsMode;
+                    box.disabled = false;
+                    showIcon();
+                })
+                .catch(() => {});
+        };
+
         // Cancel, Apply and OK in place of Save; Apply saves while there are changes
         const addDialogButtons = (state) => {
             const footer = state.page.querySelector(":scope > .dialogFooter");
@@ -2369,6 +2407,7 @@ window.qBittorrent.Modern ??= (() => {
             markFieldUnits(state.page);
             addProxySwitch(state);
             addI2PSwitch();
+            addSpeedLimitsSwitch(state);
             for (const editor of LIST_EDITORS)
                 addListEditor(state, editor);
             editWatchedFolders(state);
@@ -2395,6 +2434,31 @@ window.qBittorrent.Modern ??= (() => {
                 save();
         };
 
+        // as applyPreferences() saves: the alternative speed limits' mode, where the switch changed it
+        const modernSaveSpeedLimitsMode = async () => {
+            if (modernOptions === null)
+                return;
+
+            const state = modernOptions;
+            const enabled = document.getElementById("modernAltSpeedLimits").checked;
+            if ((state.speedLimitsMode === null) || (enabled === state.speedLimitsMode))
+                return;
+
+            const response = await fetch("api/v2/transfer/setSpeedLimitsMode", {
+                method: "POST",
+                body: new URLSearchParams({
+                    mode: enabled ? "1" : "0"
+                })
+            });
+            if (!response.ok) {
+                // the server's message, as cache.js marks it
+                const error = new Error(await response.text());
+                error.name = "ServerError";
+                throw error;
+            }
+            state.speedLimitsMode = enabled;
+        };
+
         // after a save: OK reloads the page; Apply keeps Options open and has the page reload as Options closes. False where
         // applyPreferences() goes on as in Classic
         const modernSaved = (close) => {
@@ -2410,7 +2474,7 @@ window.qBittorrent.Modern ??= (() => {
             return true;
         };
 
-        return { setupModern: setupModern, modernFilled: modernFilled, modernBeforeSave: modernBeforeSave, modernSaved: modernSaved };
+        return { setupModern: setupModern, modernFilled: modernFilled, modernBeforeSave: modernBeforeSave, modernSaved: modernSaved, modernSaveSpeedLimitsMode: modernSaveSpeedLimitsMode };
     };
 
     // the torrents' upload and download limits; where the torrents' limits differ the field is mixed
