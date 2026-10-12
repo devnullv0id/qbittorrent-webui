@@ -95,6 +95,7 @@
             searchPluginsTable.setup("searchPluginsTableDiv", "searchPluginsTableFixedHeaderDiv", searchPluginsTableContextMenu);
 
             searchPluginsTable.dynamicTableDiv.addEventListener("dblclick", (e) => { enablePlugin(); });
+            setupModern();
 
             updateTable();
         };
@@ -160,7 +161,14 @@
             }
 
             searchPluginsTable.updateTable();
+            updateActions();
         };
+
+        // Modern's plugin buttons (modern.js)
+        const { setupModern, updateActions } = window.qBittorrent.Modern.searchPluginsPage({
+            searchPluginsTable: () => searchPluginsTable,
+            uninstallPlugin: uninstallPlugin
+        });
 
         return exports();
     })();
