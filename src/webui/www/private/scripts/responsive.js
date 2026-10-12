@@ -40,6 +40,8 @@ window.qBittorrent.Responsive ??= (() => {
             isRelayout: isRelayout,
             setDisplayMode: setDisplayMode,
             whenElement: whenElement,
+            addWindowHook: addWindowHook,
+            addFrameHook: addFrameHook,
             rowHeight: rowHeight
         };
     };
@@ -78,6 +80,20 @@ window.qBittorrent.Responsive ??= (() => {
     // the main page and every dialog frame carry the main window's queries as classes: a frame is narrower than the
     // screen its window is on
     const frameDocuments = new Set();
+
+    // Modern's handling of each dialog frame as it loads, and of each window as it opens and its page loads (modern.js)
+    const frameHooks = [];
+    const windowHooks = [];
+    const addFrameHook = (hook) => {
+        frameHooks.push(hook);
+    };
+    const addWindowHook = (hook) => {
+        windowHooks.push(hook);
+    };
+    const runWindowHooks = (instance) => {
+        for (const hook of windowHooks)
+            hook(instance);
+    };
 
     const setClasses = (doc) => {
         doc.documentElement.classList.toggle("responsivePhone", queries.phone.matches);
@@ -134,6 +150,8 @@ window.qBittorrent.Responsive ??= (() => {
         setClasses(doc);
         frameDocuments.add(doc);
         doc.defaultView.addEventListener("pagehide", (_event) => frameDocuments.delete(doc));
+        for (const hook of frameHooks)
+            hook(doc);
     };
 
     for (const query of [queries.phone, queries.relayout]) {
@@ -848,6 +866,7 @@ window.qBittorrent.Responsive ??= (() => {
         // a window opened from the drawer would open behind it
         closeFiltersDrawer();
         raiseStoredSize(instance);
+        runWindowHooks(instance);
         fitWindow(instance);
 
         // the page's own boxes change size as it loads and changes; skipped where nothing a fit follows has changed
@@ -870,6 +889,7 @@ window.qBittorrent.Responsive ??= (() => {
             // another page
             instance.responsiveFitState = null;
             instance.responsiveFills = undefined;
+            runWindowHooks(instance);
             fitSoon();
         });
         for (const child of instance.contentEl.children)

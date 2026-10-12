@@ -167,6 +167,103 @@ window.qBittorrent.Modern ??= (() => {
         strip.addEventListener("click", (_event) => requestAnimationFrame(keepSelectedInView));
     };
 
+    /* Dialogs */
+
+    // a label that opens a window ends in "...", which beside Modern's fields reads as cut off: buttons drop it, as each
+    // page loads
+    const TRAILING_ELLIPSIS = /\s*(?:\.{2,}|\u2026)\s*$/;
+    const BUTTONS = "button, input:is([type='button'], [type='submit'])";
+
+    const trimEllipsis = (container) => {
+        for (const button of container.querySelectorAll(BUTTONS)) {
+            if (button.matches("input")) {
+                button.value = button.value.replace(TRAILING_ELLIPSIS, "");
+                continue;
+            }
+            const label = [...button.childNodes].findLast((node) => (node.nodeType === Node.TEXT_NODE) && (node.textContent.trim() !== ""));
+            if (label !== undefined)
+                label.textContent = label.textContent.replace(TRAILING_ELLIPSIS, "");
+        }
+    };
+
+    // the buttons that close a dialog without doing anything
+    const CANCEL_BUTTONS = "#cancelBtn, #newPluginCancel, [id^='cancel'][id$='Button'], [onclick*='closeFrameWindow']";
+
+    // the button rows Modern has set up, while their pages are shown
+    const footers = new Set();
+
+    // a dialog's Cancel comes before its main action, at the row's start; on phones, where the buttons stack, after it.
+    // Moved in the page, so the keyboard goes through them in the order they are shown
+    const placeCancel = (footer) => {
+        const cancel = footer.querySelector(":scope > .dialogCancel");
+        if (responsive.queries.phone.matches)
+            footer.append(cancel);
+        else
+            footer.prepend(cancel);
+    };
+
+    // a dialog frame with one button gets a Cancel; the other button, or a window's only one, is the main action
+    const setUpFooter = (footer, frameWindow) => {
+        const buttons = [...footer.querySelectorAll(`:scope > :is(${BUTTONS})`)];
+        let cancel = buttons.find((button) => button.matches(CANCEL_BUTTONS));
+        if ((cancel === undefined) && (frameWindow !== null) && (buttons.length === 1)) {
+            cancel = footer.ownerDocument.createElement("button");
+            cancel.type = "button";
+            cancel.textContent = "QBT_TR(Cancel)QBT_TR[CONTEXT=MainWindow]";
+            cancel.addEventListener("click", (_event) => window.qBittorrent.Client.closeFrameWindow(frameWindow));
+            footer.append(cancel);
+            buttons.push(cancel);
+        }
+        if (buttons.length !== ((cancel === undefined) ? 1 : 2))
+            return;
+
+        buttons.find((button) => button !== cancel).classList.add("dialogPrimary");
+        if (cancel === undefined)
+            return;
+
+        cancel.classList.add("dialogCancel");
+        footers.add(footer);
+        placeCancel(footer);
+    };
+
+    // Enter on a focused button presses that button, not the main action the page presses on Enter
+    const ENTER_TARGETS = "button, input:is([type='button'], [type='submit'], [type='reset']), a[href]";
+
+    const setUpFrame = (doc) => {
+        const footer = doc.querySelector(".dialogFooter");
+        if (footer !== null)
+            setUpFooter(footer, doc.defaultView);
+        doc.defaultView.addEventListener("keydown", (event) => {
+            if ((event.key === "Enter") && event.target.matches?.(ENTER_TARGETS))
+                event.stopImmediatePropagation();
+        }, true);
+        trimEllipsis(doc.body);
+    };
+
+    // windows whose pages are loaded into them, not framed
+    const setUpWindow = (instance) => {
+        if (instance.iframeEl)
+            return;
+
+        const footer = instance.contentEl.querySelector(".dialogFooter");
+        if ((footer !== null) && !footers.has(footer))
+            setUpFooter(footer, null);
+        trimEllipsis(instance.contentEl);
+    };
+
+    const initDialogs = () => {
+        responsive.addFrameHook(setUpFrame);
+        responsive.addWindowHook(setUpWindow);
+        responsive.queries.phone.addEventListener("change", (_event) => {
+            for (const footer of footers) {
+                if (footer.isConnected && (footer.ownerDocument.defaultView !== null))
+                    placeCancel(footer);
+                else
+                    footers.delete(footer);
+            }
+        });
+    };
+
     const init = () => {
         if (!responsive.isModern())
             return;
@@ -174,6 +271,7 @@ window.qBittorrent.Modern ??= (() => {
         initPopups();
         initMenubar();
         initPropertiesTabs();
+        initDialogs();
     };
 
     return exports();
