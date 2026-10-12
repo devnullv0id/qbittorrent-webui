@@ -734,8 +734,10 @@
 }
 
 /* Options: where pages are laid out anew, the settings rows wrap in a window narrower than 800px, the room the widest
-    rows need with touch-sized fields */
-:root.responsiveRelayout #preferencesPage .mochaContentWrapper {
+    rows need with touch-sized fields (Modern lays them out on its own) */
+:root.responsiveRelayout:where(:not(.modern))
+    #preferencesPage
+    .mochaContentWrapper {
     container: options / inline-size;
 }
 

@@ -523,6 +523,9 @@ window.qBittorrent.Responsive ??= (() => {
     const MAX_WINDOW_HEIGHT = 800;
     // windows whose pages share them and differ in height, as Options' tabs do: they keep the fitted height
     const ONE_SIZE_WINDOWS = new Set(["preferencesPage"]);
+    // windows that Modern's stylesheet sizes: they are only placed
+    const STYLESHEET_SIZED_WINDOWS = new Set(["preferencesPage"]);
+    const isStylesheetSized = (instance) => isModern() && STYLESHEET_SIZED_WINDOWS.has(instance.windowEl.id);
 
     // resizes like a drag of the edge, without storing the size as the user's
     const setContentSize = (instance, width, height) => {
@@ -750,7 +753,7 @@ window.qBittorrent.Responsive ??= (() => {
             return;
 
         const phone = queries.phone.matches;
-        const { fullScreen, fitted } = fitWindowSize(instance, phone);
+        const { fullScreen, fitted } = isStylesheetSized(instance) ? { fullScreen: phone, fitted: true } : fitWindowSize(instance, phone);
 
         // no dragging on phones
         if (phone)
