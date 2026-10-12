@@ -39,6 +39,9 @@
 
         MochaUI.initializeTabs("preferencesTabs");
 
+        // Modern on phones: More and a second row of tiles
+        window.qBittorrent.Modern.setUpOptionsTabs();
+
         const showTab = (element) => {
             for (const tab of document.querySelectorAll(".PrefTab"))
                 tab.classList.toggle("invisible", (tab !== element));

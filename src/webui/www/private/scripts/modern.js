@@ -37,6 +37,7 @@ window.qBittorrent.Modern ??= (() => {
             trimEllipsis: trimEllipsis,
             optionsPage: optionsPage,
             initTorrentLimits: initTorrentLimits,
+            setUpOptionsTabs: setUpOptionsTabs,
         };
     };
 
@@ -2067,6 +2068,52 @@ window.qBittorrent.Modern ??= (() => {
                     window.parent.qBittorrent.Client.closeWindow(applyButton.closest(".mocha"));
                 });
         });
+    };
+
+    // phones: the first four pages and More as tiles, the others in a second row while More is open
+    const setUpOptionsTabs = () => {
+        if (!responsive.isModern())
+            return;
+
+        const tabs = document.getElementById("preferencesTabs");
+        const pages = [...tabs.children];
+        const more = document.createElement("button");
+        more.type = "button";
+        const glyph = document.createElement("span");
+        glyph.className = "modernGlyph";
+        glyph.dataset.glyph = "chevron";
+        glyph.setAttribute("aria-hidden", "true");
+        more.append(glyph, "QBT_TR(More)QBT_TR[CONTEXT=OptionsDialog]");
+        const tile = document.createElement("li");
+        tile.className = "modernPrefsMore";
+        tile.append(more);
+        pages[3].after(tile);
+
+        const expand = (expanded) => {
+            tabs.classList.toggle("modernExpanded", expanded);
+            more.setAttribute("aria-expanded", expanded.toString());
+        };
+        more.addEventListener("click", (_event) => expand(!tabs.classList.contains("modernExpanded")));
+        for (const page of pages.slice(4))
+            page.addEventListener("click", (_event) => expand(true));
+        expand(false);
+
+        // the heights More opens and closes, measured again as a tile's size changes
+        const measure = () => {
+            const top = tabs.getBoundingClientRect().top;
+            const below = Number.parseFloat(getComputedStyle(tabs).paddingBottom);
+            const bottom = (tiles) => Math.max(...tiles.map((tile) => tile.getBoundingClientRect().bottom));
+            const tiles = [...tabs.children];
+            tabs.style.setProperty("--modern-prefs-strip", `${bottom(tiles.slice(0, 5)) - top + below}px`);
+            tabs.style.setProperty("--modern-prefs-strip-expanded", `${bottom(tiles) - top + below}px`);
+        };
+        const sizes = new ResizeObserver((_entries) => measure());
+        for (const tile of tabs.children)
+            sizes.observe(tile);
+        window.MUI.Windows.instances["preferencesPage"].addEvent("close", () => sizes.disconnect());
+        // measured now, not by the observer: the list shrinking would change the toolbar's size, which responsive.js observes
+        // too, and the browser would report a loop
+        measure();
     };
 
     return exports();

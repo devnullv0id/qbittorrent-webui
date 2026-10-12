@@ -661,6 +661,8 @@
     :root.modern #modernStatusBar .modernStatusChevron,
     :root.modern #modernStatusBar .modernStatusDetails,
     :root.modern #modernSpeedLimits,
+    :root.modern #preferencesTabs,
+    :root.modern #preferencesTabs > li,
     :root.modern input,
     :root.modern input::before,
     :root.modern select,
@@ -4830,4 +4832,172 @@
         position: absolute;
         right: 0;
     }
+}
+
+/* Options on phones */
+:root.modern.responsivePhone #preferencesPage {
+    & .mochaToolbar {
+        border-bottom: var(--modern-divider);
+    }
+
+    & #preferencesTabs {
+        align-content: start;
+        box-sizing: border-box;
+        display: grid;
+        gap: 4px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        height: var(--modern-prefs-strip, auto);
+        overflow: clip;
+        padding: 6px 8px;
+        transition: height 0.2s;
+
+        &.modernExpanded {
+            height: var(--modern-prefs-strip-expanded, auto);
+        }
+
+        & li > :is(a, button) {
+            align-items: center;
+            border-radius: var(--modern-radius-button);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            font-size: 11px;
+            gap: 4px;
+            height: 100%;
+            hyphens: auto;
+            justify-content: center;
+            line-height: 13px;
+            min-height: 64px;
+            overflow-wrap: anywhere;
+            padding: 4px 2px;
+            text-align: center;
+            white-space: normal;
+            width: 100%;
+
+            & img {
+                height: 20px;
+                margin: 0;
+                width: 20px;
+            }
+        }
+
+        & > li:nth-child(n + 6) {
+            transition:
+                opacity 0.2s,
+                visibility 0.2s;
+        }
+
+        &:not(.modernExpanded) > li:nth-child(n + 6) {
+            opacity: 0;
+            visibility: hidden;
+        }
+    }
+
+    & .modernPrefsMore button {
+        background-color: transparent;
+        border: 1px solid transparent;
+        color: var(--color-text-default);
+        font-weight: 500;
+        min-width: 0;
+    }
+
+    & .modernPrefsMore .modernGlyph {
+        background-color: currentcolor;
+        height: 20px;
+        mask: var(--modern-chevron-down) center / 20px no-repeat;
+        width: 20px;
+    }
+
+    & .modernExpanded .modernPrefsMore .modernGlyph {
+        rotate: 180deg;
+    }
+
+    & .PrefTab {
+        --modern-select-width: 100%;
+        --modern-unit-slot: 40px;
+
+        & table:where(:not(#watched_folders_tab)) tr {
+            flex-wrap: wrap;
+        }
+
+        & tr:not(.modernSwitchEndRow) > td:last-child:not(:first-child) {
+            padding-top: 0;
+        }
+
+        & tr.modernSwitchEndRow {
+            flex-wrap: nowrap;
+
+            & > td:last-child {
+                width: auto;
+            }
+        }
+
+        & tr.modernApiKeyRow {
+            flex-wrap: wrap;
+
+            & > td:first-child {
+                flex-basis: 100%;
+            }
+
+            & > td:nth-child(2) {
+                flex: 1 1 0;
+            }
+        }
+
+        & table.modernIconTable > tbody {
+            grid-template-columns: minmax(0, 1fr);
+
+            & td[rowspan="2"] {
+                grid-row: auto;
+            }
+
+            & > tr + tr > td:not(:first-child) {
+                border-top: 0;
+            }
+        }
+
+        & #watched_folders_tab {
+            display: block;
+            overflow-x: auto;
+        }
+
+        & fieldset.modernSwitchCard {
+            padding-top: 2px;
+
+            & > legend {
+                height: auto;
+                min-height: calc(var(--modern-row-height) + 12px);
+                position: static;
+                white-space: normal;
+                width: 100%;
+            }
+        }
+
+        & div.formRow {
+            row-gap: 8px;
+        }
+    }
+
+    & .PrefTab div.formRow.modernFieldWithButton {
+        flex-wrap: wrap;
+
+        & > label:first-child {
+            flex: 1 1 100%;
+            width: auto;
+        }
+    }
+
+    & .PrefTab :is(#peerProxyServerTable, #fieldsetI2p table) {
+        & tr {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        & td:nth-child(even) {
+            padding-top: 0;
+        }
+    }
+}
+
+:root.modern:not(.responsivePhone) #preferencesTabs > .modernPrefsMore {
+    display: none;
 }
