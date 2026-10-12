@@ -1038,8 +1038,11 @@
                 markItemAsRead(path);
         };
 
-        const openRssDownloader = () => {
+        // guided: open Modern's guided new rule once the page has loaded
+        const openRssDownloader = (guided = false) => {
             const id = "rssdownloaderpage";
+            // the window's page is already set up
+            const loaded = (document.getElementById("rssWizardNext") !== null);
             new MochaUI.Window({
                 id: id,
                 icon: "images/qbittorrent-tray.svg",
@@ -1057,10 +1060,18 @@
                     y: [500, 2000]
                 }
             });
+            if (!guided)
+                return;
+
+            if (loaded)
+                window.qBittorrent.RssDownloader.startWizard();
+            else
+                MochaUI.Windows.instances[id].addEvent("contentLoaded", () => window.qBittorrent.RssDownloader.startWizard());
         };
 
         // Modern's additions (modern.js)
         const { setupModern, modernDescriptionStyle } = window.qBittorrent.Modern.rssPage({
+            openRssDownloader: openRssDownloader,
             rssArticleTable: rssArticleTable,
             rssFeedTable: rssFeedTable
         });

@@ -336,6 +336,35 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
     </div>
 </div>
 
+<template id="rssWizardTemplate">
+    <div id="rssWizardHeader" aria-live="polite">
+        <span id="rssWizardProgress"></span>
+        <b id="rssWizardTitle"></b>
+        <span id="rssWizardHint"></span>
+    </div>
+    <div id="rssWizardName" class="formRow">
+        <label for="rssWizardNameInput">QBT_TR(New rule name)QBT_TR[CONTEXT=AutomatedRssDownloader]</label>
+        <input type="text" id="rssWizardNameInput" autocorrect="off" autocapitalize="none">
+    </div>
+    <div id="rssWizardRules">
+        <b>QBT_TR(Download Rules)QBT_TR[CONTEXT=AutomatedRssDownloader]</b>
+        <ul id="rssWizardRulesList"></ul>
+    </div>
+    <div id="rssWizardFeeds" class="listEditor">
+        <ul id="rssWizardFeedsList" class="listEditorItems"></ul>
+        <div class="listEditorAdd">
+            <label for="rssWizardFeedUrl">QBT_TR(Feed URL:)QBT_TR[CONTEXT=RSSWidget]</label>
+            <input type="text" id="rssWizardFeedUrl" autocorrect="off" autocapitalize="none" spellcheck="false">
+            <button type="button" id="rssWizardFeedAdd">QBT_TR(Add)QBT_TR[CONTEXT=HttpServer]</button>
+        </div>
+    </div>
+    <div id="rssWizardFooter" class="dialogFooter">
+        <button type="button" id="rssWizardCancel" class="dialogCancel">QBT_TR(Cancel)QBT_TR[CONTEXT=MainWindow]</button>
+        <button type="button" id="rssWizardBack">QBT_TR(Back)QBT_TR[CONTEXT=MainWindow]</button>
+        <button type="button" id="rssWizardNext" class="dialogPrimary">QBT_TR(Next)QBT_TR[CONTEXT=AutomatedRssDownloader]</button>
+    </div>
+</template>
+
 <ul id="rssDownloaderRuleMenu" class="contextMenu">
     <li><a href="#addRule"><img src="images/list-add.svg" alt="QBT_TR(Add new rule...)QBT_TR[CONTEXT=AutomatedRssDownloader]"> QBT_TR(Add new rule...)QBT_TR[CONTEXT=AutomatedRssDownloader]</a></li>
     <li><a href="#deleteRule"><img src="images/edit-clear.svg" alt="QBT_TR(Delete rule)QBT_TR[CONTEXT=AutomatedRssDownloader]"> QBT_TR(Delete rule)QBT_TR[CONTEXT=AutomatedRssDownloader]</a></li>
@@ -362,6 +391,7 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
                 rssDownloaderFeedSelectionTable: rssDownloaderFeedSelectionTable,
                 setElementTitles: setElementTitles,
                 addRule: addRule,
+                startWizard: startWizard,
                 removeSelectedRule: removeSelectedRule,
                 exportRules: exportRules,
                 importRules: importRules
@@ -493,12 +523,21 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
                         combobox.add(option);
                     }
                 });
-            // get all rss feed
+            loadFeeds();
+            document.getElementById("savetoDifferentDir").addEventListener("click", (event) => {
+                document.getElementById("saveToText").disabled = !event.target.checked;
+            });
+            setupModern();
+            updateRulesList();
+        };
+
+        // get all rss feed
+        const loadFeeds = () => {
             const url = new URL("api/v2/rss/items", window.location);
             url.search = new URLSearchParams({
                 withData: false
             });
-            fetch(url, {
+            return fetch(url, {
                     method: "GET",
                     cache: "no-store"
                 })
@@ -519,16 +558,11 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
                     };
                     flatten(responseJSON);
                 });
-            document.getElementById("savetoDifferentDir").addEventListener("click", (event) => {
-                document.getElementById("saveToText").disabled = !event.target.checked;
-            });
-            setupModern();
-            updateRulesList();
         };
 
         const updateRulesList = () => {
             // get all rules
-            fetch("api/v2/rss/rules", {
+            return fetch("api/v2/rss/rules", {
                     method: "GET",
                     cache: "no-store"
                 })
@@ -909,7 +943,17 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
             document.getElementById("episodeFilterText").title = episodeFilterTitle;
         };
 
-        const { setupModern } = window.qBittorrent.Modern.rssDownloaderPage();
+        // Modern's additions (modern.js)
+        const { setupModern, startWizard } = window.qBittorrent.Modern.rssDownloaderPage({
+            feedList: () => feedList,
+            rulesList: () => rulesList,
+            rssDownloaderFeedSelectionTable: rssDownloaderFeedSelectionTable,
+            rssDownloaderRulesTable: rssDownloaderRulesTable,
+            loadFeeds: loadFeeds,
+            saveSettings: saveSettings,
+            showRule: showRule,
+            updateRulesList: updateRulesList
+        });
 
         return exports();
     })();
