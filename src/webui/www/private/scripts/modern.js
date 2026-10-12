@@ -33,6 +33,7 @@ window.qBittorrent.Modern ??= (() => {
     const exports = () => {
         return {
             init: init,
+            addSpeedSlider: addSpeedSlider,
             trimEllipsis: trimEllipsis,
         };
     };
@@ -1346,6 +1347,180 @@ window.qBittorrent.Modern ??= (() => {
         window.qBittorrent.Client.addServerStateListener(render);
         syncExpanded();
         scheduleLayout();
+    };
+
+    // speed limits in KiB/s, up to the most the server stores: a 32-bit number of bytes per second
+    const MAX_SPEED = 2097151;
+    const SPEED_UNITS = ["QBT_TR(KiB)QBT_TR[CONTEXT=misc]", "QBT_TR(MiB)QBT_TR[CONTEXT=misc]", "QBT_TR(GiB)QBT_TR[CONTEXT=misc]"]
+        .map((unit, i) => ({ name: `${unit}QBT_TR(/s)QBT_TR[CONTEXT=misc]`, factor: 1024 ** i }));
+    const unitOf = (kib) => SPEED_UNITS.findLast((unit) => kib >= unit.factor) ?? SPEED_UNITS[0];
+
+    const formatSpeed = (kib) => {
+        const unit = unitOf(kib);
+        return { value: Number((kib / unit.factor).toFixed(2)).toString(), unit: unit };
+    };
+
+    // a note on the card's label line once a speed limit reaches the most the server stores
+    const noteSpeedLimit = (card, id, limited) => {
+        if (card === null)
+            return;
+
+        let note = card.querySelector(":scope > .modernSpeedNote");
+        if (!limited) {
+            if (note?.dataset.field === id)
+                note.remove();
+            return;
+        }
+
+        if (note === null) {
+            note = document.createElement("div");
+            note.className = "modernSpeedNote";
+            note.setAttribute("role", "alert");
+            card.append(note);
+        }
+        note.dataset.field = id;
+        const { value, unit } = formatSpeed(MAX_SPEED);
+        note.textContent = "QBT_TR(Speed limits go up to %1)QBT_TR[CONTEXT=SpeedLimit]".replace("%1", `${value} ${unit.name}`);
+    };
+
+    // a typed speed ("5", "5 m", "1.5 GiB/s") in KiB/s, not capped; a unit by its first letter, as shown or in English;
+    // null for text with a comma, which can be a decimal point or a thousands separator
+    const parseSpeed = (text, unit) => {
+        if (text.includes(","))
+            return null;
+
+        const match = /^\s*(\d+(?:\.\d*)?|\.\d+)\s*(\S?)/.exec(text);
+        if (match === null)
+            return 0;
+
+        const letter = match[2].toLowerCase();
+        const typedUnit = (letter === "") ? unit : (SPEED_UNITS.find((known) => known.name[0].toLowerCase() === letter) ?? SPEED_UNITS[["k", "m", "g"].indexOf(letter)] ?? unit);
+        return Math.round(Number(match[1]) * typedUnit.factor);
+    };
+
+    // slider positions: 0 is no limit, the others speeds with two significant digits in their unit
+    const SLIDER_STEPS = 1000;
+
+    const roundSpeed = (kib) => {
+        const unit = unitOf(kib);
+        const value = kib / unit.factor;
+        const precision = (value < 10) ? 0.1 : (10 ** (Math.floor(Math.log10(value)) - 1));
+        return Math.max(1, Math.round(Math.round(value / precision) * precision * unit.factor));
+    };
+    const speedAt = (position) => ((position <= 0) ? 0 : Math.min(MAX_SPEED, roundSpeed(MAX_SPEED ** (position / SLIDER_STEPS))));
+    const sliderPosition = (kib) => ((kib <= 0) ? 0 : Math.min(SLIDER_STEPS, Math.max(1, Math.round((Math.log(kib) / Math.log(MAX_SPEED)) * SLIDER_STEPS))));
+
+    // the next speed along the slider, skipping positions that show the same speed
+    const stepSpeed = (kib, direction) => {
+        let position = sliderPosition(kib) + direction;
+        while ((position >= 0) && (position <= SLIDER_STEPS)) {
+            const next = speedAt(position);
+            if ((direction > 0) ? (next > kib) : (next < kib))
+                return next;
+
+            position += direction;
+        }
+        return kib;
+    };
+
+    const STEP_KEYS = { ArrowUp: 1, ArrowDown: -1, PageUp: 10, PageDown: -10 };
+
+    const addSpeedSlider = (slider, input) => {
+        if (!responsive.isModern())
+            return;
+        // the page's late answer for a field already gone: the slider found by its ID is a newer page's
+        if (!input.isConnected)
+            return;
+
+        const unitLabel = (input.nextElementSibling?.tagName === "SPAN") ? input.nextElementSibling : null;
+        unitLabel?.classList.add("modernSpeedUnit");
+        const field = document.createElement("input");
+        field.type = "text";
+        field.className = "modernSpeedField";
+        field.inputMode = "decimal";
+        field.setAttribute("aria-label", input.getAttribute("aria-label"));
+        field.setAttribute("role", "spinbutton");
+        field.setAttribute("aria-valuemin", "0");
+        field.setAttribute("aria-valuemax", MAX_SPEED.toString());
+        const stepper = document.createElement("span");
+        stepper.className = "modernSpeedStepper";
+
+        const inputKib = Number(input.value);
+        let kib = Number.isNaN(inputKib) ? 0 : inputKib;
+        let shown = "";
+        const pageValue = (value) => ((value === 0) ? "∞" : value.toString());
+        const show = () => {
+            const { value, unit } = formatSpeed(kib);
+            field.value = (kib === 0) ? "∞" : value;
+            shown = field.value;
+            const text = (kib === 0) ? field.value : `${value} ${unit.name}`;
+            field.setAttribute("aria-valuenow", kib.toString());
+            field.setAttribute("aria-valuetext", text);
+            slider.setAttribute("aria-valuetext", text);
+            if (unitLabel !== null) {
+                unitLabel.textContent = unit.name;
+                unitLabel.style.visibility = (kib === 0) ? "hidden" : "";
+            }
+            input.value = pageValue(kib);
+        };
+        const setSpeed = (value) => {
+            kib = value;
+            slider.value = sliderPosition(kib);
+            show();
+        };
+        // what the field shows or has typed in, at most what the server stores; the speed shown while the text is invalid
+        const typed = () => {
+            const speed = (field.value === shown) ? kib : parseSpeed(field.value, unitOf(kib));
+            return (speed === null) ? kib : Math.min(MAX_SPEED, speed);
+        };
+        const card = slider.closest("fieldset");
+        const step = (direction) => {
+            setSpeed(stepSpeed(typed(), direction));
+            noteSpeedLimit(card, input.id, (kib === MAX_SPEED));
+        };
+
+        for (const direction of [-1, 1]) {
+            const arrow = document.createElement("span");
+            arrow.className = (direction > 0) ? "modernSpeedUp" : "modernSpeedDown";
+            arrow.setAttribute("aria-hidden", "true");
+            // the focus stays in the field
+            arrow.addEventListener("mousedown", (event) => event.preventDefault());
+            arrow.addEventListener("click", (_event) => step(direction));
+            stepper.append(arrow);
+        }
+        stepper.firstElementChild.after(field);
+        input.before(stepper);
+        input.type = "hidden";
+
+        slider.min = 0;
+        slider.max = SLIDER_STEPS;
+        slider.step = 1;
+        // before the page's own handler, which reads the slider as linear
+        slider.addEventListener("input", (event) => {
+            event.stopImmediatePropagation();
+            kib = speedAt(Number(slider.value));
+            show();
+            noteSpeedLimit(card, input.id, (kib === MAX_SPEED));
+        }, true);
+        // the page reads its field before the typed speed is shown anew
+        field.addEventListener("input", (_event) => {
+            input.value = pageValue(typed());
+            noteSpeedLimit(card, input.id, false);
+        });
+        field.addEventListener("change", (_event) => {
+            setSpeed(typed());
+            noteSpeedLimit(card, input.id, (kib === MAX_SPEED));
+        });
+        field.addEventListener("keydown", (event) => {
+            const steps = STEP_KEYS[event.key];
+            if (steps === undefined)
+                return;
+
+            event.preventDefault();
+            for (let i = 0; i < Math.abs(steps); ++i)
+                step(Math.sign(steps));
+        });
+        setSpeed(kib);
     };
 
     const init = () => {
