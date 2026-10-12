@@ -39,11 +39,12 @@ window.qBittorrent.ProgressBar ??= (() => {
     class ProgressBar extends HTMLElement {
         static #progressBarUniqueId = 0;
         static #styles = {
-            height: 12,
-            darkbg: "var(--color-background-blue)",
-            darkfg: "var(--color-text-white)",
-            lightbg: "var(--color-background-default)",
-            lightfg: "var(--color-text-default)",
+            // display modes can change its height and colors
+            height: "var(--progress-bar-height, 12px)",
+            darkbg: "var(--progress-bar-fill, var(--color-background-blue))",
+            darkfg: "var(--progress-bar-fill-text, var(--color-text-white))",
+            lightbg: "var(--progress-bar-track, var(--color-background-default))",
+            lightfg: "var(--progress-bar-text, var(--color-text-default))",
         };
 
         #value = 0;
@@ -57,7 +58,7 @@ window.qBittorrent.ProgressBar ??= (() => {
             super();
 
             this.#dark.style.width = "100%";
-            this.#dark.style.height = `${ProgressBar.#styles.height}px`;
+            this.#dark.style.height = ProgressBar.#styles.height;
             this.#dark.style.background = ProgressBar.#styles.darkbg;
             this.#dark.style.boxSizing = "content-box";
             this.#dark.style.color = ProgressBar.#styles.darkfg;
@@ -65,10 +66,10 @@ window.qBittorrent.ProgressBar ??= (() => {
             this.#dark.style.textAlign = "center";
             this.#dark.style.left = "0";
             this.#dark.style.top = "0";
-            this.#dark.style.lineHeight = `${ProgressBar.#styles.height}px`;
+            this.#dark.style.lineHeight = ProgressBar.#styles.height;
 
             this.#light.style.width = "100%";
-            this.#light.style.height = `${ProgressBar.#styles.height}px`;
+            this.#light.style.height = ProgressBar.#styles.height;
             this.#light.style.background = ProgressBar.#styles.lightbg;
             this.#light.style.boxSizing = "content-box";
             this.#light.style.color = ProgressBar.#styles.lightfg;
@@ -76,14 +77,14 @@ window.qBittorrent.ProgressBar ??= (() => {
             this.#light.style.textAlign = "center";
             this.#light.style.left = "0";
             this.#light.style.top = "0";
-            this.#light.style.lineHeight = `${ProgressBar.#styles.height}px`;
+            this.#light.style.lineHeight = ProgressBar.#styles.height;
 
             this.attachShadow({ mode: "open" });
             this.shadowRoot.host.id = this.#id;
             this.shadowRoot.host.style.display = "block";
             this.shadowRoot.host.style.border = "1px solid var(--color-border-default)";
             this.shadowRoot.host.style.boxSizing = "content-box";
-            this.shadowRoot.host.style.height = `${ProgressBar.#styles.height}px`;
+            this.shadowRoot.host.style.height = ProgressBar.#styles.height;
             this.shadowRoot.host.style.position = "relative";
             this.shadowRoot.host.style.margin = "0 auto";
             this.shadowRoot.appendChild(this.#dark);

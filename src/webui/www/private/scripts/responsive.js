@@ -38,6 +38,7 @@ window.qBittorrent.Responsive ??= (() => {
             isModern: isModern,
             isRelayout: isRelayout,
             setDisplayMode: setDisplayMode,
+            whenElement: whenElement,
             rowHeight: rowHeight
         };
     };
@@ -88,6 +89,7 @@ window.qBittorrent.Responsive ??= (() => {
             // title bars and list rows take their heights from it
             stylesheet.addEventListener("load", (_event) => {
                 applyWindowTitleHeight();
+                ++modernStylesheetLoads;
                 keepFirstRow();
             });
             document.getElementById("responsiveStylesheet").after(stylesheet);
@@ -359,7 +361,8 @@ window.qBittorrent.Responsive ??= (() => {
         const home = button.parentElement;
         const homeNext = button.nextSibling;
         const placeButton = () => {
-            if (toolbar.classList.contains("invisible"))
+            // Modern always shows the toolbar
+            if (toolbar.classList.contains("invisible") && !isModern())
                 document.getElementById("desktopNavbar").append(button);
             else if (button.parentElement !== home)
                 home.insertBefore(button, homeNext);
@@ -368,10 +371,29 @@ window.qBittorrent.Responsive ??= (() => {
         placeButton();
     };
 
+    // modern.css sets --modern-row-height for each list, by density, pointer and screen size
+    let modernStylesheetLoads = 0;
+
+    const modernRowHeight = (table) => {
+        const key = [modernStylesheetLoads, root.classList.contains("compact"), queries.coarse.matches, queries.phone.matches].join();
+        if (table.modernRowHeight?.key !== key) {
+            const list = table.dynamicTableDiv;
+            const height = Number.parseFloat(list.ownerDocument.defaultView.getComputedStyle(list).getPropertyValue("--modern-row-height"));
+            // undefined until the stylesheet has loaded
+            if (Number.isNaN(height))
+                return undefined;
+
+            table.modernRowHeight = { key: key, height: height };
+        }
+        return table.modernRowHeight.height;
+    };
+
     // the virtual list's row height for dynamicTable.js, or undefined for its own
     const rowHeight = (table) => {
         if (queries.phone.matches && (table.dynamicTableDivId === "torrentsTableDiv"))
             return cssLength("--responsive-card-height");
+        if (isModern())
+            return modernRowHeight(table);
         if (queries.coarse.matches)
             return cssLength("--responsive-touch-row-height");
         return undefined;
