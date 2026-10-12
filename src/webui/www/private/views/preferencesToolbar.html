@@ -33,6 +33,10 @@
     "use strict";
 
     (() => {
+        // Options was closed before this arrived
+        if (document.getElementById("preferencesPage") === null)
+            return;
+
         MochaUI.initializeTabs("preferencesTabs");
 
         const showTab = (element) => {
