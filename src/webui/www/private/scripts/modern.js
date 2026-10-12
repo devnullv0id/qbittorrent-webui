@@ -1788,7 +1788,8 @@ window.qBittorrent.Modern ??= (() => {
         initTorrentSpeedLimits();
     };
 
-    const optionsPage = ({ loadPreferences, updatePeerProxySettings }) => {
+    // set up by preferences.html with the functions of its page it uses
+    const optionsPage = ({ addWatchFolder, applyPreferences, loadPreferences, updatePeerProxySettings }) => {
         let modernOptions = null;
 
         // a unit beside a field gets an element of its own, and with the field a box, so they line up with the dropdowns
@@ -1904,7 +1905,7 @@ window.qBittorrent.Modern ??= (() => {
             ["modernSeedingAction", "tr:has(> td > #maxRatioSelect)"],
             ["modernAutorunNotes", "fieldset:has(#autorun_checkbox) > div:not(.formRow)"],
             ["modernApiKeyRow", "tr:has(> td > #WebUIAPIKeyText)"],
-            ["modernWideCell", "td:has(> input.pathDirectory)"]
+            ["modernWideCell", "td:has(> input.pathDirectory, > .listEditor)"]
         ];
 
         const markStructures = (page) => {
@@ -2006,6 +2007,194 @@ window.qBittorrent.Modern ??= (() => {
             });
         };
 
+        // lists edited entry by entry; the page's own field, hidden, keeps the list as the page loads and saves it
+        const LIST_EDITORS = [
+            { id: "banned_IPs_textarea", joiner: "\n", splitter: /\n/, wholeLines: true },
+            { id: "add_trackers_textarea", joiner: "\n", splitter: /\n/, tiers: true },
+            { id: "bypass_auth_subnet_whitelist_textarea", joiner: "\n", splitter: /[\n,]/ },
+            { id: "webuiDomainTextarea", joiner: ";", splitter: /[;\n]/ },
+            { id: "webUIReverseProxiesListTextarea", joiner: ";", splitter: /[;\n]/ },
+            { id: "dhtBootstrapNodes", joiner: ", ", splitter: /,/ },
+            { id: "webUICustomHTTPHeadersTextarea", joiner: "\n", splitter: /\n/, wholeLines: true }
+        ];
+
+        const nameOf = (field) => {
+            const label = field.labels?.[0] ?? document.getElementById(field.getAttribute("aria-labelledby"));
+            return [...(label?.childNodes ?? [])].filter((node) => node.nodeName !== "A").map((node) => node.textContent).join("").trim();
+        };
+
+        const addListEditor = (state, { id, joiner, splitter, tiers = false, wholeLines = false }) => {
+            const field = document.getElementById(id);
+            // null marks a break between tiers
+            const parse = (text) => {
+                const entries = [];
+                for (const value of text.split(splitter).map((entry) => entry.trim())) {
+                    if (value !== "")
+                        entries.push(value);
+                    else if (tiers && (entries.length > 0) && (entries.at(-1) !== null))
+                        entries.push(null);
+                }
+                if (entries.at(-1) === null)
+                    entries.pop();
+                return entries;
+            };
+            const join = (entries) => entries.map((entry) => entry ?? "").join(joiner);
+
+            const editor = document.createElement("div");
+            editor.className = "listEditor";
+            const list = document.createElement("ul");
+            list.className = "listEditorItems";
+            list.setAttribute("aria-label", nameOf(field));
+            const input = document.createElement("input");
+            input.type = "text";
+            input.autocomplete = "off";
+            input.spellcheck = false;
+            input.setAttribute("aria-label", nameOf(field));
+            input.title = field.title;
+            const addButton = document.createElement("button");
+            addButton.type = "button";
+            addButton.textContent = "QBT_TR(Add)QBT_TR[CONTEXT=HttpServer]";
+            const addRow = document.createElement("div");
+            addRow.className = "listEditorAdd";
+            addRow.append(input, addButton);
+            editor.append(list, addRow);
+            field.classList.add("hasListEditor");
+            field.after(editor);
+
+            const write = (entries) => {
+                field.value = join(parse(join(entries)));
+                render();
+                // MooTools replaces window.Event
+                field.dispatchEvent(new CustomEvent("change", { bubbles: true }));
+            };
+            const render = () => {
+                const entries = parse(field.value);
+                const items = [];
+                for (const [index, entry] of entries.entries()) {
+                    if (entry === null)
+                        continue;
+
+                    const item = document.createElement("li");
+                    const text = document.createElement("span");
+                    text.textContent = entry;
+                    const remove = document.createElement("button");
+                    remove.type = "button";
+                    remove.className = "listEditorRemove";
+                    remove.title = "QBT_TR(Remove %1)QBT_TR[CONTEXT=OptionsDialog]".replace("%1", () => entry);
+                    remove.setAttribute("aria-label", remove.title);
+                    remove.disabled = field.disabled;
+                    remove.addEventListener("click", (_event) => {
+                        const position = items.indexOf(item);
+                        entries.splice(index, 1);
+                        write(entries);
+                        // the focus moves to the entry that took the removed one's place, or to the field
+                        const buttons = list.querySelectorAll("button");
+                        (buttons[Math.min(position, buttons.length - 1)] ?? input).focus();
+                    });
+                    item.append(text, remove);
+                    items.push(item);
+                }
+                list.replaceChildren(...items);
+                list.hidden = (items.length === 0);
+                input.placeholder = (items.length === 0) ? field.placeholder : "";
+                input.disabled = field.disabled;
+                addButton.disabled = field.disabled;
+            };
+            const add = (text) => {
+                const entries = parse(field.value);
+                for (const value of text.split(wholeLines ? /\n/ : (tiers ? /\s+/ : /[\s,;]+/)).map((entry) => entry.trim())) {
+                    if ((value !== "") && !entries.includes(value))
+                        entries.push(value);
+                }
+                input.value = "";
+                write(entries);
+            };
+
+            addButton.addEventListener("click", (_event) => {
+                add(input.value);
+                input.focus();
+            });
+            input.addEventListener("keydown", (event) => {
+                if (event.key !== "Enter")
+                    return;
+
+                event.preventDefault();
+                add(input.value);
+            });
+            // several entries pasted are added at once
+            input.addEventListener("paste", (event) => {
+                const pasted = event.clipboardData?.getData("text") ?? "";
+                if (!(wholeLines ? /\n/ : /[\s,;]/).test(pasted.trim()))
+                    return;
+
+                event.preventDefault();
+                add(input.value.slice(0, input.selectionStart) + pasted + input.value.slice(input.selectionEnd));
+            });
+            // what was typed but not added is saved too
+            state.beforeSave.push(() => {
+                if (input.value.trim() !== "")
+                    add(input.value);
+            });
+            // the field is switched on and off with its setting
+            const observer = new MutationObserver(render);
+            observer.observe(field, { attributes: true, attributeFilter: ["disabled"] });
+            state.observers.push(observer);
+            state.onFilled.push(render);
+            render();
+        };
+
+        // the monitored folders: a button each that removes it, the last, empty one with Add
+        const editWatchedFolders = (state) => {
+            const table = document.getElementById("watched_folders_tab");
+            const [folderName, locationName] = [...table.tHead.rows[0].cells].map((cell) => cell.textContent.trim());
+            const update = () => {
+                const rows = [...table.tBodies[0].rows];
+                for (const [i, row] of rows.entries()) {
+                    const folder = row.cells[0].querySelector("input");
+                    folder.placeholder = folderName;
+                    folder.setAttribute("aria-label", folderName);
+                    row.cells[1].querySelector("select").setAttribute("aria-label", locationName);
+                    const last = (i === (rows.length - 1));
+                    const cell = row.querySelector(":scope > td.modernWatchedFolderButton") ?? row.insertCell();
+                    cell.className = "modernWatchedFolderButton";
+                    let button = cell.firstElementChild;
+                    if ((button === null) || (button.classList.contains("listEditorRemove") === last)) {
+                        button = document.createElement("button");
+                        button.type = "button";
+                        if (last) {
+                            button.textContent = "QBT_TR(Add)QBT_TR[CONTEXT=HttpServer]";
+                            button.addEventListener("click", (_event) => {
+                                addWatchFolder();
+                                table.tBodies[0].rows[table.tBodies[0].rows.length - 1].cells[0].querySelector("input").focus();
+                            });
+                        }
+                        else {
+                            button.className = "listEditorRemove";
+                            button.addEventListener("click", (_event) => {
+                                folder.value = "";
+                                row.classList.add("invisible");
+                                folder.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+                                // the focus stays in the list
+                                const next = [...table.tBodies[0].rows].find((other) => (other.rowIndex > row.rowIndex) && !other.classList.contains("invisible"));
+                                next?.querySelector("td.modernWatchedFolderButton > button").focus();
+                            });
+                        }
+                        cell.replaceChildren(button);
+                    }
+                    if (!last) {
+                        button.title = "QBT_TR(Remove %1)QBT_TR[CONTEXT=OptionsDialog]".replace("%1", () => folder.value.trim());
+                        button.setAttribute("aria-label", button.title);
+                    }
+                    button.disabled = last && (folder.value.trim() === "");
+                }
+            };
+            const observer = new MutationObserver(update);
+            observer.observe(table.tBodies[0], { childList: true });
+            state.observers.push(observer);
+            table.addEventListener("input", (_event) => update(), { signal: state.listening.signal });
+            update();
+        };
+
         // what a switch shows or hides slides open and shut; the sizes are measured, as not every browser animates a height
         // to auto
         const slideWithSwitches = (state) => {
@@ -2057,6 +2246,8 @@ window.qBittorrent.Modern ??= (() => {
                 page: instance.contentEl,
                 listening: new AbortController(),
                 observers: [],
+                // what comes before the page is saved
+                beforeSave: [],
                 // what follows once the page is filled
                 onFilled: []
             };
@@ -2073,6 +2264,9 @@ window.qBittorrent.Modern ??= (() => {
             markFieldUnits(state.page);
             addProxySwitch(state);
             addI2PSwitch();
+            for (const editor of LIST_EDITORS)
+                addListEditor(state, editor);
+            editWatchedFolders(state);
             markStructures(state.page);
             splitWideSettings(state);
             slideWithSwitches(state);
@@ -2089,7 +2283,13 @@ window.qBittorrent.Modern ??= (() => {
             modernOptions.onFilled = [];
         };
 
-        return { setupModern: setupModern, modernFilled: modernFilled };
+        // as applyPreferences() begins
+        const modernBeforeSave = () => {
+            for (const save of modernOptions?.beforeSave ?? [])
+                save();
+        };
+
+        return { setupModern: setupModern, modernFilled: modernFilled, modernBeforeSave: modernBeforeSave };
     };
 
     // the torrents' upload and download limits; where the torrents' limits differ the field is mixed

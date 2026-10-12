@@ -3009,6 +3009,7 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
         };
 
         const applyPreferences = () => {
+            modernBeforeSave();
             const settings = {};
             const clientData = {};
             // Validate form data
@@ -3589,7 +3590,9 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             });
         };
 
-        const { setupModern, modernFilled } = window.qBittorrent.Modern.optionsPage({
+        const { setupModern, modernFilled, modernBeforeSave } = window.qBittorrent.Modern.optionsPage({
+            addWatchFolder: addWatchFolder,
+            applyPreferences: applyPreferences,
             loadPreferences: loadPreferences,
             updatePeerProxySettings: updatePeerProxySettings
         });
