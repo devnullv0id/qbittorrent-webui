@@ -939,15 +939,18 @@ window.qBittorrent.Responsive ??= (() => {
 
     // phones show only the view tabs' icons: name them on hover
     const initViewTabs = () => {
+        // in Modern also below 1100px
+        const iconsOnly = () => queries.phone.matches || (isModern() && queries.drawer.matches);
         const name = () => {
             for (const img of document.querySelectorAll("#mainWindowTabsList img")) {
-                if (queries.phone.matches)
+                if (iconsOnly())
                     img.parentElement.title = img.alt;
                 else
                     img.parentElement.removeAttribute("title");
             }
         };
         queries.phone.addEventListener("change", (_event) => name());
+        queries.drawer.addEventListener("change", (_event) => name());
         name();
     };
 
