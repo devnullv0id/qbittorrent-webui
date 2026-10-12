@@ -5027,11 +5027,6 @@
             }
         }
 
-        & #watched_folders_tab {
-            display: block;
-            overflow-x: auto;
-        }
-
         & fieldset.modernSwitchCard {
             padding-top: 2px;
 
@@ -5214,4 +5209,156 @@
 
 :root.modern.responsivePhone #aboutpage .aboutTabContent {
     padding: 12px 12px 2px;
+}
+
+/* Options lists edited entry by entry */
+:root.modern .PrefTab .hasListEditor {
+    display: none;
+}
+
+:root.modern .PrefTab div.formRow > :is(.listEditor, fieldset) {
+    flex: 1 1 100%;
+}
+
+:root.modern .PrefTab .listEditor {
+    border: var(--modern-border);
+    border-radius: var(--modern-radius-card);
+    box-sizing: border-box;
+    overflow: hidden;
+    width: 100%;
+
+    & .listEditorItems {
+        list-style: none;
+        margin: 0;
+        max-height: 220px;
+        overflow-y: auto;
+        padding: 0;
+
+        & li {
+            align-items: center;
+            border-bottom: var(--modern-divider);
+            display: flex;
+            gap: 8px;
+            min-height: var(--modern-control-height);
+            padding: 2px 4px 2px 12px;
+        }
+
+        & span {
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+    }
+
+    & .listEditorAdd {
+        display: flex;
+        gap: 8px;
+        padding: 8px;
+
+        & > input {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        & > button {
+            flex: none;
+        }
+    }
+}
+
+:root.modern .PrefTab button.listEditorRemove {
+    background: transparent;
+    border-color: transparent;
+    flex: none;
+    height: var(--modern-control-height);
+    min-width: 0;
+    padding: 0;
+    position: relative;
+    width: var(--modern-control-height);
+
+    &::before,
+    &::after {
+        background-color: currentcolor;
+        content: "";
+        height: 1.5px;
+        left: 50%;
+        position: absolute;
+        top: 50%;
+        width: 11px;
+    }
+
+    &::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    &::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+    &:hover:not(:disabled) {
+        background-color: var(--color-background-row-hover);
+        border-color: transparent;
+        color: var(--color-text-red);
+    }
+}
+
+:root.modern .PrefTab #watched_folders_tab {
+    border: 0 !important; /* override inline style */
+    display: block;
+
+    & thead,
+    & img[id^="addFolderImg"] {
+        display: none;
+    }
+
+    & tbody {
+        align-items: center;
+        display: grid;
+        gap: 8px;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        padding: 8px 0;
+    }
+
+    & tr:not(.invisible) {
+        display: contents;
+    }
+
+    & td {
+        border: 0;
+        padding: 0;
+        width: auto;
+    }
+
+    & td:first-child > input {
+        box-sizing: border-box;
+        width: 100%;
+    }
+}
+
+:root.modern.responsivePhone .PrefTab {
+    & .listEditorAdd {
+        flex-wrap: wrap;
+
+        & > input {
+            flex-basis: 100%;
+        }
+
+        & > button {
+            flex: 1 1 0;
+        }
+    }
+
+    & #watched_folders_tab {
+        & tbody {
+            grid-template-columns: minmax(0, 1fr) auto;
+        }
+
+        & td:first-child {
+            grid-column: 1 / -1;
+        }
+
+        & .select-watched-folder-editable {
+            width: 100%;
+        }
+    }
 }
