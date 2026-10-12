@@ -4105,10 +4105,17 @@
 :root.modern #preferencesPage {
     --modern-sidebar-width: 184px;
 
-    /* override Mocha's inline height and width */
-    height: min(840px, calc(100dvh - 16px)) !important;
+    /* override Mocha's inline height and width: the size a drag of the corner chose (modern.js), within the screen */
+    height: min(
+        var(--modern-window-height, 840px),
+        calc(100dvh - 16px)
+    ) !important;
     min-height: min(420px, calc(100dvh - 16px));
-    width: min(730px, calc(100vw - 16px)) !important;
+    min-width: min(640px, calc(100vw - 16px));
+    width: min(
+        var(--modern-window-width, 730px),
+        calc(100vw - 16px)
+    ) !important;
 
     /* the title, the pages and the page below one another */
     & .mochaOverlay {
@@ -4144,8 +4151,8 @@
         width: auto !important; /* override Mocha's inline width */
     }
 
-    /* the size is the stylesheet's */
-    & .handle {
+    /* the size is the stylesheet's, changed at the corner only */
+    & .handle:not([id$="_se"]) {
         display: none;
     }
 

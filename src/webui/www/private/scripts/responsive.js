@@ -46,6 +46,8 @@ window.qBittorrent.Responsive ??= (() => {
             addScrim: addScrim,
             trapFocus: trapFocus,
             updateSelection: () => updateSelection(),
+            isStylesheetSized: isStylesheetSized,
+            windowMargin: WINDOW_MARGIN,
             rowHeight: rowHeight
         };
     };
