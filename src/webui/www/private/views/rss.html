@@ -1047,7 +1047,8 @@
                 loadMethod: "xhr",
                 contentURL: "views/rssDownloader.html?v=${CACHEID}",
                 maximizable: false,
-                width: loadWindowWidth(id, 800, false),
+                // in Modern, on screens 1100px wide or more, wide enough for the rules beside the rule's two columns
+                width: loadWindowWidth(id, ((window.qBittorrent.Responsive.isModern() && window.matchMedia("(width >= 1100px)").matches) ? 1000 : 800), false),
                 height: loadWindowHeight(id, 650, false),
                 onResize: window.qBittorrent.Misc.createDebounceHandler(500, (e) => {
                     saveWindowSize(id);

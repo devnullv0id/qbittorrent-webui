@@ -38,6 +38,7 @@ window.qBittorrent.Modern ??= (() => {
             openOptionsPage: openOptionsPage,
             trimEllipsis: trimEllipsis,
             optionsPage: optionsPage,
+            rssDownloaderPage: rssDownloaderPage,
             rssPage: rssPage,
             initTorrentLimits: initTorrentLimits,
             searchPluginsPage: searchPluginsPage,
@@ -2693,6 +2694,36 @@ window.qBittorrent.Modern ??= (() => {
         };
 
         return { setupModern: setupModern, modernFilled: modernFilled, modernBeforeSave: modernBeforeSave, modernSaved: modernSaved, modernSaveLook: modernSaveLook, modernSaveSpeedLimitsMode: modernSaveSpeedLimitsMode };
+    };
+
+    const rssDownloaderPage = () => {
+        const setupModern = () => {
+            if (!window.qBittorrent.Responsive.isModern())
+                return;
+
+            const optionsButton = document.createElement("button");
+            optionsButton.type = "button";
+            optionsButton.textContent = "QBT_TR(Options...)QBT_TR[CONTEXT=MainWindow]";
+            optionsButton.addEventListener("click", (_event) => {
+                window.qBittorrent.Modern.openOptionsPage("PrefRSSLink", ["enable_fetching_rss_feeds_checkbox", "enable_auto_downloading_rss_torrents_checkbox"]);
+            });
+            document.getElementById("rssDownloaderDisabled").append(optionsButton);
+
+            const cancel = document.createElement("button");
+            cancel.type = "button";
+            cancel.id = "rssDownloaderCancel";
+            cancel.textContent = "QBT_TR(Cancel)QBT_TR[CONTEXT=MainWindow]";
+            cancel.addEventListener("click", (_event) => window.qBittorrent.Client.closeWindow(document.getElementById("rssdownloaderpage")));
+            document.getElementById("saveButton").before(cancel);
+
+            const page = document.getElementById("RssDownloader");
+            const saveButton = document.getElementById("saveButton");
+            const updateDimmed = () => page.classList.toggle("modernNoRule", saveButton.disabled);
+            new MutationObserver(updateDimmed).observe(saveButton, { attributes: true, attributeFilter: ["disabled"] });
+            updateDimmed();
+        };
+
+        return { setupModern: setupModern };
     };
 
     const rssPage = ({ rssArticleTable, rssFeedTable }) => {
