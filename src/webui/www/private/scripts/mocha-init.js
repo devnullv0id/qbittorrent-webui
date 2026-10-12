@@ -73,12 +73,12 @@ window.qBittorrent.Dialog ??= (() => {
     // where pages are laid out anew, a window keeps the size it asks for, and responsive.js fits it to the screen as
     // the screen changes: cut to the screen it opened on, it would stay cut after a phone turns
     const limitWidthToViewport = (width) => {
-        if (window.qBittorrent.Responsive?.queries.relayout.matches)
+        if (window.qBittorrent.Responsive?.isRelayout())
             return width;
         return Math.min(width, window.innerWidth - 20);
     };
     const limitHeightToViewport = (height) => {
-        if (window.qBittorrent.Responsive?.queries.relayout.matches)
+        if (window.qBittorrent.Responsive?.isRelayout())
             return height;
         return Math.min(height, window.innerHeight - 75);
     };

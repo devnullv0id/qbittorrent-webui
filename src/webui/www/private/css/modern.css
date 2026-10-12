@@ -1,0 +1,576 @@
+/* Modern, the display mode Options offers besides Classic. responsive.js links this stylesheet only while Modern is
+    on, after responsive.css, in the main page and in every dialog frame; every rule starts with :root.modern, but
+    the one for every list cell (see there).
+
+    Screens, as in responsive.js: phones below 760px wide, the filters in a drawer below 1100px, touch screens
+    (pointer: coarse), short screens below 620px high. The main page's rules use them as media queries; the windows'
+    rules use the classes responsivePhone and responsiveRelayout, which responsive.js also sets in dialog frames.
+
+    Layers: windows from 100 (Mocha), scrims at 1500 and drawers at 1501 (responsive.css), menus and sheets at 2000
+    with their scrim at 1999.
+
+    !important only where a rule has to win over an inline style, over responsive.css's override of one, or over
+    every animation (reduced motion); each says which.
+
+    Chromium files a rule under its element's id, class or type, and checks only those elements against it. A rule
+    for one of several alternatives, :is(a, b), or nested in a list of selectors, has none of them, and is checked
+    against every element at every restyle; such rules first name what their alternatives have in common, in
+    :where() so that their specificity stays: :where(input):is(...). An attribute comes before the type: a rule for
+    h3[style*="x"] is checked against every element with a style attribute, every cell of the lists among them; such
+    tests stand in :not(:not(...)), which leaves the rule under its type. */
+
+/* Tokens */
+
+:root.modern {
+    --modern-radius-pill: 999px;
+    --modern-radius-card: 8px;
+    --modern-radius-menu: 10px;
+    --modern-radius-item: 6px;
+    --modern-radius-button: 6px;
+    /* a bottom sheet's top corners */
+    --modern-radius-sheet: 14px 14px 0 0;
+    /* controls and table rows, a touch's size on touch screens */
+    --modern-control-height: 32px;
+    --modern-row-height: 30px;
+    --modern-switch-width: 36px;
+    --modern-switch-height: 20px;
+    --modern-knob: 14px;
+    --modern-check-size: 16px;
+    /* also read by responsive.js */
+    --responsive-window-title-height: 34px;
+    /* the buttons in a window's title bar */
+    --modern-window-button: calc(var(--responsive-window-title-height) - 10px);
+    --color-text-muted: hsl(0deg 0% 40%);
+    --color-background-card: hsl(0deg 0% 98%);
+    --color-background-row-hover: hsl(0deg 0% 92%);
+    --color-border-divider: hsl(0deg 0% 90%);
+    /* the edge of a control that shows nothing else: at least 3:1 against the page */
+    --modern-control-edge: hsl(0deg 0% 52%);
+    /* the line between parts, and the edge of fields and cards */
+    --modern-divider: 1px solid var(--color-border-divider);
+    --modern-border: 1px solid var(--color-border-default);
+    /* a focused control's ring */
+    --modern-focus-ring: 2px solid var(--color-accent-blue);
+    --modern-shadow:
+        0 8px 28px hsl(0deg 0% 0% / 18%), 0 1px 3px hsl(0deg 0% 0% / 12%);
+    --color-background-scrim: hsl(0deg 0% 0% / 45%);
+
+    /* the search fields' magnifier */
+    --modern-search: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg fill='none' stroke='%23737373' stroke-width='2'%3E%3Ccircle cx='8.5' cy='8.5' r='5.5'/%3E%3Cpath d='m12.5 12.5 4.5 4.5' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E");
+
+    /* one chevron everywhere */
+    --modern-chevron-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4.34 6.79 10 12.45 15.66 6.79' fill='none' stroke='%23545454' stroke-width='2'/%3E%3C/svg%3E");
+    --modern-chevron-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4.34 13.21 10 7.55 15.66 13.21' fill='none' stroke='%23545454' stroke-width='2'/%3E%3C/svg%3E");
+    --modern-chevron-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6.79 4.34 12.45 10 6.79 15.66' fill='none' stroke='%23545454' stroke-width='2'/%3E%3C/svg%3E");
+
+    /* a check box's tick and a mixed box's dash, drawn on the accent */
+    --modern-tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.5 8.5 3 3 6-7' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    --modern-dash: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8h8' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+
+    /* the accent */
+    --color-background-blue: hsl(210deg 65% 42%);
+    --color-accent-blue: hsl(210deg 65% 45%);
+    /* the accent as text on the page */
+    --modern-accent-text: var(--color-accent-blue);
+    --color-background-hover: var(--color-background-blue);
+    --color-background-default: hsl(0deg 0% 95%);
+    --color-border-default: hsl(0deg 0% 84%);
+    --color-background-surface: var(--color-background-primary);
+    --color-background-fill: color-mix(
+        in srgb,
+        var(--color-text-default) 7%,
+        var(--color-background-primary)
+    );
+    --color-background-zebra: color-mix(
+        in srgb,
+        var(--color-text-default) 3%,
+        var(--color-background-primary)
+    );
+    --color-background-track: color-mix(
+        in srgb,
+        var(--color-accent-blue) 22%,
+        var(--color-background-primary)
+    );
+    /* buttons (style.css) */
+    --color-button-face: var(--color-background-default);
+    --color-button-border: var(--color-border-default);
+
+    &.dark {
+        --modern-search: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg fill='none' stroke='%23a3a3a3' stroke-width='2'%3E%3Ccircle cx='8.5' cy='8.5' r='5.5'/%3E%3Cpath d='m12.5 12.5 4.5 4.5' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E");
+        --modern-chevron-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4.34 6.79 10 12.45 15.66 6.79' fill='none' stroke='%23e6e6e6' stroke-width='2'/%3E%3C/svg%3E");
+        --modern-chevron-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4.34 13.21 10 7.55 15.66 13.21' fill='none' stroke='%23e6e6e6' stroke-width='2'/%3E%3C/svg%3E");
+        --modern-chevron-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6.79 4.34 12.45 10 6.79 15.66' fill='none' stroke='%23e6e6e6' stroke-width='2'/%3E%3C/svg%3E");
+        --color-text-muted: hsl(0deg 0% 64%);
+        --color-background-card: hsl(0deg 0% 16%);
+        --color-background-row-hover: hsl(0deg 0% 22%);
+        --color-border-divider: hsl(0deg 0% 24%);
+        --modern-control-edge: hsl(0deg 0% 54%);
+        --modern-shadow:
+            0 10px 32px hsl(0deg 0% 0% / 55%), 0 1px 3px hsl(0deg 0% 0% / 40%);
+        --color-background-blue: hsl(210deg 42% 42%);
+        --color-accent-blue: hsl(210deg 45% 50%);
+        /* the accent is too dark to read on the dark page */
+        --modern-accent-text: color-mix(
+            in srgb,
+            var(--color-accent-blue) 60%,
+            white
+        );
+        --color-background-primary: hsl(0deg 0% 9%);
+        --color-background-default: hsl(0deg 0% 13%);
+        --color-background-popup: hsl(0deg 0% 12%);
+        --color-border-default: hsl(0deg 0% 26%);
+        --color-background-track: color-mix(
+            in srgb,
+            var(--color-accent-blue) 32%,
+            var(--color-background-primary)
+        );
+    }
+}
+
+@media (pointer: coarse) {
+    :root.modern {
+        --modern-control-height: 44px;
+        --modern-row-height: 44px;
+        /* the least a touch target should be; a touch's size to hit (below) */
+        --modern-check-size: 24px;
+        --modern-switch-width: 48px;
+        --modern-switch-height: 26px;
+        --modern-knob: 20px;
+        /* a touch's size for menu entries, tabs, buttons, fields, table rows and title bars (responsive.css) */
+        --responsive-touch-target: 44px;
+        --responsive-touch-field-height: 44px;
+        --responsive-touch-row-height: 44px;
+        --responsive-window-title-height: 48px;
+        --modern-window-button: var(--responsive-touch-target);
+    }
+}
+
+/* Compact density, with a mouse only */
+@media not (pointer: coarse) {
+    :root.modern.compact {
+        --modern-control-height: 28px;
+        --modern-row-height: 26px;
+    }
+}
+
+/* Base */
+
+:root.modern body {
+    font-family:
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        Ubuntu,
+        Cantarell,
+        "Noto Sans",
+        sans-serif;
+    font-size: 13px;
+}
+
+:root.modern.compact body {
+    line-height: normal;
+}
+
+:root.modern a:not(:where(.contextMenu, #desktopNavbar, .tab-menu) a) {
+    color: var(--modern-accent-text);
+}
+
+:root.modern hr {
+    background-color: var(--color-border-divider);
+}
+
+/* Controls */
+
+/* text fields, and dropdowns as specific as they are (a select has no type) */
+:root.modern
+    input:is(
+        [type="text"],
+        [type="search"],
+        [type="number"],
+        [type="password"],
+        [type="url"],
+        [type="email"],
+        :not([type])
+    ),
+:root.modern select:not([type]) {
+    background-color: var(--color-background-primary);
+    border: var(--modern-border);
+    border-radius: var(--modern-radius-pill);
+    color: var(--color-text-default);
+    min-height: var(--modern-control-height);
+    padding: 2px 12px;
+    transition: border-color 0.12s;
+    vertical-align: middle;
+}
+
+:root.modern
+    input:is(
+        [type="text"],
+        [type="search"],
+        [type="number"],
+        [type="password"],
+        [type="url"],
+        [type="email"],
+        :not([type])
+    ):enabled:hover,
+:root.modern select:not([type]):enabled:hover {
+    border-color: var(--color-text-muted);
+}
+
+:root.modern
+    input:is(
+        [type="text"],
+        [type="search"],
+        [type="number"],
+        [type="password"],
+        [type="url"],
+        [type="email"],
+        :not([type])
+    ):disabled,
+:root.modern select:not([type]):disabled {
+    opacity: 0.55;
+}
+
+:root.modern select {
+    appearance: none;
+    background: var(--color-background-primary) var(--modern-chevron-down) right
+        8px center / 16px no-repeat;
+    cursor: pointer;
+    text-overflow: ellipsis;
+}
+
+/* room for the arrow */
+:root.modern select:not([multiple]) {
+    padding-right: 30px;
+}
+
+/* the current option, tinted like a selected row */
+:root.modern option:checked {
+    background-color: color-mix(
+        in srgb,
+        var(--color-accent-blue) 22%,
+        var(--color-background-default)
+    );
+    color: var(--color-text-default);
+}
+
+:root.modern textarea {
+    background-color: var(--color-background-primary);
+    border: var(--modern-border);
+    border-radius: var(--modern-radius-card);
+    padding: 8px 10px;
+}
+
+/* buttons, but the windows' and the filters' own; the button's :not() makes it as specific as the inputs' :is() */
+:root.modern input:is([type="button"], [type="submit"], [type="reset"]),
+:root.modern
+    button:not(
+        .mochaCloseButton,
+        .mochaMinimizeButton,
+        .mochaMaximizeButton,
+        .categoryToggle
+    ) {
+    align-items: center;
+    border-radius: var(--modern-radius-button);
+    display: inline-flex;
+    gap: 6px;
+    justify-content: center;
+    min-height: var(--modern-control-height);
+    padding: 3px 14px;
+    transition:
+        background-color 0.12s,
+        border-color 0.12s;
+    vertical-align: middle;
+}
+
+:root.modern
+    input:is([type="button"], [type="submit"], [type="reset"]):enabled:hover,
+:root.modern
+    button:not(
+        .mochaCloseButton,
+        .mochaMinimizeButton,
+        .mochaMaximizeButton,
+        .categoryToggle
+    ):enabled:hover {
+    border-color: var(--color-text-muted);
+}
+
+:root.modern
+    input:is([type="button"], [type="submit"], [type="reset"]):disabled,
+:root.modern
+    button:not(
+        .mochaCloseButton,
+        .mochaMinimizeButton,
+        .mochaMaximizeButton,
+        .categoryToggle
+    ):disabled {
+    opacity: 0.5;
+}
+
+/* style.css takes the outline away */
+:root.modern :focus-visible {
+    outline: var(--modern-focus-ring);
+    outline-offset: 1px;
+}
+
+/* Check boxes: switches where they stand for a setting, boxes in lists and menus (and the lists' select all) */
+:root.modern
+    input[type="checkbox"]:not(
+        :where(.dynamicTable, .contextMenu) input,
+        #torrentsFilterRegexBox,
+        #torrentsSelectAll
+    ) {
+    appearance: none;
+    background-color: var(--color-background-row-hover);
+    border: 1px solid var(--modern-control-edge);
+    border-radius: var(--modern-radius-pill);
+    cursor: pointer;
+    flex: none;
+    height: var(--modern-switch-height);
+    margin: 2px 8px 2px 2px;
+    position: relative;
+    transition:
+        background-color 0.15s,
+        border-color 0.15s;
+    vertical-align: middle;
+    width: var(--modern-switch-width);
+
+    &::before {
+        background-color: var(--color-text-white);
+        border-radius: 50%;
+        box-shadow: 0 1px 2px hsl(0deg 0% 0% / 35%);
+        content: "";
+        height: var(--modern-knob);
+        left: 2px;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        transition: left 0.15s;
+        width: var(--modern-knob);
+    }
+
+    &:checked {
+        background-color: var(--color-accent-blue);
+        border-color: var(--color-accent-blue);
+    }
+
+    &:checked::before {
+        left: calc(100% - var(--modern-knob) - 2px);
+    }
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.45;
+    }
+}
+
+:root.modern
+    :where(input):is(
+        :where(.dynamicTable, .contextMenu) input[type="checkbox"],
+        #torrentsSelectAll,
+        input[type="radio"]
+    ) {
+    appearance: none;
+    background: var(--color-background-primary) center / contain no-repeat;
+    border: 1.5px solid var(--modern-control-edge);
+    border-radius: 4px;
+    cursor: pointer;
+    flex: none;
+    height: var(--modern-check-size);
+    position: relative;
+    vertical-align: middle;
+    width: var(--modern-check-size);
+
+    &:checked {
+        background-color: var(--color-accent-blue);
+        border-color: var(--color-accent-blue);
+    }
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.45;
+    }
+}
+
+:root.modern
+    :where(input):is(
+        :where(.dynamicTable, .contextMenu) input[type="checkbox"],
+        #torrentsSelectAll
+    ) {
+    &:checked {
+        background-image: var(--modern-tick);
+    }
+
+    &:indeterminate {
+        background-color: var(--color-accent-blue);
+        background-image: var(--modern-dash);
+        border-color: var(--color-accent-blue);
+    }
+}
+
+:root.modern input[type="radio"] {
+    border-radius: 50%;
+
+    &:checked {
+        box-shadow: inset 0 0 0 3px var(--color-background-primary);
+    }
+}
+
+/* on touch screens a box is a touch's size to hit, without taking more room */
+@media (pointer: coarse) {
+    :root.modern
+        :where(input):is(
+            :where(.dynamicTable, .contextMenu) input[type="checkbox"],
+            #torrentsSelectAll,
+            input[type="radio"]
+        )::after {
+        content: "";
+        inset: calc(
+            (var(--modern-check-size) - var(--responsive-touch-target)) / 2
+        );
+        position: absolute;
+    }
+}
+
+/* Windows */
+
+:root.modern .mocha {
+    background-color: var(--color-background-popup);
+    border: var(--modern-border);
+    border-radius: 10px;
+    box-shadow: var(--modern-shadow);
+    overflow: hidden;
+}
+
+:root.modern .mochaOverlay {
+    background-color: var(--color-background-popup);
+    border-radius: 10px;
+}
+
+:root.modern .mochaTitlebar {
+    align-items: center;
+    background-color: var(--color-background-default);
+    border-bottom: var(--modern-divider);
+    border-radius: 0;
+    display: flex;
+
+    & h3 {
+        font-size: 13px;
+        font-weight: 600;
+        line-height: var(--responsive-window-title-height);
+        /* a long title ends before the window's buttons */
+        overflow: hidden;
+        padding: 0
+            calc(
+                (
+                        var(--modern-window-buttons, 1) *
+                            (var(--modern-window-button) + 5px)
+                    ) +
+                    10px
+            )
+            0 14px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* the window's icon */
+    & h3:not(:not([style*="url"])) {
+        background-position: 12px center !important; /* override Mocha's inline position */
+        padding-left: 36px !important; /* override Mocha's inline padding */
+    }
+}
+
+:root.modern .mochaControls {
+    height: var(--modern-window-button);
+    right: 6px;
+    top: calc(
+        (var(--responsive-window-title-height) - var(--modern-window-button)) /
+            2
+    );
+}
+
+:root.modern
+    :where(.mochaWindowButton):is(
+        .mochaCloseButton,
+        .mochaMaximizeButton,
+        .mochaMinimizeButton
+    ) {
+    border-radius: var(--modern-radius-item);
+    height: var(--modern-window-button);
+    margin: 0;
+    width: var(--modern-window-button);
+
+    &::before,
+    &::after {
+        width: 11px;
+    }
+
+    &:hover {
+        background-color: var(--color-background-row-hover);
+    }
+}
+
+/* a window keeps the size it is fitted to */
+:root.modern .mochaMaximizeButton {
+    display: none;
+}
+
+/* on touch screens the buttons are a touch's size */
+@media (pointer: coarse) {
+    :root.modern .mochaControls {
+        right: 2px;
+    }
+}
+
+:root.modern .mocha .tab-menu {
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 4px 8px;
+
+    & li a {
+        padding: 5px 10px;
+    }
+}
+
+:root.modern .mochaContentBorder {
+    border: 0;
+}
+
+:root.modern .mocha .mochaContentWrapper,
+:root.modern .mocha .mochaIframe {
+    background-color: var(--color-background-popup);
+}
+
+:root.modern .mochaContentWrapper {
+    font-size: 13px;
+}
+
+:root.modern .mochaToolbarWrapper {
+    background-color: var(--color-background-popup);
+}
+
+:root.modern .mochaToolbar {
+    border-top: 0;
+    padding: 6px 8px;
+}
+
+:root.modern #modalOverlay {
+    background: var(--color-background-scrim);
+}
+
+/* Motion */
+
+/* reduced motion: nothing moves, Classic's menus and the filters' toggles included. Each part that moves is named:
+    for every element (*), Chromium would style each one's ::before and ::after too, at every restyle */
+@media (prefers-reduced-motion: reduce) {
+    :root.modern input,
+    :root.modern input::before,
+    :root.modern select,
+    :root.modern button,
+    :root.modern .contextMenu,
+    :root.modern .categoryToggle {
+        animation: none !important; /* override the animations' own declarations, also inline */
+        transition: none !important; /* override the transitions' own declarations, also inline */
+    }
+}

@@ -36,6 +36,9 @@ window.qBittorrent.Responsive ??= (() => {
             init: init,
             queries: queries,
             addFrame: addFrame,
+            isModern: isModern,
+            isRelayout: isRelayout,
+            setDisplayMode: setDisplayMode,
             rowHeight: rowHeight
         };
     };
@@ -65,13 +68,52 @@ window.qBittorrent.Responsive ??= (() => {
 
     /* Pages */
 
+    // Modern, the display mode Options offers besides Classic: color-scheme.js sets it as the page loads
+    const isModern = () => root.classList.contains("modern");
+
+    // pages are laid out anew in Modern, and in Classic where the desktop layout doesn't hold
+    const isRelayout = () => queries.relayout.matches || isModern();
+
     // the main page and every dialog frame carry the main window's queries as classes: a frame is narrower than the
     // screen its window is on
     const frameDocuments = new Set();
 
     const setClasses = (doc) => {
         doc.documentElement.classList.toggle("responsivePhone", queries.phone.matches);
-        doc.documentElement.classList.toggle("responsiveRelayout", queries.relayout.matches);
+        doc.documentElement.classList.toggle("responsiveRelayout", isRelayout());
+    };
+
+    // Modern's stylesheet, after responsive.css
+    const modernStylesheet = (doc) => {
+        const stylesheet = doc.createElement("link");
+        stylesheet.id = "modernStylesheet";
+        stylesheet.rel = "stylesheet";
+        stylesheet.type = "text/css";
+        stylesheet.href = document.getElementById("responsiveStylesheet").href.replace("/responsive.css", "/modern.css");
+        return stylesheet;
+    };
+
+    // called by color-scheme.js: as the page loads with the look stored at the last visit, and once the client data has
+    // arrived
+    const setDisplayMode = (modern) => {
+        if (modern === isModern())
+            return;
+
+        root.classList.toggle("modern", modern);
+        if (modern) {
+            const stylesheet = modernStylesheet(document);
+            // Mocha's title bars and the rows of the torrent list take their heights from it
+            stylesheet.addEventListener("load", (_event) => {
+                applyWindowTitleHeight();
+                keepFirstRow();
+            });
+            document.getElementById("responsiveStylesheet").after(stylesheet);
+        }
+        else {
+            document.getElementById("modernStylesheet")?.remove();
+            applyWindowTitleHeight();
+        }
+        setClasses(document);
     };
 
     // called by a dialog frame's color-scheme.js: responsive.css follows the frame's own stylesheets
@@ -81,6 +123,12 @@ window.qBittorrent.Responsive ??= (() => {
         stylesheet.type = "text/css";
         stylesheet.href = document.getElementById("responsiveStylesheet").href;
         doc.head.append(stylesheet);
+        // a dialog takes the main window's look
+        if (isModern()) {
+            doc.documentElement.classList.add("modern");
+            doc.documentElement.classList.toggle("compact", root.classList.contains("compact"));
+            stylesheet.after(modernStylesheet(doc));
+        }
         setClasses(doc);
         frameDocuments.add(doc);
         doc.defaultView.addEventListener("pagehide", (_event) => frameDocuments.delete(doc));
@@ -673,7 +721,7 @@ window.qBittorrent.Responsive ??= (() => {
         }
         // Mocha centers a window at the size it opens with: where windows are fitted, a window is centered again,
         // until the user moves it
-        else if (phone || wasFullScreen || ((queries.relayout.matches || fitted) && !instance.responsiveUserMoved)) {
+        else if (phone || wasFullScreen || ((isRelayout() || fitted) && !instance.responsiveUserMoved)) {
             windowEl.style.left = `${Math.max(margin, Math.round((maxLeft + margin) / 2))}px`;
             windowEl.style.top = `${Math.max(margin, Math.round((maxTop + margin) / 2))}px`;
         }
@@ -692,7 +740,7 @@ window.qBittorrent.Responsive ??= (() => {
         // Mocha draws the window around the toolbar's inline height, while touch-sized tabs and tabs that wrap make it
         // taller
         const toolbar = instance.toolbarWrapperEl;
-        if (queries.relayout.matches && toolbar && (toolbar.style.height !== `${toolbar.offsetHeight}px`)) {
+        if (isRelayout() && toolbar && (toolbar.style.height !== `${toolbar.offsetHeight}px`)) {
             toolbar.style.height = `${toolbar.offsetHeight}px`;
             instance.drawWindow();
         }
@@ -718,7 +766,7 @@ window.qBittorrent.Responsive ??= (() => {
         let ownHeight = null;
         // a size the user gave a window, now or before, is kept, except on phones
         const userSized = instance.responsiveUserResized || hasStoredSize(instance);
-        if (queries.relayout.matches && (phone || !userSized)) {
+        if (isRelayout() && (phone || !userSized)) {
             width = phone ? maxWidth : Math.min(fitWidth, Math.max(width, MIN_WINDOW_WIDTH, pageOverflow(instance, width, wantedHeight).width));
             // pages that share one window take all of its fitted height, so it doesn't change from page to page
             if (ONE_SIZE_WINDOWS.has(windowEl.id)) {
@@ -737,7 +785,7 @@ window.qBittorrent.Responsive ??= (() => {
         // the desktop layout keeps a window's size, but a dialog takes its page's height where the screen has room for
         // all of it: its button row then ends the window, as far from its edge as from the page, and doesn't cover the
         // page's end
-        else if (!queries.relayout.matches && !userSized && isDialog(instance)) {
+        else if (!isRelayout() && !userSized && isDialog(instance)) {
             const pageNeeds = pageHeight(instance, width, maxHeight);
             if ((pageNeeds > 0) && (pageNeeds <= fitHeight)) {
                 height = pageNeeds;
