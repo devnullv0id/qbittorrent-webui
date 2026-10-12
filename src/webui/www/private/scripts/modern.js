@@ -2368,6 +2368,33 @@ window.qBittorrent.Modern ??= (() => {
                 .catch(() => {});
         };
 
+        // accent colors, below the display mode
+        const ACCENT_COLORS = [
+            ["blue", "QBT_TR(Blue)QBT_TR[CONTEXT=OptionsDialog]"],
+            ["indigo", "QBT_TR(Indigo)QBT_TR[CONTEXT=OptionsDialog]"],
+            ["purple", "QBT_TR(Purple)QBT_TR[CONTEXT=OptionsDialog]"],
+            ["pink", "QBT_TR(Pink)QBT_TR[CONTEXT=OptionsDialog]"],
+            ["red", "QBT_TR(Red)QBT_TR[CONTEXT=OptionsDialog]"],
+            ["orange", "QBT_TR(Orange)QBT_TR[CONTEXT=OptionsDialog]"],
+            ["green", "QBT_TR(Green)QBT_TR[CONTEXT=OptionsDialog]"],
+            ["teal", "QBT_TR(Teal)QBT_TR[CONTEXT=OptionsDialog]"]
+        ];
+
+        const addAccentColor = () => {
+            const select = document.createElement("select");
+            select.id = "modernAccentColor";
+            for (const [value, name] of ACCENT_COLORS)
+                select.add(new Option(name, value));
+            select.value = window.qBittorrent.ClientData.get("accent_color") ?? "blue";
+            const label = document.createElement("label");
+            label.htmlFor = select.id;
+            label.textContent = "QBT_TR(Accent color:)QBT_TR[CONTEXT=OptionsDialog]";
+            const row = document.createElement("div");
+            row.className = "formRow";
+            row.append(label, select);
+            document.getElementById("displayModeSelect").parentElement.after(row);
+        };
+
         // Cancel, Apply and OK in place of Save; Apply saves while there are changes
         const addDialogButtons = (state) => {
             const footer = state.page.querySelector(":scope > .dialogFooter");
@@ -2487,6 +2514,7 @@ window.qBittorrent.Modern ??= (() => {
             markFieldUnits(state.page);
             addProxySwitch(state);
             addI2PSwitch();
+            addAccentColor();
             addSpeedLimitsSwitch(state);
             for (const editor of LIST_EDITORS)
                 addListEditor(state, editor);
@@ -2512,6 +2540,15 @@ window.qBittorrent.Modern ??= (() => {
         const modernBeforeSave = () => {
             for (const save of modernOptions?.beforeSave ?? [])
                 save();
+        };
+
+        // as applyPreferences() gathers the client data: the accent color, none for blue
+        const modernSaveLook = (clientData) => {
+            if (modernOptions === null)
+                return;
+
+            const accent = document.getElementById("modernAccentColor").value;
+            clientData.accent_color = (accent === "blue") ? null : accent;
         };
 
         // as applyPreferences() saves: the alternative speed limits' mode, where the switch changed it
@@ -2556,7 +2593,7 @@ window.qBittorrent.Modern ??= (() => {
             return true;
         };
 
-        return { setupModern: setupModern, modernFilled: modernFilled, modernBeforeSave: modernBeforeSave, modernSaved: modernSaved, modernSaveSpeedLimitsMode: modernSaveSpeedLimitsMode };
+        return { setupModern: setupModern, modernFilled: modernFilled, modernBeforeSave: modernBeforeSave, modernSaved: modernSaved, modernSaveLook: modernSaveLook, modernSaveSpeedLimitsMode: modernSaveSpeedLimitsMode };
     };
 
     // the torrents' upload and download limits; where the torrents' limits differ the field is mixed
