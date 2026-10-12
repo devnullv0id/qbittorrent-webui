@@ -9,7 +9,7 @@
             };
         };
 
-        const setupSlider = (sliderId, input, limit) => {
+        const setupSlider = (sliderId, input, limit, mixed = false) => {
             const update = (value) => {
                 input.value = (value === 0) ? "∞" : value;
             };
@@ -33,7 +33,74 @@
 
             update(limit);
             // Modern's sliders are logarithmic, with the speed in the unit that fits (modern.js)
-            window.qBittorrent.Modern.addSpeedSlider(slider, input);
+            window.qBittorrent.Modern.addSpeedSlider(slider, input, { mixed: mixed });
+        };
+
+        // Modern opens the page for torrents too (modern.js): their upload and download limits, without the session's
+        // alternative ones. Where the torrents' limits differ the field is mixed, and Apply leaves it alone until a speed
+        // is chosen; it sends only what changed, once the limits have loaded
+        const initTorrents = (hashes) => {
+            document.getElementById("altUploadValue").closest("fieldset").classList.add("invisible");
+            const applyButton = document.getElementById("applyButton");
+            applyButton.disabled = true;
+            const directions = [
+                { input: document.getElementById("uploadValue"), slider: "uploadSlider", method: "uploadLimit", setMethod: "setUploadLimit" },
+                { input: document.getElementById("downloadValue"), slider: "downloadSlider", method: "downloadLimit", setMethod: "setDownloadLimit" }
+            ];
+
+            // the limit the torrents share, in bytes/s, else null
+            const loadLimit = async ({ method }) => {
+                const response = await fetch(`api/v2/torrents/${method}`, {
+                    method: "POST",
+                    body: new URLSearchParams({
+                        hashes: hashes.join("|")
+                    })
+                });
+                if (!response.ok)
+                    throw new Error(response.statusText);
+
+                const limits = Object.values(await response.json()).map((limit) => Math.max(limit, 0));
+                return limits.every((limit) => limit === limits[0]) ? limits[0] : null;
+            };
+            Promise.all(directions.map(loadLimit))
+                .then((limits) => {
+                    for (const [i, direction] of directions.entries()) {
+                        direction.limit = limits[i];
+                        setupSlider(direction.slider, direction.input, ((limits[i] ?? 0) / 1024), (limits[i] === null));
+                    }
+                    applyButton.disabled = false;
+                })
+                .catch(console.error);
+
+            applyButton.addEventListener("click", (_event) => {
+                const requests = [];
+                for (const { input, limit, setMethod } of directions) {
+                    // still mixed
+                    if (input.value === "")
+                        continue;
+
+                    const newLimit = Number(input.value) * 1024 || 0;
+                    if (newLimit === limit)
+                        continue;
+
+                    requests.push(fetch(`api/v2/torrents/${setMethod}`, {
+                        method: "POST",
+                        body: new URLSearchParams({
+                            hashes: hashes.join("|"),
+                            limit: newLimit
+                        })
+                    }));
+                }
+                Promise.all(requests)
+                    .then((responses) => responses.every((response) => response.ok), () => false)
+                    .then((applied) => {
+                        if (!applied)
+                            alert("QBT_TR(Failed to set speed limits)QBT_TR[CONTEXT=SpeedLimit]");
+
+                        window.parent.updateMainData();
+                        window.parent.qBittorrent.Client.closeWindow(applyButton.closest(".mocha"));
+                    });
+            });
         };
 
         const init = () => {
@@ -43,6 +110,12 @@
             const altDownloadValue = document.getElementById("altDownloadValue");
 
             const applyButton = document.getElementById("applyButton");
+            const torrentHashes = window.MUI.Windows.instances[applyButton.closest(".mocha")?.id]?.options.limitHashes;
+            if (torrentHashes !== undefined) {
+                initTorrents(torrentHashes);
+                return;
+            }
+
             applyButton.addEventListener("click", (_event) => {
                 const upload = Number(uploadValue.value) * 1024 || 0;
                 const download = Number(downloadValue.value) * 1024 || 0;

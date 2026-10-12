@@ -1185,9 +1185,13 @@ window.qBittorrent.Modern ??= (() => {
 
     const STEP_KEYS = { ArrowUp: 1, ArrowDown: -1, PageUp: 10, PageDown: -10 };
 
+    // the limits of torrents that have different ones
+    const MIXED = "QBT_TR(Mixed)QBT_TR[CONTEXT=PropListDelegate]";
+
     // a page's speed slider made logarithmic, with a field beside it that shows the speed in the unit that fits and has
-    // arrows to step it; the page's own field, hidden, keeps the speed in KiB/s, as the page reads it
-    const addSpeedSlider = (slider, input) => {
+    // arrows to step it; the page's own field, hidden, keeps the speed in KiB/s, as the page reads it. A mixed one shows
+    // no speed until one is chosen
+    const addSpeedSlider = (slider, input, { mixed = false } = {}) => {
         if (!responsive.isModern())
             return;
 
@@ -1204,11 +1208,30 @@ window.qBittorrent.Modern ??= (() => {
         const stepper = document.createElement("span");
         stepper.className = "modernSpeedStepper";
 
-        let kib = Number(input.value) || 0;
+        // no speed while mixed
+        let kib = mixed ? null : (Number(input.value) || 0);
+        field.placeholder = MIXED;
         let shown = "";
-        // what the page reads: KiB/s, or ∞ for no limit
-        const pageValue = (value) => ((value === 0) ? "∞" : value.toString());
+        // what the page reads: KiB/s, ∞ for no limit, nothing while mixed
+        const pageValue = (value) => {
+            if (value === null)
+                return "";
+
+            return (value === 0) ? "∞" : value.toString();
+        };
         const show = () => {
+            if (kib === null) {
+                field.value = "";
+                shown = "";
+                field.removeAttribute("aria-valuenow");
+                field.setAttribute("aria-valuetext", MIXED);
+                slider.setAttribute("aria-valuetext", MIXED);
+                if (unitLabel !== null)
+                    unitLabel.style.visibility = "hidden";
+                input.value = "";
+                return;
+            }
+
             const { value, unit } = formatSpeed(kib);
             field.value = (kib === 0) ? "∞" : value;
             shown = field.value;
@@ -1336,6 +1359,7 @@ window.qBittorrent.Modern ??= (() => {
             setExpanded(false);
             releaseFocus();
         };
+        closeSpeedLimitsPopup = close;
 
         const open = async () => {
             const load = ++loads;
@@ -1383,7 +1407,7 @@ window.qBittorrent.Modern ??= (() => {
         const isDetached = () => localPreferences.get("speed_limits_detached") === "true";
         const openWindow = () => {
             close();
-            globalLimitFN();
+            afterWindowsClose([TORRENT_SPEED_LIMITS_WINDOW], () => globalLimitFN());
         };
         detach.addEventListener("click", (_event) => {
             localPreferences.set("speed_limits_detached", "true");
@@ -1396,7 +1420,7 @@ window.qBittorrent.Modern ??= (() => {
                 else if (isDetached())
                     openWindow();
                 else
-                    afterWindowsClose([SPEED_LIMITS_WINDOW], () => open());
+                    afterWindowsClose([SPEED_LIMITS_WINDOW, TORRENT_SPEED_LIMITS_WINDOW], () => open());
             });
         }
         for (const query of [responsive.queries.coarse, responsive.queries.phone])
@@ -1420,6 +1444,55 @@ window.qBittorrent.Modern ??= (() => {
         });
     };
 
+    /* Torrent speed limits */
+
+    // one Speed limits item in the torrent menu, instead of its two limit items, opens the global speed limits' page for
+    // the selected torrents, in a window of its own (globalspeedlimits.html); the global limits close first
+    const TORRENT_SPEED_LIMITS_WINDOW = "torrentSpeedLimitsPage";
+
+    // set as the status bar is built
+    let closeSpeedLimitsPopup = () => {};
+
+    const openTorrentSpeedLimits = () => {
+        const hashes = window.torrentsTable.selectedRowsIds();
+        if (hashes.length === 0)
+            return;
+
+        closeSpeedLimitsPopup();
+        afterWindowsClose([SPEED_LIMITS_WINDOW, TORRENT_SPEED_LIMITS_WINDOW], () => new MochaUI.Window({
+            id: TORRENT_SPEED_LIMITS_WINDOW,
+            icon: "images/qbittorrent-tray.svg",
+            title: "QBT_TR(Speed limits)QBT_TR[CONTEXT=SpeedLimit]",
+            // not data, which the window would send in the page's URL
+            limitHashes: hashes,
+            loadMethod: "xhr",
+            contentURL: "views/globalspeedlimits.html?v=${CACHEID}",
+            scrollbars: false,
+            resizable: false,
+            maximizable: false,
+            paddingVertical: 0,
+            paddingHorizontal: 0,
+            width: window.qBittorrent.Dialog.limitWidthToViewport(480),
+            height: 150
+        }));
+    };
+
+    const initTorrentSpeedLimits = () => {
+        const downloadLimit = document.querySelector("#torrentsTableMenu a[href='#downloadLimit']").parentElement;
+        const link = document.createElement("a");
+        link.href = "#speedLimits";
+        const img = document.createElement("img");
+        img.src = "images/slow_off.svg";
+        img.alt = "";
+        link.append(img, "QBT_TR(Speed limits)QBT_TR[CONTEXT=SpeedLimit]");
+        // the menu has no such action
+        link.addEventListener("click", (_event) => openTorrentSpeedLimits());
+        const item = document.createElement("li");
+        item.className = "separator";
+        item.append(link);
+        downloadLimit.before(item);
+    };
+
     const init = () => {
         if (!responsive.isModern())
             return;
@@ -1436,6 +1509,7 @@ window.qBittorrent.Modern ??= (() => {
         initSortSheet();
         initSelectionCheckboxes();
         initStatusBar();
+        initTorrentSpeedLimits();
     };
 
     return exports();

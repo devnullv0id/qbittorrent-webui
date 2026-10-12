@@ -4088,3 +4088,10 @@
 :root.modern:not(.responsivePhone) .modernMoved:has(.modernAttachButton) {
     --modern-window-buttons: 3;
 }
+
+/* Torrent speed limits: one Speed limits item replaces the torrent menu's two (modern.js) */
+:root.modern
+    #torrentsTableMenu
+    li:has(> a:is([href="#downloadLimit"], [href="#uploadLimit"])) {
+    display: none;
+}
