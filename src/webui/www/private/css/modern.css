@@ -264,6 +264,12 @@
     vertical-align: middle;
 }
 
+/* center the letters rather than the font's line; modern.js wraps a button element's text in .modernButtonLabel for it */
+:root.modern input:is([type="button"], [type="submit"], [type="reset"]),
+:root.modern .modernButtonLabel {
+    text-box: trim-both cap alphabetic;
+}
+
 :root.modern
     input:is([type="button"], [type="submit"], [type="reset"]):enabled:hover,
 :root.modern
@@ -1711,6 +1717,8 @@
     }
 }
 
+:root.modern #statisticsContent h3,
+:root.modern #manageCookiesTable thead td,
 :root.modern fieldset > legend {
     color: var(--color-text-muted);
     font-size: 11px;
@@ -1771,5 +1779,416 @@
         letter-spacing: 0;
         text-transform: none;
         top: 8px;
+    }
+}
+
+/* Dialogs */
+:root.modern body:not(:has(#desktop)) {
+    padding: 12px 16px;
+}
+
+:root.modern.responsivePhone body:not(:has(#desktop)) {
+    padding-inline: 12px;
+}
+
+:root.modern
+    body:not(:has(#desktop))
+    > div
+    > label:has(+ input:is([type="text"], :not([type]))) {
+    display: block;
+    margin-bottom: 6px;
+}
+
+:root.modern body:not(:has(#desktop)) h2 {
+    font-size: 15px;
+    font-weight: 600;
+    padding-bottom: 10px;
+}
+
+:root.modern #urls,
+:root.modern #trackersUrls {
+    min-height: 120px;
+}
+
+:root.modern #createTorrentForm div:has(> input[type="checkbox"] + label) {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    padding: 4px 0;
+
+    & > label {
+        flex: 1 1 auto;
+    }
+
+    & > input[type="checkbox"] {
+        margin: 0;
+        order: 1;
+    }
+}
+
+:root.modern #uploadForm fieldset fieldset:has(> legend > #useDownloadPath) {
+    padding-left: 14px;
+    padding-top: 0;
+
+    & > legend {
+        align-items: center;
+        box-sizing: border-box;
+        display: flex;
+        gap: 12px;
+        max-width: none;
+        overflow: visible;
+        padding: 10px 0;
+        position: static;
+        white-space: normal;
+        width: 100%;
+
+        & > label {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        & > input[type="checkbox"] {
+            margin: 0;
+            order: 1;
+        }
+    }
+}
+
+:root.modern:not(.responsivePhone) {
+    &
+        #uploadForm
+        fieldset
+        table
+        td
+        > :is(
+            input:not([type="checkbox"], [type="hidden"], .pathDirectory),
+            select,
+            .select-watched-folder-editable
+        ),
+    & #btn-group-tagsSelect {
+        box-sizing: border-box;
+        max-width: 100%;
+        width: 200px;
+    }
+}
+
+:root.modern #filesColumn > fieldset {
+    box-sizing: border-box;
+    margin-bottom: 0;
+    max-height: calc(100% - 26px);
+}
+
+:root.modern.responsivePhone {
+    & #btn-group-tagsSelect {
+        display: block;
+    }
+
+    &
+        :is(#uploadForm, #createTorrentForm)
+        fieldset
+        table:where(:not(.dynamicTable))
+        tr {
+        align-items: stretch;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 6px 0;
+
+        & > td {
+            padding: 0;
+            width: auto;
+        }
+
+        &
+            > td
+            > :is(
+                input:not([type="checkbox"]),
+                select,
+                textarea,
+                .select-watched-folder-editable
+            ) {
+            box-sizing: border-box;
+            max-width: none !important; /* override inline style */
+            width: 100% !important;
+        }
+
+        &:has(> td > input[type="checkbox"]):not(
+                :has(
+                    > td
+                        > :is(
+                            input:not([type="checkbox"], [type="hidden"]),
+                            select,
+                            textarea
+                        )
+                )
+            ) {
+            align-items: center;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        & > td:has(> input[type="checkbox"] + label) {
+            align-items: center;
+            display: flex;
+            flex: 1 1 auto;
+            gap: 12px;
+
+            & > label {
+                flex: 1 1 auto;
+            }
+
+            & > input[type="checkbox"] {
+                margin: 0;
+                order: 1;
+            }
+        }
+
+        & > td:empty {
+            display: none;
+        }
+    }
+
+    & #uploadForm .formRow:has(> #downloadPath),
+    &
+        #createTorrentForm
+        fieldset
+        div:has(> label + :is(select, input:not([type="checkbox"]))) {
+        align-items: stretch !important; /* override inline style */
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    & #uploadForm .formRow:has(> #downloadPath) > select,
+    & #uploadForm .formRow:has(> #downloadPath) > input,
+    &
+        #createTorrentForm
+        fieldset
+        div:has(> label + :is(select, input:not([type="checkbox"])))
+        > select,
+    &
+        #createTorrentForm
+        fieldset
+        div:has(> label + :is(select, input:not([type="checkbox"])))
+        > input {
+        box-sizing: border-box;
+        margin: 0 !important; /* override inline style */
+        width: 100%;
+    }
+
+    & #categoryName,
+    & #savePath,
+    & #downloadPath,
+    & #cloneRssCloneRuleText {
+        box-sizing: border-box;
+        max-width: 100%;
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+:root.modern .modernFieldRow {
+    margin-bottom: 0 !important; /* override inline style */
+
+    & + .modernFieldRow {
+        margin-top: 8px;
+    }
+}
+
+:root.modern #shareLimitsGrid {
+    row-gap: 8px;
+}
+
+/* Multi-select dropdowns */
+:root.modern :is(#btn-group-logLevelSelect, #btn-group-tagsSelect) > button {
+    background: var(--color-background-primary) var(--modern-chevron-down) right
+        8px center / 16px no-repeat;
+    border-radius: var(--modern-radius-pill);
+    justify-content: flex-start;
+    padding: 2px 30px 2px 12px;
+    width: 100%;
+
+    & .caret {
+        display: none;
+    }
+}
+
+:root.modern .vsb-menu {
+    & li {
+        border-radius: var(--modern-radius-item);
+        font-size: 13px;
+        line-height: 16px;
+        padding-bottom: 5px;
+        padding-top: 5px;
+    }
+
+    & li:hover {
+        background-color: var(--color-background-blue);
+    }
+
+    & .multi li:not(.grouped-option) {
+        position: relative;
+
+        &::before {
+            border: 1.5px solid var(--modern-control-edge);
+            border-radius: 4px;
+            box-sizing: border-box;
+            height: 16px;
+            padding: 0;
+            width: 16px;
+        }
+
+        &.active::before {
+            background: var(--color-accent-blue) var(--modern-tick) center /
+                contain no-repeat;
+            border-color: var(--color-accent-blue);
+        }
+
+        &.active::after {
+            display: none;
+        }
+    }
+}
+
+/* Editable selects */
+:root.modern .select-watched-folder-editable {
+    border: 0;
+    height: auto;
+    width: 200px;
+
+    & select {
+        position: relative;
+        width: 100%;
+    }
+
+    & input {
+        background: transparent;
+        border: 0;
+        bottom: 0;
+        min-height: 0;
+        right: 30px;
+        width: auto;
+    }
+
+    & input:focus-visible {
+        outline: 0;
+    }
+
+    &:has(> input:focus-visible) select {
+        outline: var(--modern-focus-ring);
+        outline-offset: 1px;
+    }
+}
+
+/* Button rows */
+:root.modern .dialogFooter {
+    align-items: center;
+    border-image: linear-gradient(
+            var(--color-border-divider),
+            var(--color-border-divider)
+        )
+        1 / 1px 0 0 / 0 100vw;
+    justify-content: flex-end;
+    margin-top: 14px;
+
+    & > :is(input, button) {
+        min-width: 88px;
+    }
+
+    & > .dialogCancel {
+        margin-right: auto;
+    }
+}
+
+:root.modern.responsivePhone .dialogFooter > .dialogCancel {
+    margin-right: 0;
+}
+
+/* phones held sideways: one row, as a stack would leave the page no height */
+@media (height < 500px) {
+    :root.modern.responsivePhone .mocha .dialogFooter {
+        flex-flow: row nowrap;
+
+        & > :is(input, button) {
+            flex: 1 1 0;
+            min-width: 0;
+            width: auto !important; /* override responsive.css */
+        }
+    }
+}
+
+:root.modern .dialogFooter > .dialogPrimary:not(:disabled) {
+    background-color: var(--color-background-blue);
+    border-color: var(--color-background-blue);
+    color: var(--color-text-white);
+    font-weight: 600;
+}
+
+:root.modern .dialogFooter > .dialogPrimary:not(:disabled):hover {
+    --modern-deeper: color-mix(
+        in srgb,
+        var(--color-background-blue) 85%,
+        black
+    );
+
+    background-color: var(--modern-deeper);
+    border-color: var(--modern-deeper);
+}
+
+/* Confirmations */
+:root.modern .modalDialog .mochaContent.pad {
+    padding-inline: 16px !important; /* override inline style */
+}
+
+:root.modern .genericConfirmGrid,
+:root.modern .confirmDeletionGrid {
+    gap: 8px 12px;
+}
+
+:root.modern #rememberBtn {
+    border-radius: var(--modern-radius-button);
+}
+
+/* Statistics */
+:root.modern #statisticsContent {
+    & table {
+        background-color: var(--color-background-card);
+        border: var(--modern-border);
+        border-radius: var(--modern-radius-card);
+        border-spacing: 0;
+        margin-bottom: 14px;
+        padding: 4px 14px;
+        width: 100%;
+    }
+
+    & td {
+        padding: 4px 0;
+    }
+
+    & tr + tr td {
+        border-top: var(--modern-divider);
+    }
+
+    & h3 {
+        margin: 4px 0 6px 2px;
+        padding: 0;
+    }
+}
+
+/* Cookies */
+:root.modern #manageCookiesTable {
+    border-spacing: 0 4px;
+    width: 100%;
+
+    & input {
+        width: 100%;
+    }
+}
+
+@media (pointer: coarse) {
+    :root.modern .aboutTabContent td > a {
+        align-items: center;
+        display: inline-flex;
+        min-height: var(--responsive-touch-target);
     }
 }

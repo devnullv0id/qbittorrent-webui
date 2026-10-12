@@ -33,6 +33,7 @@ window.qBittorrent.Modern ??= (() => {
     const exports = () => {
         return {
             init: init,
+            trimEllipsis: trimEllipsis,
         };
     };
 
@@ -154,6 +155,123 @@ window.qBittorrent.Modern ??= (() => {
         strip.addEventListener("click", (_event) => requestAnimationFrame(keepSelectedInView));
     };
 
+    // buttons drop the "..." of a label that opens a window, which reads as cut off
+    const TRAILING_ELLIPSIS = /\s*(?:\.{2,}|\u2026)\s*$/;
+    const BUTTONS = "button, input:is([type='button'], [type='submit'])";
+
+    const trimEllipsis = (container) => {
+        for (const button of container.querySelectorAll(BUTTONS)) {
+            if (button.matches("input")) {
+                button.value = button.value.replace(TRAILING_ELLIPSIS, "");
+                continue;
+            }
+            const label = [...button.childNodes].findLast((node) => (node.nodeType === Node.TEXT_NODE) && (node.textContent.trim() !== ""));
+            if (label !== undefined)
+                label.textContent = label.textContent.replace(TRAILING_ELLIPSIS, "");
+        }
+    };
+
+    // the buttons that close a dialog without doing anything
+    const CANCEL_BUTTONS = "#cancelBtn, #newPluginCancel, [id^='cancel'][id$='Button'], [onclick*='closeFrameWindow']";
+
+    // weak, so closed dialogs can be freed
+    const footers = new WeakSet();
+
+    // wrap a button's text, which modern.css trims to the letters' height
+    const labelButton = (button) => {
+        for (const node of [...button.childNodes]) {
+            if ((node.nodeType !== Node.TEXT_NODE) || (node.textContent.trim() === ""))
+                continue;
+
+            const label = button.ownerDocument.createElement("span");
+            label.className = "modernButtonLabel";
+            node.replaceWith(label);
+            label.append(node);
+        }
+    };
+
+    // after trimEllipsis(), which works on the buttons' own text
+    const labelFooterButtons = (footer) => {
+        for (const button of footer?.querySelectorAll(":scope > button") ?? [])
+            labelButton(button);
+    };
+
+    // Cancel first, or last where the buttons stack on phones; moved in the page, so the tab order follows
+    const placeCancel = (footer) => {
+        const cancel = footer.querySelector(":scope > .dialogCancel");
+        if (responsive.queries.phone.matches)
+            footer.append(cancel);
+        else
+            footer.prepend(cancel);
+    };
+
+    // a dialog frame with one button gets a Cancel; the other button, or a window's only one, is the main action
+    const setUpFooter = (footer, frameWindow) => {
+        const buttons = [...footer.querySelectorAll(`:scope > :is(${BUTTONS})`)];
+        let cancel = buttons.find((button) => button.matches(CANCEL_BUTTONS));
+        if ((cancel === undefined) && (frameWindow !== null) && (buttons.length === 1)) {
+            cancel = footer.ownerDocument.createElement("button");
+            cancel.type = "button";
+            cancel.textContent = "QBT_TR(Cancel)QBT_TR[CONTEXT=MainWindow]";
+            cancel.addEventListener("click", (_event) => window.qBittorrent.Client.closeFrameWindow(frameWindow));
+            footer.append(cancel);
+            buttons.push(cancel);
+        }
+        if (buttons.length !== ((cancel === undefined) ? 1 : 2))
+            return;
+
+        buttons.find((button) => button !== cancel).classList.add("dialogPrimary");
+        if (cancel === undefined)
+            return;
+
+        cancel.classList.add("dialogCancel");
+        footers.add(footer);
+        placeCancel(footer);
+    };
+
+    // Enter on a focused button presses that button, not the main action the page presses on Enter
+    const ENTER_TARGETS = "button, input:is([type='button'], [type='submit'], [type='reset']), a[href]";
+
+    const setUpFrame = (doc) => {
+        const footer = doc.querySelector(".dialogFooter");
+        if (footer !== null)
+            setUpFooter(footer, doc.defaultView);
+        // New and Edit Category: spaced like the share limits' rows
+        for (const id of ["categoryName", "savePath", "useDownloadPath", "downloadPath"])
+            doc.getElementById(id)?.parentElement.classList.add("modernFieldRow");
+        doc.defaultView.addEventListener("keydown", (event) => {
+            if ((event.key === "Enter") && event.target.matches?.(ENTER_TARGETS))
+                event.stopImmediatePropagation();
+        }, true);
+        trimEllipsis(doc.body);
+        labelFooterButtons(footer);
+    };
+
+    // every window: no empty strip below its page; then the windows whose pages aren't framed
+    const setUpWindow = (instance) => {
+        if (instance.iframeEl)
+            return;
+
+        const footer = instance.contentEl.querySelector(".dialogFooter");
+        if ((footer !== null) && !footers.has(footer))
+            setUpFooter(footer, null);
+        trimEllipsis(instance.contentEl);
+        labelFooterButtons(footer);
+    };
+
+    const initDialogs = () => {
+        responsive.addFrameHook(setUpFrame);
+        responsive.addWindowHook(setUpWindow);
+        // place Cancel anew in every open row as the phone layout changes
+        responsive.queries.phone.addEventListener("change", (_event) => {
+            const docs = [document, ...[...document.querySelectorAll("iframe")].map((frame) => frame.contentDocument).filter((doc) => doc !== null)];
+            for (const doc of docs) {
+                for (const footer of doc.querySelectorAll(".dialogFooter:has(> .dialogCancel)"))
+                    placeCancel(footer);
+            }
+        });
+    };
+
     const init = () => {
         if (!responsive.isModern())
             return;
@@ -161,6 +279,7 @@ window.qBittorrent.Modern ??= (() => {
         initPopups();
         initMenubar();
         initPropertiesTabs();
+        initDialogs();
     };
 
     return exports();

@@ -39,6 +39,8 @@ window.qBittorrent.Responsive ??= (() => {
             isRelayout: isRelayout,
             setDisplayMode: setDisplayMode,
             whenElement: whenElement,
+            addWindowHook: addWindowHook,
+            addFrameHook: addFrameHook,
             rowHeight: rowHeight
         };
     };
@@ -63,6 +65,20 @@ window.qBittorrent.Responsive ??= (() => {
     const isRelayout = () => queries.relayout.matches || isModern();
 
     const frameDocuments = new Set();
+
+    // modern.js sets up each dialog frame and window through these
+    const frameHooks = [];
+    const windowHooks = [];
+    const addFrameHook = (hook) => {
+        frameHooks.push(hook);
+    };
+    const addWindowHook = (hook) => {
+        windowHooks.push(hook);
+    };
+    const runWindowHooks = (instance) => {
+        for (const hook of windowHooks)
+            hook(instance);
+    };
 
     const setClasses = (doc) => {
         doc.documentElement.classList.toggle("responsivePhone", queries.phone.matches);
@@ -117,6 +133,8 @@ window.qBittorrent.Responsive ??= (() => {
         setClasses(doc);
         frameDocuments.add(doc);
         doc.defaultView.addEventListener("pagehide", (_event) => frameDocuments.delete(doc));
+        for (const hook of frameHooks)
+            hook(doc);
     };
 
     for (const query of [queries.phone, queries.relayout]) {
@@ -789,6 +807,7 @@ window.qBittorrent.Responsive ??= (() => {
         // a window opened from the drawer would open behind it
         closeFiltersDrawer();
         raiseStoredSize(instance);
+        runWindowHooks(instance);
         fitWindow(instance);
 
         // refit only when something the fit depends on has changed
@@ -810,6 +829,7 @@ window.qBittorrent.Responsive ??= (() => {
             }
             instance.responsiveFitState = null;
             instance.responsiveFills = undefined;
+            runWindowHooks(instance);
             fitSoon();
         });
         for (const child of instance.contentEl.children)
