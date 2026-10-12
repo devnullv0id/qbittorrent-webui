@@ -734,6 +734,8 @@
     :root.modern #modernSpeedLimits,
     :root.modern #preferencesTabs,
     :root.modern #preferencesTabs > li,
+    :root.modern .modernHighlight,
+    :root.modern .modernHighlight::after,
     :root.modern input,
     :root.modern input::before,
     :root.modern select,
@@ -1001,6 +1003,7 @@
 :root.modern #searchPattern,
 :root.modern #searchInNameFilter,
 :root.modern #filterTextInput,
+:root.modern #rssFilterInput,
 :root.modern #torrentsFilterInput,
 :root.modern #torrentFilesFilterInput {
     background: var(--color-background-primary) var(--modern-search) 10px
@@ -1885,6 +1888,7 @@
 
 /* Section labels */
 :root.modern .mocha #searchPluginsContainer > h2,
+:root.modern #rssContentView .dynamicTable th,
 :root.modern #statisticsContent h3,
 :root.modern #manageCookiesTable thead td,
 :root.modern #aboutAuthorContent > h3,
@@ -3059,6 +3063,7 @@
         }
     }
 
+    :root.modern #rssPhoneBar > .modernSheetBack,
     :root.modern #propertiesPanel_wrapper.modernSheet .modernSheetBack {
         background: var(--modern-chevron-down) center / 22px no-repeat
             transparent;
@@ -3072,6 +3077,7 @@
         width: 44px;
     }
 
+    :root.modern #rssPhoneTitle,
     :root.modern #propertiesPanel_wrapper.modernSheet #modernSheetTitle {
         flex: 1 1 auto;
         font-size: 15px;
@@ -5425,6 +5431,7 @@
     }
 }
 
+:root.modern #rssButtonBar button > img,
 :root.modern :is(#startSearchButton, #addTaskButton) > img {
     margin: 0;
 }
@@ -5612,6 +5619,7 @@
     }
 }
 
+:root.modern #rssTopBar,
 :root.modern #logTopBar,
 :root.modern #torrentCreatorTopBar {
     align-items: center;
@@ -5631,4 +5639,335 @@
 :root.modern #logFilterSummary {
     color: var(--color-text-muted);
     margin-left: auto;
+}
+
+/* RSS tab */
+:root.modern #rssButtonBar {
+    gap: 6px;
+}
+
+:root.modern #rssContentView {
+    box-sizing: border-box;
+    padding-top: 12px;
+
+    & > :is(#leftRssColumn, #centerRssColumn, #rightRssColumn) {
+        background-color: var(--color-background-card);
+        border: var(--modern-border);
+        border-radius: var(--modern-radius-card);
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    & .dynamicTableFixedHeaderDiv table {
+        background-color: transparent;
+    }
+
+    & .dynamicTable th {
+        border-right: 0;
+        padding: 10px 12px 6px;
+    }
+
+    & .dynamicTable td {
+        padding: 6px 12px;
+    }
+
+    & .dynamicTableDiv {
+        --color-background-zebra: color-mix(
+            in srgb,
+            var(--color-text-default) 4%,
+            var(--color-background-card)
+        );
+    }
+
+    & .dynamicTableDiv table.dynamicTable tbody tr.selected {
+        background-color: color-mix(
+            in srgb,
+            var(--color-accent-blue) 22%,
+            transparent
+        );
+        color: var(--color-text-default);
+        font-weight: 600;
+
+        & img:not(.flags) {
+            filter: none;
+        }
+    }
+}
+
+:root.modern #rssFeedTableDiv tbody td {
+    align-items: center;
+    display: flex !important; /* override inline style */
+
+    & > span:not(.rssUnreadCount) {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+:root.modern .rssUnreadCount {
+    background-color: var(--color-background-blue);
+    border-radius: var(--modern-radius-pill);
+    box-sizing: border-box;
+    color: var(--color-text-white);
+    flex: none;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 18px;
+    margin-left: 8px;
+    min-width: 18px;
+    padding: 0 6px;
+    text-align: center;
+
+    &.invisible {
+        display: none;
+    }
+}
+
+@media (width >= 760px) {
+    :root.modern #rssView {
+        overflow-y: auto;
+    }
+
+    :root.modern #rssContentView {
+        display: flex;
+        flex-shrink: 0;
+        gap: 12px;
+        min-height: 240px;
+        overflow: hidden;
+
+        & > :is(#leftRssColumn, #centerRssColumn, #rightRssColumn) {
+            display: flex;
+            flex: 1 1 0;
+            flex-direction: column;
+            float: none;
+            height: auto;
+            margin: 0;
+            min-width: 0;
+            width: auto;
+        }
+
+        & :is(#rssFeedTableDiv, #rssArticleTableDiv, #rssDetailsView) {
+            flex: 1 1 auto;
+            height: auto;
+            min-height: 0;
+        }
+    }
+}
+
+:root.modern #rssDetailsView {
+    padding: 14px 16px 0;
+
+    & #rssTorrentDetailsName {
+        background-color: transparent;
+        color: var(--color-text-default);
+        font-size: 15px;
+        line-height: 1.35;
+        margin: 0 0 6px;
+        overflow-wrap: anywhere;
+    }
+
+    &
+        :is(
+            #rssTorrentDetailsDate,
+            #rssTorrentDetailsAuthor,
+            #rssTorrentDetailsLink
+        ) {
+        background-color: transparent;
+    }
+
+    & :is(#rssTorrentDetailsDate, #rssTorrentDetailsAuthor) {
+        color: var(--color-text-muted);
+
+        & b {
+            font-weight: 400;
+        }
+    }
+
+    & #rssTorrentDetailsLink {
+        margin: 12px 0 14px;
+
+        & a {
+            align-items: center;
+            border: var(--modern-border);
+            border-radius: var(--modern-radius-button);
+            color: var(--color-text-default);
+            display: inline-flex;
+            min-height: var(--modern-control-height);
+            padding: 0 14px;
+        }
+
+        & a:hover {
+            background-color: var(--color-background-row-hover);
+            border-color: var(--color-text-muted);
+        }
+    }
+
+    & #rssDescription {
+        border-top: var(--modern-divider);
+        min-height: 120px;
+        padding-top: 8px;
+    }
+}
+
+:root.modern #rightRssColumn {
+    &:not(:has(> #rssDetailsView:empty)) > #rssDetailsHint,
+    &:has(> #rssDetailsView:empty) > #rssDetailsView {
+        display: none;
+    }
+
+    & > #rssDetailsHint {
+        align-items: center;
+        color: var(--color-text-muted);
+        display: flex;
+        flex: 1 1 auto;
+        justify-content: center;
+        padding: 16px;
+        text-align: center;
+    }
+}
+
+:root.modern #rssFetchingDisabled {
+    align-items: center;
+    background-color: color-mix(in srgb, var(--color-text-red) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-text-red) 35%, transparent);
+    border-radius: var(--modern-radius-card);
+    box-sizing: border-box;
+    color: var(--color-text-default);
+    display: flex;
+    flex: 1 1 100%;
+    font-style: normal;
+    gap: 12px;
+    justify-content: space-between;
+    margin: 0;
+    padding: 6px 6px 6px 12px;
+
+    & > button {
+        flex: none;
+    }
+}
+
+:root.modern #rssFetchingDisabled.invisible {
+    display: none;
+}
+
+/* RSS tab on phones */
+:root.modern #rssPhoneBar {
+    display: none;
+}
+
+@media (width < 760px) {
+    :root.modern #rssView {
+        & #rssContentView {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        & :is(#leftRssColumn, #centerRssColumn, #rightRssColumn) {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            margin: 0;
+            min-height: 0;
+        }
+
+        & :is(#rssFeedTableDiv, #rssArticleTableDiv, #rssDetailsView) {
+            flex: 1 1 auto;
+            height: auto;
+            min-height: 0;
+        }
+
+        & #rssDownloaderButton {
+            grid-column: 1 / -1;
+        }
+
+        &[data-phone-step="feeds"]
+            :is(#centerRssColumn, #rightRssColumn, #rssFilterInput),
+        &[data-phone-step="articles"]
+            :is(
+                #leftRssColumn,
+                #rightRssColumn,
+                #rssButtonBar button,
+                #rssFetchingDisabled
+            ),
+        &[data-phone-step="details"]
+            :is(
+                #leftRssColumn,
+                #centerRssColumn,
+                #rssButtonBar,
+                #rssFetchingDisabled
+            ) {
+            display: none;
+        }
+
+        &:not([data-phone-step="feeds"]) #rssPhoneBar {
+            align-items: center;
+            display: flex;
+            flex: 1 1 200px;
+            gap: 4px;
+            margin-left: -6px;
+            min-width: 0;
+        }
+
+        &[data-phone-step="articles"] #rssButtonBar {
+            display: flex;
+            flex: 1 1 200px;
+            width: auto;
+        }
+    }
+
+    @media (height < 620px) {
+        :root.modern #rssView {
+            padding-top: 6px;
+
+            & #rssContentView {
+                padding-top: 6px;
+            }
+
+            &[data-phone-step="feeds"] #rssButtonBar {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+
+                & button {
+                    flex: none;
+                    width: auto;
+                }
+            }
+        }
+    }
+}
+
+/* Highlighted settings */
+@keyframes modern-highlight {
+    0%,
+    60% {
+        outline-color: var(--color-accent-blue);
+    }
+
+    100% {
+        outline-color: transparent;
+    }
+}
+
+:root.modern fieldset.modernHighlight,
+:root.modern .modernHighlight:not(fieldset)::after {
+    animation: modern-highlight 2.4s ease-out forwards;
+    outline: 4px solid var(--color-accent-blue);
+    outline-offset: -4px;
+}
+
+:root.modern .modernHighlight:not(fieldset) {
+    position: relative;
+
+    &::after {
+        border-radius: var(--modern-radius-card);
+        content: "";
+        inset: var(--modern-highlight-top, 0) var(--modern-highlight-right, 0) 0
+            var(--modern-highlight-left, 0);
+        pointer-events: none;
+        position: absolute;
+    }
 }
