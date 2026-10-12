@@ -3582,7 +3582,8 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             // Send data to qBT
             Promise.allSettled([
                 window.parent.qBittorrent.ClientData.set(clientData),
-                window.parent.qBittorrent.Cache.preferences.set(settings)
+                window.parent.qBittorrent.Cache.preferences.set(settings),
+                modernSaveSpeedLimitsMode()
             ]).then((results) => {
                 if (results.every((result) => result.status === "fulfilled")) {
                     if (modernSaved(close))
@@ -3606,7 +3607,7 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             });
         };
 
-        const { setupModern, modernFilled, modernBeforeSave, modernSaved } = window.qBittorrent.Modern.optionsPage({
+        const { setupModern, modernFilled, modernBeforeSave, modernSaved, modernSaveSpeedLimitsMode } = window.qBittorrent.Modern.optionsPage({
             addWatchFolder: addWatchFolder,
             applyPreferences: applyPreferences,
             loadPreferences: loadPreferences,
