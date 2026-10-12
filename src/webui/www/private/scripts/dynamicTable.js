@@ -966,6 +966,8 @@ window.qBittorrent.DynamicTable ??= (() => {
 
         updateTable(fullUpdate = false) {
             const rows = this.getFilteredAndSortedRows();
+            // also for the selection's count (responsive.js)
+            this.filteredRowCount = rows.length;
             const rowIds = new Set(rows.map(row => row.rowId));
             window.qBittorrent.Misc.filterInPlace(this.selectedRows, (selectedRow => rowIds.has(selectedRow)));
 

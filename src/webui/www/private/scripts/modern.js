@@ -758,6 +758,9 @@ window.qBittorrent.Modern ??= (() => {
                 return li;
             });
             const filterHeading = document.querySelector("label[for='torrentsFilterSelect']").textContent.replace(/[:\uFF1A]\s*$/, "");
+            const checkboxes = item("QBT_TR(Checkboxes)QBT_TR[CONTEXT=MainWindow]", "menuitemcheckbox", checkboxesOn(), () => switchCheckboxes());
+            checkboxes.firstElementChild.classList.add("modernCardField");
+            fieldItems.unshift(checkboxes);
             list.replaceChildren(heading(button.title), ...sortItems, heading(filterHeading), ...filterItems, fold, ...fieldItems);
             if (focused >= 0)
                 list.querySelectorAll("a")[focused]?.focus();
@@ -792,6 +795,71 @@ window.qBittorrent.Modern ??= (() => {
         });
     };
 
+    /* Selection checkboxes */
+
+    // a check box before each torrent selects several without Ctrl or Shift (responsive.js handles them as Classic's
+    // cards' boxes); the header's menu, and on phones the sort sheet, switch them off
+    const checkboxesOn = () => localPreferences.get("torrents_row_checkboxes") !== "false";
+
+    let switchCheckboxes = () => {};
+
+    const initSelectionCheckboxes = async () => {
+        await responsive.whenElement("torrentsTableDiv");
+        const table = window.torrentsTable;
+        const selectAll = document.getElementById("torrentsSelectAll");
+        const bar = selectAll.parentElement;
+        const header = document.getElementById("torrentsTableFixedHeaderDiv");
+
+        // select all: above the cards on phones, before the column headers otherwise
+        const placeSelectAll = () => {
+            if (responsive.queries.phone.matches)
+                bar.prepend(selectAll);
+            else
+                header.prepend(selectAll);
+        };
+        const apply = () => {
+            root.classList.toggle("modernSelectMode", checkboxesOn());
+            responsive.updateSelection();
+        };
+        switchCheckboxes = () => {
+            localPreferences.set("torrents_row_checkboxes", (!checkboxesOn()).toString());
+            apply();
+        };
+        responsive.queries.phone.addEventListener("change", (_event) => placeSelectAll());
+        placeSelectAll();
+        apply();
+
+        // the header's menu, which the list builds anew, shows them checked as it does its columns
+        const menu = document.getElementById("torrentsTableDiv_headerMenu");
+        const addItem = () => {
+            if (menu.querySelector("a[href='#modernCheckboxes']") !== null)
+                return;
+
+            const link = document.createElement("a");
+            link.href = "#modernCheckboxes";
+            const img = document.createElement("img");
+            img.src = "images/checked-completed.svg";
+            img.alt = "";
+            link.append(img, "QBT_TR(Checkboxes)QBT_TR[CONTEXT=MainWindow]");
+            // contextmenu.js has no such action
+            link.addEventListener("click", (event) => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                switchCheckboxes();
+                table.headerContextMenu.hide();
+            });
+            const item = document.createElement("li");
+            item.className = "separator";
+            item.append(link);
+            menu.append(item);
+        };
+        addItem();
+        new MutationObserver(addItem).observe(menu, { childList: true });
+        header.addEventListener("contextmenu", (_event) => {
+            menu.querySelector("a[href='#modernCheckboxes'] > img").style.opacity = checkboxesOn() ? "1" : "0";
+        }, true);
+    };
+
     const init = () => {
         if (!responsive.isModern())
             return;
@@ -806,6 +874,7 @@ window.qBittorrent.Modern ??= (() => {
         initPropertyCards();
         initPropertiesPanelHeight();
         initSortSheet();
+        initSelectionCheckboxes();
     };
 
     return exports();

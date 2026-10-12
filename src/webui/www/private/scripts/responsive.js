@@ -45,6 +45,7 @@ window.qBittorrent.Responsive ??= (() => {
             fitWindow: fitWindow,
             addScrim: addScrim,
             trapFocus: trapFocus,
+            updateSelection: () => updateSelection(),
             rowHeight: rowHeight
         };
     };
@@ -1031,9 +1032,12 @@ window.qBittorrent.Responsive ??= (() => {
 
     /* Torrent cards on phones */
 
+    // Modern's check boxes, before each torrent at every width (modern.js switches them)
+    const modernSelectMode = () => root.classList.contains("modernSelectMode");
+
     // a card's zones (responsive.css): the checkbox at its left and the ⋯ at its top right, or null
     const cardZone = (event) => {
-        const tr = queries.phone.matches ? event.target.closest?.("#torrentsTableDiv tbody tr") : null;
+        const tr = (queries.phone.matches || modernSelectMode()) ? event.target.closest?.("#torrentsTableDiv tbody tr") : null;
         if (!tr)
             return null;
 
@@ -1093,6 +1097,9 @@ window.qBittorrent.Responsive ??= (() => {
         }, true);
     };
 
+    // the check boxes and count as the selection changes outside the list
+    let updateSelection = () => {};
+
     // a card's checkbox adds its torrent to the selection or takes it out, as a Ctrl+click on a row does; the bar above
     // the cards selects all or none and counts the selected torrents
     const initCardCheckboxes = async () => {
@@ -1115,11 +1122,12 @@ window.qBittorrent.Responsive ??= (() => {
         const selectAll = document.getElementById("torrentsSelectAll");
         const count = document.getElementById("torrentsSelectionCount");
         const update = () => {
-            if (!queries.phone.matches)
+            if (!queries.phone.matches && !modernSelectMode())
                 return;
 
             const selected = table.selectedRowsIds().length;
-            const all = (selected > 0) ? table.getFilteredAndSortedRows().length : 0;
+            // the list counts its rows as it filters them
+            const all = (selected > 0) ? table.filteredRowCount : 0;
             selectAll.checked = (selected > 0) && (selected >= all);
             selectAll.indeterminate = (selected > 0) && (selected < all);
             count.textContent = (selected > 0) ? count.dataset.format.replace("%1", selected) : "";
@@ -1140,6 +1148,7 @@ window.qBittorrent.Responsive ??= (() => {
         const updateSoon = window.qBittorrent.Misc.createDebounceHandler(100, update);
         new MutationObserver(updateSoon).observe(table.tableBody, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
         queries.phone.addEventListener("change", (_event) => update());
+        updateSelection = update;
         update();
     };
 
