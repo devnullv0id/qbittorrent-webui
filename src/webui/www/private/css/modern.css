@@ -69,6 +69,10 @@
     --progress-bar-height: 17px;
     --progress-bar-track: var(--color-background-track);
     --progress-bar-fill: var(--color-accent-blue);
+    /* no checkbox or menu zones on Modern's cards */
+    --responsive-card-check-width: 0px;
+    --responsive-card-menu-width: 0px;
+    --responsive-card-menu-height: 0px;
 
     &.dark {
         --modern-search: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg fill='none' stroke='%23a3a3a3' stroke-width='2'%3E%3Ccircle cx='8.5' cy='8.5' r='5.5'/%3E%3Cpath d='m12.5 12.5 4.5 4.5' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E");
@@ -630,6 +634,7 @@
     :root.modern #desktopNavbar ul,
     :root.modern #Filters,
     :root.modern #desktopNavbar,
+    :root.modern #propertiesPanel_wrapper,
     :root.modern input,
     :root.modern input::before,
     :root.modern select,
@@ -2724,5 +2729,474 @@
     :root.modern:has(#logTabLink.selected) #toolbarOverflowButton {
         background-color: var(--color-background-blue);
         color: var(--color-text-white);
+    }
+}
+
+/* Torrent cards and properties sheet on phones */
+@keyframes modern-sheet-in {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+:root.modern .modernSheetBar {
+    display: none;
+}
+
+@media (width < 760px) {
+    :root.modern #propertiesPanel_wrapper:not(.modernSheet),
+    :root.modern #transferList_handle {
+        display: none;
+    }
+
+    :root.modern #transferList {
+        height: 100% !important; /* override inline style */
+    }
+
+    :root.modern #transferList_wrapper {
+        height: 100%;
+    }
+
+    :root.modern #transferList #torrentsTableDiv {
+        --progress-bar-height: 18px;
+
+        & tbody tr {
+            gap: 0 14px;
+            grid-template-columns: auto minmax(0, 1fr) auto auto;
+            padding: 0 16px;
+
+            &::before,
+            &::after {
+                display: none;
+            }
+        }
+
+        & td {
+            color: var(--color-text-muted);
+            font-size: 12px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        & td[data-col="name"] {
+            color: var(--color-text-default);
+            font-size: 14px;
+            font-weight: 500;
+            grid-area: 1 / 2 / 2 / 5;
+        }
+
+        & td[data-col="priority"] {
+            grid-area: 1 / 1;
+            margin-right: -6px;
+            min-width: 1.2em;
+        }
+
+        & td[data-col="progress"] {
+            grid-area: 2 / 1 / 3 / 5;
+            margin: 6px 0 7px;
+        }
+
+        & td[data-col="status"] {
+            color: var(--color-text-default);
+            grid-area: 3 / 1 / 4 / 4;
+        }
+
+        & td[data-col="eta"] {
+            grid-area: 3 / 4;
+        }
+
+        & td[data-col="size"] {
+            grid-area: 4 / 1 / 5 / 3;
+        }
+
+        & td[data-col="dlspeed"] {
+            grid-area: 4 / 3;
+        }
+
+        & td[data-col="upspeed"] {
+            grid-area: 4 / 4;
+        }
+
+        & td[data-col="eta"]::before {
+            opacity: 0.8;
+        }
+
+        & tr.selected td {
+            color: inherit;
+        }
+    }
+
+    :root.modern #propGeneral {
+        padding: 8px 14px 16px;
+
+        & fieldset {
+            margin-top: 34px;
+            padding: 0 14px;
+        }
+
+        & tbody {
+            column-gap: 0;
+            grid-template-columns: minmax(7.5em, auto) minmax(0, 1fr);
+        }
+
+        & td {
+            border-bottom: var(--modern-divider);
+            line-height: 18px;
+            padding: 10px 0;
+        }
+
+        & td:not(.generalLabel) {
+            font-variant-numeric: tabular-nums;
+            padding-left: 16px;
+            text-align: right;
+        }
+
+        & tbody > tr:last-child > td {
+            border-bottom: 0;
+        }
+
+        & td.generalLabel {
+            padding-right: 0;
+            text-align: left;
+            white-space: nowrap;
+        }
+    }
+
+    /* over the list, below windows */
+    :root.modern #propertiesPanel_wrapper.modernSheet {
+        animation: modern-sheet-in 0.18s ease-out;
+        background-color: var(--color-background-default);
+        display: flex;
+        flex-direction: column;
+        inset: 0;
+        position: fixed;
+        transition:
+            top 0.25s ease,
+            border-radius 0.25s ease;
+        z-index: 90;
+
+        & #propertiesPanel {
+            flex: 1 1 auto;
+            height: auto !important; /* override inline style */
+        }
+
+        & #propertiesPanel_header {
+            align-items: stretch;
+            cursor: default;
+            flex: none;
+            flex-direction: column;
+            padding: 0;
+
+            & #propertiesPanel_headerCollapseBox {
+                display: none;
+            }
+
+            & .modernSheetBar {
+                align-items: center;
+                display: flex;
+                gap: 4px;
+                min-height: 52px;
+                padding: 0 12px 0 4px;
+            }
+
+            & .panel-headerContent {
+                border-top: var(--modern-divider);
+                width: 100%;
+            }
+
+            & .tab-menu {
+                gap: 2px;
+                overflow-x: visible;
+                padding: 4px 6px;
+            }
+
+            & .tab-menu li {
+                flex: 1 1 0;
+                min-width: 0;
+            }
+
+            & .tab-menu li a {
+                align-items: center;
+                border-radius: 10px;
+                display: flex;
+                flex-direction: column;
+                font-size: 11px;
+                gap: 3px;
+                justify-content: center;
+                line-height: 14px;
+                min-height: 48px;
+                overflow: hidden;
+                padding: 4px 2px;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+
+                & img {
+                    height: 18px;
+                    margin: 0;
+                    width: 18px;
+                }
+            }
+
+            & #torrentFilesFilterToolbar {
+                margin: 0 12px 8px;
+            }
+        }
+    }
+
+    :root.modern #propertiesPanel_wrapper.modernSheet .modernSheetBack {
+        background: var(--modern-chevron-down) center / 22px no-repeat
+            transparent;
+        border: 0;
+        border-radius: var(--modern-radius-pill);
+        flex: none;
+        height: 44px;
+        min-height: 44px;
+        padding: 0;
+        transform: rotate(90deg);
+        width: 44px;
+    }
+
+    :root.modern #propertiesPanel_wrapper.modernSheet #modernSheetTitle {
+        flex: 1 1 auto;
+        font-size: 15px;
+        font-weight: 600;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    :root.modern #propertiesPanel_wrapper.modernSheet.modernSheetHalf {
+        border-radius: var(--modern-radius-sheet);
+        box-shadow:
+            0 -8px 28px hsl(0deg 0% 0% / 35%),
+            0 0 0 100vmax var(--color-background-scrim);
+        overflow: hidden;
+        top: var(--modern-sheet-top, 50dvh);
+
+        & #propertiesPanel_header {
+            border-radius: var(--modern-radius-sheet);
+            cursor: grab;
+            touch-action: none;
+        }
+
+        & #propertiesPanel_header::before {
+            align-self: center;
+            background-color: var(--color-text-muted);
+            border-radius: var(--modern-radius-pill);
+            content: "";
+            flex: none;
+            height: 4px;
+            margin-top: 8px;
+            opacity: 0.6;
+            width: 36px;
+        }
+    }
+
+    :root.modern #propertiesPanel_wrapper.modernSheet.modernSheetDragging {
+        transition: none;
+        user-select: none;
+    }
+
+    /* Peer and tracker cards */
+    :root.modern
+        :where(#propertiesPanel)
+        :where(div):is(#torrentPeersTableDiv, #torrentTrackersTableDiv) {
+        --modern-row-height: 72px;
+
+        & thead {
+            display: none;
+        }
+
+        & table,
+        & tbody {
+            display: block;
+            width: 100% !important; /* override inline style */
+        }
+
+        & tbody tr {
+            align-content: center;
+            border-bottom: var(--modern-divider);
+            box-sizing: border-box;
+            display: grid;
+            gap: 0 12px;
+            /* override inline style */
+            height: var(--modern-row-height) !important;
+            left: 0;
+            overflow: hidden;
+            padding: 0 16px;
+            right: 0;
+            width: auto !important; /* override inline style */
+        }
+
+        & td {
+            border: 0;
+            display: none;
+            font-size: 12px;
+            font-variant-numeric: tabular-nums;
+            height: auto !important; /* override inline style */
+            line-height: 18px;
+            max-width: none !important; /* override inline style */
+            min-width: 0;
+            overflow: hidden;
+            padding: 0;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: auto !important; /* override inline style */
+        }
+    }
+
+    :root.modern #torrentPeersTableDiv {
+        & tbody tr {
+            grid-template-areas:
+                "country ip port dl"
+                ". client client up"
+                ". progress connection flags";
+            grid-template-columns: 18px minmax(0, 1fr) auto auto;
+        }
+
+        & td[data-col="country"] {
+            display: block;
+            grid-area: country;
+        }
+
+        & td[data-col="ip"] {
+            display: block;
+            font-size: 14px;
+            grid-area: ip;
+            line-height: 20px;
+        }
+
+        & td[data-col="port"] {
+            color: var(--color-text-muted);
+            display: block;
+            grid-area: port;
+            line-height: 20px;
+        }
+
+        & td[data-col="client"] {
+            display: block;
+            grid-area: client;
+        }
+
+        & :is(td[data-col="dl_speed"], td[data-col="up_speed"]) {
+            display: block;
+            text-align: right;
+
+            &:not(:empty)::before {
+                background: center / contain no-repeat;
+                content: "";
+                display: inline-block;
+                height: 14px;
+                margin-right: 3px;
+                vertical-align: -3px;
+                width: 14px;
+            }
+        }
+
+        & td[data-col="dl_speed"] {
+            grid-area: dl;
+            line-height: 20px;
+
+            &::before {
+                background-image: url("../images/downloading.svg");
+            }
+        }
+
+        & td[data-col="up_speed"] {
+            grid-area: up;
+
+            &::before {
+                background-image: url("../images/upload.svg");
+            }
+        }
+
+        &
+            td:is(
+                [data-col="progress"],
+                [data-col="connection"],
+                [data-col="flags"]
+            ) {
+            color: var(--color-text-muted);
+            display: block;
+        }
+
+        & td[data-col="progress"] {
+            grid-area: progress;
+        }
+
+        & td[data-col="connection"] {
+            grid-area: connection;
+        }
+
+        & td[data-col="flags"] {
+            grid-area: flags;
+            text-align: right;
+        }
+    }
+
+    :root.modern #torrentTrackersTableDiv {
+        & tbody tr {
+            grid-template-areas:
+                "url url url url"
+                "status seeds leeches peers"
+                "message message message message";
+            grid-template-columns: minmax(0, 1fr) auto auto auto;
+        }
+
+        & td[data-col="url"] {
+            display: block;
+            font-size: 14px;
+            grid-area: url;
+            line-height: 20px;
+        }
+
+        & td[data-col="status"] {
+            display: block;
+            grid-area: status;
+        }
+
+        & td:is([data-col="seeds"], [data-col="leeches"], [data-col="peers"]) {
+            display: block;
+            text-align: right;
+
+            &::before {
+                color: var(--color-text-muted);
+                content: attr(data-label) " ";
+            }
+        }
+
+        & td[data-col="seeds"] {
+            grid-area: seeds;
+        }
+
+        & td[data-col="leeches"] {
+            grid-area: leeches;
+        }
+
+        & td[data-col="peers"] {
+            grid-area: peers;
+        }
+
+        & td[data-col="message"] {
+            color: var(--color-text-muted);
+            display: block;
+            grid-area: message;
+        }
+    }
+}
+
+@media (540px <= width < 760px) {
+    :root.modern #propGeneral tbody {
+        grid-template-columns: repeat(2, minmax(7.5em, auto) minmax(0, 1fr));
+    }
+
+    :root.modern #propGeneral td[colspan] {
+        grid-column: 2 / -1;
     }
 }
