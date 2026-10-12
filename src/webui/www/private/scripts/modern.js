@@ -1136,7 +1136,6 @@ window.qBittorrent.Modern ??= (() => {
             const limit = document.createElement("span");
             limit.className = "modernStatusLimit invisible";
             cell.append(icon, rate, limit);
-            cell.addEventListener("click", (_event) => globalLimitFN());
             return { cell: cell, rate: rate, limit: limit };
         };
         const download = createSpeedCell("images/downloading.svg", "QBT_TR(Download speed icon)QBT_TR[CONTEXT=MainWindow]");
@@ -1144,6 +1143,7 @@ window.qBittorrent.Modern ??= (() => {
 
         bar.append(badge, details, altSpeed, download.cell, upload.cell);
         footer.append(bar);
+        initSpeedLimits([download.cell, upload.cell]);
 
         // details that don't fit on the line open above it: as a popup, or as a sheet where menus are sheets
         let inlineOpen = localPreferences.get("status_bar_details_open") === "true";
@@ -1461,6 +1461,150 @@ window.qBittorrent.Modern ??= (() => {
                 step(Math.sign(steps));
         });
         setSpeed(kib);
+    };
+
+    // the status bar's speeds open the global speed limits above them, as a popup or a sheet, or, detached, in their window
+    const SPEED_LIMITS_WINDOW = "globalSpeedLimitsPage";
+
+    const afterWindowsClose = (ids, then) => {
+        const open = ids.map((id) => MochaUI.Windows.instances[id]).filter((instance) => instance?.windowEl.isConnected);
+        let left = open.length;
+        if (left === 0) {
+            then();
+            return;
+        }
+        for (const instance of open) {
+            instance.addEvent("closeComplete", () => {
+                if (--left === 0)
+                    then();
+            });
+            window.qBittorrent.Client.closeWindow(instance.windowEl);
+        }
+    };
+
+    const initSpeedLimits = (cells) => {
+        const popup = document.createElement("div");
+        popup.id = "modernSpeedLimits";
+        popup.className = "invisible";
+        popup.setAttribute("role", "dialog");
+        popup.setAttribute("aria-label", "QBT_TR(Global Speed Limits)QBT_TR[CONTEXT=MainWindow]");
+        const page = document.createElement("div");
+        const detach = document.createElement("button");
+        detach.type = "button";
+        detach.className = "modernDetachButton";
+        detach.title = "QBT_TR(Open in a window)QBT_TR[CONTEXT=MainWindow]";
+        detach.setAttribute("aria-label", detach.title);
+        popup.append(page, detach);
+        // outside the bar, whose icon size would apply
+        document.body.append(popup);
+        const setExpanded = (expanded) => {
+            for (const cell of cells)
+                cell.setAttribute("aria-expanded", expanded.toString());
+        };
+        for (const cell of cells) {
+            cell.setAttribute("aria-haspopup", "dialog");
+            cell.setAttribute("aria-controls", popup.id);
+        }
+        setExpanded(false);
+
+        // open from the click on, so what closes it also drops a load still under way
+        let loads = 0;
+        let shown = null;
+        const close = () => {
+            ++loads;
+            if (shown === null)
+                return;
+
+            const { scrim, removePopup, releaseFocus } = shown;
+            shown = null;
+            popup.classList.add("invisible");
+            page.replaceChildren();
+            scrim?.remove();
+            removePopup();
+            setExpanded(false);
+            releaseFocus();
+        };
+
+        const open = async () => {
+            const load = ++loads;
+            shown = {
+                scrim: null,
+                // the speeds close it themselves
+                removePopup: addPopup(popup, () => close(), { keepOpenFor: ".modernStatusSpeed" }),
+                releaseFocus: () => {}
+            };
+            setExpanded(true);
+            const response = await fetch("views/globalspeedlimits.html?v=${CACHEID}").catch(() => null);
+            const text = response?.ok ? await response.text() : null;
+            if (load !== loads)
+                return;
+            if (text === null) {
+                close();
+                return;
+            }
+
+            // the page's module is defined once and set up anew for each opening
+            const view = new DOMParser().parseFromString(text, "text/html");
+            const script = view.querySelector("script");
+            script.remove();
+            page.replaceChildren(...view.head.children, ...view.body.childNodes);
+            const sheet = responsive.queries.coarse.matches || responsive.queries.phone.matches;
+            popup.classList.toggle("modernSheet", sheet);
+            popup.classList.remove("invisible");
+            if (sheet)
+                shown.scrim = responsive.addScrim(() => close(), "modernStatusScrim");
+            if (window.qBittorrent.GlobalSpeedLimits === undefined) {
+                const run = document.createElement("script");
+                run.textContent = script.textContent;
+                page.append(run);
+            }
+            else {
+                window.qBittorrent.GlobalSpeedLimits.init();
+            }
+            // Apply is the main action; after the page's own handler, which reads the limits, it closes the popup
+            setUpFooter(page.querySelector(".dialogFooter"), null);
+            document.getElementById("applyButton").addEventListener("click", (_event) => close());
+            shown.releaseFocus = responsive.trapFocus(popup);
+        };
+
+        const isDetached = () => localPreferences.get("speed_limits_detached") === "true";
+        const openWindow = () => {
+            close();
+            globalLimitFN();
+        };
+        detach.addEventListener("click", (_event) => {
+            localPreferences.set("speed_limits_detached", "true");
+            openWindow();
+        });
+        for (const cell of cells) {
+            cell.addEventListener("click", (_event) => {
+                if (shown !== null)
+                    close();
+                else if (isDetached())
+                    openWindow();
+                else
+                    afterWindowsClose([SPEED_LIMITS_WINDOW], () => open());
+            });
+        }
+        for (const query of [responsive.queries.coarse, responsive.queries.phone])
+            query.addEventListener("change", (_event) => close());
+
+        // the window's button, beside its close button, attaches them back
+        responsive.addWindowHook((instance) => {
+            if ((instance.options.id !== SPEED_LIMITS_WINDOW) || !instance.controlsEl || (instance.controlsEl.querySelector(".modernAttachButton") !== null))
+                return;
+
+            const attach = document.createElement("button");
+            attach.type = "button";
+            attach.className = "modernAttachButton";
+            attach.title = "QBT_TR(Attach to the status bar)QBT_TR[CONTEXT=MainWindow]";
+            attach.setAttribute("aria-label", attach.title);
+            attach.addEventListener("click", (_event) => {
+                localPreferences.set("speed_limits_detached", "false");
+                afterWindowsClose([SPEED_LIMITS_WINDOW], () => open());
+            });
+            instance.controlsEl.append(attach);
+        });
     };
 
     const init = () => {

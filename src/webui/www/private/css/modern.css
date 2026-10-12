@@ -306,6 +306,8 @@
         .mochaMinimizeButton,
         .mochaMaximizeButton,
         .modernCenterButton,
+        .modernAttachButton,
+        .modernDetachButton,
         .categoryToggle
     ) {
     align-items: center;
@@ -335,6 +337,8 @@
         .mochaMinimizeButton,
         .mochaMaximizeButton,
         .modernCenterButton,
+        .modernAttachButton,
+        .modernDetachButton,
         .categoryToggle
     ):enabled:hover {
     border-color: var(--color-text-muted);
@@ -348,6 +352,8 @@
         .mochaMinimizeButton,
         .mochaMaximizeButton,
         .modernCenterButton,
+        .modernAttachButton,
+        .modernDetachButton,
         .categoryToggle
     ):disabled {
     opacity: 0.5;
@@ -654,6 +660,7 @@
     :root.modern #modernStatusBar .modernStatusPill,
     :root.modern #modernStatusBar .modernStatusChevron,
     :root.modern #modernStatusBar .modernStatusDetails,
+    :root.modern #modernSpeedLimits,
     :root.modern input,
     :root.modern input::before,
     :root.modern select,
@@ -3979,4 +3986,104 @@
     & > .modernSpeedUnit {
         grid-column: 4;
     }
+}
+
+/* Global speed limits popup */
+:root.modern #modernSpeedLimits {
+    background-color: var(--color-background-popup);
+    border-radius: var(--modern-radius-menu);
+    bottom: calc(var(--modern-footer-height) + 6px);
+    box-shadow: var(--modern-shadow);
+    box-sizing: border-box;
+    max-height: calc(100dvh - var(--modern-footer-height) - 12px);
+    overflow: auto;
+    padding: 12px 16px;
+    position: fixed;
+    right: 6px;
+    width: min(480px, calc(100vw - 12px));
+    z-index: 2000;
+
+    &.modernSheet {
+        animation: modern-sheet 0.18s ease-out;
+        border-radius: var(--modern-radius-sheet);
+        bottom: var(--modern-footer-height);
+        max-height: calc(82dvh - var(--modern-footer-height));
+        right: 0;
+        width: 100%;
+    }
+}
+
+:root.modern :where(button):is(.modernDetachButton, .modernAttachButton) {
+    background: none;
+    border: 0;
+    border-radius: var(--modern-radius-item);
+    cursor: pointer;
+    padding: 0;
+    position: relative;
+
+    &::before {
+        background-color: var(--color-text-muted);
+        content: "";
+        inset: 0;
+        position: absolute;
+    }
+
+    &:hover {
+        background-color: var(--color-background-row-hover);
+
+        &::before {
+            background-color: var(--color-text-default);
+        }
+    }
+}
+
+:root.modern .modernDetachButton {
+    height: 28px;
+    position: absolute;
+    right: 10px;
+    top: 8px;
+    width: 28px;
+
+    &::before {
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 2.5H3.5a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V8M8.5 2.5h3v3M11.5 2.5 6.5 7.5'/%3E%3C/svg%3E")
+            center / 14px no-repeat;
+    }
+}
+
+@media (pointer: coarse) {
+    :root.modern .modernDetachButton {
+        height: var(--responsive-touch-target);
+        right: 2px;
+        top: 0;
+        width: var(--responsive-touch-target);
+    }
+}
+
+/* ends before the detach button */
+:root.modern #modernSpeedLimits fieldset:first-of-type > .modernSpeedNote {
+    right: 30px;
+
+    @media (pointer: coarse) {
+        right: calc(var(--responsive-touch-target) - 6px);
+    }
+}
+
+:root.modern .modernAttachButton {
+    float: right;
+    height: var(--modern-window-button);
+    margin-left: 5px;
+    width: var(--modern-window-button);
+
+    &::before {
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 2.5H3.5a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V8M11.5 2.5 7 7M7 4v3h3'/%3E%3C/svg%3E")
+            center / 13px no-repeat;
+    }
+}
+
+:root.modern .mocha:has(.modernAttachButton) {
+    --modern-window-buttons: 2;
+}
+
+:root.modern:not(.responsivePhone) .modernMoved:has(.modernAttachButton) {
+    --modern-window-buttons: 3;
 }
