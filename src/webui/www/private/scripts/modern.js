@@ -34,6 +34,7 @@ window.qBittorrent.Modern ??= (() => {
         return {
             init: init,
             addSpeedSlider: addSpeedSlider,
+            addSpeedUnitPicker: addSpeedUnitPicker,
             trimEllipsis: trimEllipsis,
             optionsPage: optionsPage,
             initTorrentLimits: initTorrentLimits,
@@ -1461,6 +1462,59 @@ window.qBittorrent.Modern ??= (() => {
 
     const STEP_KEYS = { ArrowUp: 1, ArrowDown: -1, PageUp: 10, PageDown: -10 };
 
+    // a speed field with a unit to pick; the page's own field, hidden, keeps whole KiB/s
+    const addSpeedUnitPicker = (input, { limit = true } = {}) => {
+        const card = limit ? input.closest("fieldset") : null;
+        const picker = document.createElement("span");
+        picker.className = "modernSpeedPicker";
+        const value = document.createElement("input");
+        value.type = "number";
+        value.min = "0";
+        value.step = "any";
+        value.setAttribute("aria-label", input.labels[0]?.textContent.trim() ?? "");
+        const unit = document.createElement("select");
+        unit.setAttribute("aria-label", "QBT_TR(Unit)QBT_TR[CONTEXT=OptionsDialog]");
+        for (const [i, { name }] of SPEED_UNITS.entries())
+            unit.add(new Option(name, i.toString()));
+        picker.append(value, unit);
+        input.hidden = true;
+        input.after(picker);
+
+        const write = () => {
+            const kib = Number(value.value) * SPEED_UNITS[unit.value].factor;
+            // what isn't a speed is left for the page to point out
+            input.value = ((value.value !== "") && (kib > 0)) ? Math.min(MAX_SPEED, Math.max(1, Math.round(kib))).toString() : value.value;
+            // MooTools replaces window.Event
+            input.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+            noteSpeedLimit(card, input.id, false);
+        };
+        value.addEventListener("input", (_event) => write());
+        unit.addEventListener("change", (_event) => write());
+        // the field is switched on and off with its setting
+        const follow = () => {
+            value.disabled = input.disabled;
+            unit.disabled = input.disabled;
+        };
+        new MutationObserver(follow).observe(input, { attributes: true, attributeFilter: ["disabled"] });
+        follow();
+
+        const show = () => {
+            const kib = Number(input.value);
+            const index = Math.max(0, SPEED_UNITS.findLastIndex(({ factor }) => (kib > 0) && ((kib % factor) === 0)));
+            unit.value = index.toString();
+            value.value = (input.value === "") ? "" : (kib / SPEED_UNITS[index].factor).toString();
+        };
+        // a speed typed beyond the most shows as that most, which is what is saved, once the focus leaves the field and unit
+        picker.addEventListener("focusout", (event) => {
+            if (picker.contains(event.relatedTarget) || ((Number(value.value) * SPEED_UNITS[unit.value].factor) <= MAX_SPEED))
+                return;
+
+            show();
+            noteSpeedLimit(card, input.id, true);
+        });
+        return show;
+    };
+
     // the limits of torrents that have different ones
     const MIXED = "QBT_TR(Mixed)QBT_TR[CONTEXT=PropListDelegate]";
 
@@ -2007,6 +2061,20 @@ window.qBittorrent.Modern ??= (() => {
             });
         };
 
+        // speeds get a unit to pick, in place of the page's KiB/s
+        const SPEED_FIELDS = ["upLimitValue", "dlLimitValue", "altUpLimitValue", "altDlLimitValue", "dlRateThresholdValue", "ulRateThresholdValue"];
+        // the slow torrents' thresholds, which aren't limits
+        const RATE_THRESHOLDS = ["dlRateThresholdValue", "ulRateThresholdValue"];
+
+        const addSpeedUnits = (state) => {
+            for (const id of SPEED_FIELDS) {
+                const field = document.getElementById(id);
+                if (field.nextSibling?.nodeType === Node.TEXT_NODE)
+                    field.nextSibling.remove();
+                state.onFilled.push(window.parent.qBittorrent.Modern.addSpeedUnitPicker(field, { limit: !RATE_THRESHOLDS.includes(id) }));
+            }
+        };
+
         // lists edited entry by entry; the page's own field, hidden, keeps the list as the page loads and saves it
         const LIST_EDITORS = [
             { id: "banned_IPs_textarea", joiner: "\n", splitter: /\n/, wholeLines: true },
@@ -2261,6 +2329,7 @@ window.qBittorrent.Modern ??= (() => {
             });
 
             splitSchedule();
+            addSpeedUnits(state);
             markFieldUnits(state.page);
             addProxySwitch(state);
             addI2PSwitch();
