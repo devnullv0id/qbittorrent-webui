@@ -72,12 +72,12 @@ window.qBittorrent.Dialog ??= (() => {
 
     const limitWidthToViewport = (width) => {
         // responsive.js fits windows to the screen as it changes
-        if (window.qBittorrent.Responsive?.queries.relayout.matches === true)
+        if (window.qBittorrent.Responsive?.isRelayout() === true)
             return width;
         return Math.min(width, window.innerWidth - 20);
     };
     const limitHeightToViewport = (height) => {
-        if (window.qBittorrent.Responsive?.queries.relayout.matches === true)
+        if (window.qBittorrent.Responsive?.isRelayout() === true)
             return height;
         return Math.min(height, window.innerHeight - 75);
     };

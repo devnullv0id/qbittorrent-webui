@@ -35,6 +35,9 @@ window.qBittorrent.Responsive ??= (() => {
             init: init,
             queries: queries,
             addFrame: addFrame,
+            isModern: isModern,
+            isRelayout: isRelayout,
+            setDisplayMode: setDisplayMode,
             rowHeight: rowHeight
         };
     };
@@ -53,11 +56,47 @@ window.qBittorrent.Responsive ??= (() => {
 
     const cssLength = (name) => Number.parseFloat(getComputedStyle(root).getPropertyValue(name));
 
+    const isModern = () => root.classList.contains("modern");
+
+    // Modern always lays out pages anew
+    const isRelayout = () => queries.relayout.matches || isModern();
+
     const frameDocuments = new Set();
 
     const setClasses = (doc) => {
         doc.documentElement.classList.toggle("responsivePhone", queries.phone.matches);
-        doc.documentElement.classList.toggle("responsiveRelayout", queries.relayout.matches);
+        doc.documentElement.classList.toggle("responsiveRelayout", isRelayout());
+    };
+
+    const modernStylesheet = (doc) => {
+        const stylesheet = doc.createElement("link");
+        stylesheet.id = "modernStylesheet";
+        stylesheet.rel = "stylesheet";
+        stylesheet.type = "text/css";
+        stylesheet.href = document.getElementById("responsiveStylesheet").href.replace("/responsive.css", "/modern.css");
+        return stylesheet;
+    };
+
+    // called by color-scheme.js
+    const setDisplayMode = (modern) => {
+        if (modern === isModern())
+            return;
+
+        root.classList.toggle("modern", modern);
+        if (modern) {
+            const stylesheet = modernStylesheet(document);
+            // title bars and list rows take their heights from it
+            stylesheet.addEventListener("load", (_event) => {
+                applyWindowTitleHeight();
+                keepFirstRow();
+            });
+            document.getElementById("responsiveStylesheet").after(stylesheet);
+        }
+        else {
+            document.getElementById("modernStylesheet")?.remove();
+            applyWindowTitleHeight();
+        }
+        setClasses(document);
     };
 
     // called by color-scheme.js in dialog frames
@@ -67,6 +106,12 @@ window.qBittorrent.Responsive ??= (() => {
         stylesheet.type = "text/css";
         stylesheet.href = document.getElementById("responsiveStylesheet").href;
         doc.head.append(stylesheet);
+        // a dialog takes the main window's look
+        if (isModern()) {
+            doc.documentElement.classList.add("modern");
+            doc.documentElement.classList.toggle("compact", root.classList.contains("compact"));
+            stylesheet.after(modernStylesheet(doc));
+        }
         setClasses(doc);
         frameDocuments.add(doc);
         doc.defaultView.addEventListener("pagehide", (_event) => frameDocuments.delete(doc));
@@ -675,7 +720,7 @@ window.qBittorrent.Responsive ??= (() => {
             windowEl.style.top = "0px";
         }
         // Mocha centers a window at its opening size: recenter fitted windows until the user moves them
-        else if (phone || wasFullScreen || ((queries.relayout.matches || fitted) && (instance.responsiveUserMoved !== true))) {
+        else if (phone || wasFullScreen || ((isRelayout() || fitted) && (instance.responsiveUserMoved !== true))) {
             windowEl.style.left = `${Math.max(margin, Math.round((maxLeft + margin) / 2))}px`;
             windowEl.style.top = `${Math.max(margin, Math.round((maxTop + margin) / 2))}px`;
         }
@@ -692,7 +737,7 @@ window.qBittorrent.Responsive ??= (() => {
         const wrapper = instance.contentWrapperEl;
         const toolbar = instance.toolbarWrapperEl;
         // Mocha draws the window around the toolbar's inline height
-        if (queries.relayout.matches && (toolbar !== undefined) && (toolbar.style.height !== `${toolbar.offsetHeight}px`)) {
+        if (isRelayout() && (toolbar !== undefined) && (toolbar.style.height !== `${toolbar.offsetHeight}px`)) {
             toolbar.style.height = `${toolbar.offsetHeight}px`;
             instance.drawWindow();
         }
@@ -716,7 +761,7 @@ window.qBittorrent.Responsive ??= (() => {
         let ownHeight = null;
         // a size the user gave a window is kept, except on phones
         const userSized = (instance.responsiveUserResized === true) || hasStoredSize(instance);
-        if (queries.relayout.matches && (phone || !userSized)) {
+        if (isRelayout() && (phone || !userSized)) {
             width = phone ? maxWidth : Math.min(fitWidth, Math.max(width, MIN_WINDOW_WIDTH, pageOverflow(instance, width, wantedHeight).width));
             if (ONE_SIZE_WINDOWS.has(windowEl.id)) {
                 ownHeight = (pageOf(instance) === null) ? null : 0;
@@ -732,7 +777,7 @@ window.qBittorrent.Responsive ??= (() => {
             fitted = true;
         }
         // on the desktop, a dialog takes its page's height where it fits
-        else if (!queries.relayout.matches && !userSized && isDialog(instance)) {
+        else if (!isRelayout() && !userSized && isDialog(instance)) {
             const pageNeeds = pageHeight(instance, width, maxHeight);
             if ((pageNeeds > 0) && (pageNeeds <= fitHeight)) {
                 height = pageNeeds;

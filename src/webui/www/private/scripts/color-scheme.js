@@ -33,24 +33,66 @@ window.qBittorrent.ColorScheme ??= (() => {
     const exports = () => {
         return {
             update,
+            applyClientData,
         };
     };
 
     const colorSchemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const clientData = window.parent.qBittorrent.ClientData;
+    // only the main page loads responsive.js; a framed WebUI's main page has a parent too
+    const isMainWindow = window.qBittorrent.Responsive !== undefined;
+
+    const LOOK_SETTINGS = ["color_scheme", "display_density", "display_mode"];
+    const localPreferences = isMainWindow ? new window.qBittorrent.LocalPreferences.LocalPreferences() : null;
+    const readStoredLook = () => {
+        try {
+            const look = JSON.parse(localPreferences.get("display_look", "null"));
+            return (look?.display_mode === "modern") ? look : null;
+        }
+        catch (error) {
+            return null;
+        }
+    };
+    // null once the client data has arrived
+    let storedLook = isMainWindow ? readStoredLook() : null;
+    const setting = (key) => ((storedLook !== null) ? storedLook[key] : clientData.get(key));
 
     const update = () => {
         const root = document.documentElement;
-        const colorScheme = clientData.get("color_scheme");
+        const colorScheme = setting("color_scheme");
         const validScheme = (colorScheme === "light") || (colorScheme === "dark");
         const isDark = colorSchemeQuery.matches;
         root.classList.toggle("dark", ((!validScheme && isDark) || (colorScheme === "dark")));
     };
 
+    const storeLook = () => {
+        if (clientData.get("display_mode") === "modern")
+            localPreferences.set("display_look", JSON.stringify(Object.fromEntries(LOOK_SETTINGS.map((key) => [key, clientData.get(key) ?? null]))));
+        else if (localPreferences.get("display_look") !== null)
+            localPreferences.remove("display_look");
+    };
+
+    // called by client.js with the client data, and by Options as it saves them; the display mode changes only on reload
+    let displayModeSet = false;
+    const applyClientData = () => {
+        storedLook = null;
+        update();
+        if (!displayModeSet) {
+            displayModeSet = true;
+            window.qBittorrent.Responsive.setDisplayMode(clientData.get("display_mode") === "modern");
+        }
+        storeLook();
+    };
+
     colorSchemeQuery.addEventListener("change", (_event) => update());
     // Apply immediately: framed windows already have parent's ClientData loaded;
-    // main window falls back to system preference until client.js calls update() after fetch
+    // main window falls back to system preference (in Modern, to the stored look) until client.js calls applyClientData()
+    // after fetch
     update();
+    if (storedLook !== null) {
+        window.qBittorrent.Responsive.setDisplayMode(true);
+        document.documentElement.classList.toggle("compact", (storedLook.display_density === "compact"));
+    }
 
     // dialog frames take the responsive layout from the main window, the only page that loads responsive.js (a
     // framed WebUI's parent is the page that embeds it)
