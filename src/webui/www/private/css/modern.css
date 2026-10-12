@@ -3337,3 +3337,119 @@
         }
     }
 }
+
+/* Selection checkboxes */
+@media (width >= 760px) {
+    :root.modern.modernSelectMode {
+        --modern-check-gutter: 36px;
+        --modern-check-edge: calc(
+            (var(--modern-row-height) - var(--modern-check-size)) / 2
+        );
+        --modern-check-side: calc(
+            (var(--modern-check-gutter) - var(--modern-check-size)) / 2
+        );
+
+        & :is(#torrentsTableDiv, #torrentsTableFixedHeaderDiv) table {
+            margin-left: var(--modern-check-gutter);
+        }
+
+        & #torrentsTableFixedHeaderDiv {
+            position: relative;
+
+            & #torrentsSelectAll {
+                left: calc(
+                    (var(--modern-check-gutter) - var(--modern-check-size)) / 2
+                );
+                margin: 0;
+                position: absolute;
+                top: calc(50% - (var(--modern-check-size) / 2));
+                z-index: 1;
+            }
+        }
+
+        & #torrentsTableDiv tbody tr {
+            position: relative;
+
+            &::before {
+                background-clip: padding-box;
+                background-color: var(--color-background-primary);
+                border: solid transparent;
+                border-radius: calc(var(--modern-check-side) + 4px) /
+                    calc(var(--modern-check-edge) + 4px);
+                border-width: var(--modern-check-edge) var(--modern-check-side);
+                box-shadow: inset 0 0 0 1.5px var(--modern-control-edge);
+                box-sizing: content-box;
+                content: "";
+                height: var(--modern-check-size);
+                left: calc(0px - var(--modern-check-gutter));
+                position: absolute;
+                top: 0;
+                width: var(--modern-check-size);
+            }
+        }
+
+        & #torrentsTableDiv tbody tr.selected::before {
+            background: var(--color-accent-blue) var(--modern-tick) center /
+                var(--modern-check-size) no-repeat padding-box;
+            box-shadow: none;
+        }
+    }
+
+    :root.modern:not(.modernSelectMode)
+        #torrentsTableFixedHeaderDiv
+        #torrentsSelectAll {
+        display: none;
+    }
+}
+
+@media (width < 760px) {
+    :root.modern.modernSelectMode {
+        --responsive-card-check-width: 48px;
+
+        & #transferList #torrentsTableDiv tbody tr {
+            padding-left: 52px;
+            position: relative;
+
+            & > td[data-col="name"]::before {
+                background-color: var(--color-background-primary);
+                border-radius: 4px;
+                box-shadow: inset 0 0 0 1.5px var(--modern-control-edge);
+                content: "";
+                height: 18px;
+                left: 17px;
+                position: absolute;
+                top: calc(50% - 9px);
+                width: 18px;
+            }
+        }
+
+        &
+            #transferList
+            #torrentsTableDiv
+            tbody
+            tr.selected
+            > td[data-col="name"] {
+            &::before {
+                background-color: var(--color-text-white);
+                box-shadow: none;
+            }
+
+            &::after {
+                border-bottom: 2px solid var(--color-accent-blue);
+                border-right: 2px solid var(--color-accent-blue);
+                content: "";
+                height: 9px;
+                left: 23px;
+                position: absolute;
+                top: calc(50% - 6px);
+                transform: rotate(45deg);
+                width: 5px;
+            }
+        }
+    }
+
+    :root.modern #torrentsSelectionBar {
+        border-bottom: var(--modern-divider);
+        padding: 4px 16px 4px 17px;
+    }
+}
