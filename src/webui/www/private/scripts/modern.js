@@ -818,6 +818,144 @@ window.qBittorrent.Modern ??= (() => {
         }));
     };
 
+    // on phones the cards are sorted, and the filter's field chosen, from a sheet, which also chooses what the cards show
+    const SORT_COLUMNS = ["priority", "name", "size", "progress", "status", "dlspeed", "upspeed", "eta", "ratio", "added_on"];
+    const CARD_FIELDS = ["priority", "progress", "status", "eta", "size", "dlspeed", "upspeed"];
+
+    const initSortSheet = async () => {
+        const tableDiv = await responsive.whenElement("torrentsTableDiv");
+        const table = window.torrentsTable;
+        const filterSelect = document.getElementById("torrentsFilterSelect");
+        const caption = (column) => ((column === "priority") ? "QBT_TR(Queue)QBT_TR[CONTEXT=TransferListWidget]" : table.columns[column].caption);
+
+        const hiddenFields = () => new Set(localPreferences.get("modern_card_hidden_fields", "").split(",").filter(Boolean));
+        const applyHiddenFields = () => {
+            tableDiv.dataset.hide = [...hiddenFields()].join(" ");
+        };
+        applyHiddenFields();
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.id = "modernSortButton";
+        button.title = "QBT_TR(Sort by)QBT_TR[CONTEXT=MainWindow]";
+        button.setAttribute("aria-label", button.title);
+        button.setAttribute("aria-haspopup", "menu");
+        button.setAttribute("aria-expanded", "false");
+        button.setAttribute("aria-controls", "modernSortMenu");
+        const glyph = document.createElement("span");
+        glyph.className = "modernGlyph";
+        glyph.dataset.glyph = "sort";
+        button.append(glyph);
+        document.getElementById("filtersButton").after(button);
+
+        const list = document.createElement("ul");
+        list.id = "modernSortMenu";
+        list.className = "contextMenu";
+        list.setAttribute("aria-label", button.title);
+        setUpMenuKeys(list);
+        document.body.append(list);
+
+        // an item chosen keeps the sheet open, and the focus on it
+        const item = (text, role, checked, choose) => {
+            const li = document.createElement("li");
+            li.setAttribute("role", "none");
+            const link = document.createElement("a");
+            link.href = "#";
+            link.setAttribute("role", role);
+            if (checked !== null)
+                link.setAttribute("aria-checked", checked);
+            link.append(text);
+            link.addEventListener("click", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                choose();
+                render();
+            });
+            li.append(link);
+            return li;
+        };
+        const heading = (text) => {
+            const li = document.createElement("li");
+            li.className = "modernSheetHeading";
+            li.setAttribute("role", "presentation");
+            li.textContent = text;
+            return li;
+        };
+
+        let cardsOpen = false;
+        const render = () => {
+            const focused = [...list.querySelectorAll("a")].indexOf(document.activeElement);
+            const sortedColumn = table.columns[table.sortedColumn]?.name;
+            const sortItems = SORT_COLUMNS.filter((column) => table.columns[column] !== undefined).map((column) => {
+                const li = item(caption(column), "menuitemradio", (column === sortedColumn), () => table.setSortedColumn(column));
+                if (column === sortedColumn) {
+                    const direction = document.createElement("span");
+                    direction.className = "modernSortDirection";
+                    direction.setAttribute("aria-hidden", "true");
+                    direction.textContent = (table.reverseSort === "1") ? "\u2193" : "\u2191";
+                    li.firstElementChild.append(direction);
+                }
+                return li;
+            });
+            const filterItems = [...filterSelect.options].map((option) => item(option.textContent, "menuitemradio", option.selected, () => {
+                filterSelect.value = option.value;
+                // the filter bar filters again as it changes (Event is MooTools' DOMEvent here)
+                filterSelect.dispatchEvent(new CustomEvent("change", { bubbles: true }));
+            }));
+            const fold = item("QBT_TR(Show on cards)QBT_TR[CONTEXT=MainWindow]", "menuitem", null, () => {
+                cardsOpen = !cardsOpen;
+            });
+            fold.className = "modernSheetFold";
+            fold.firstElementChild.setAttribute("aria-expanded", cardsOpen);
+            const hidden = hiddenFields();
+            const fieldItems = !cardsOpen ? [] : CARD_FIELDS.map((field) => {
+                const li = item(caption(field), "menuitemcheckbox", !hidden.has(field), () => {
+                    const fields = hiddenFields();
+                    if (fields.has(field))
+                        fields.delete(field);
+                    else
+                        fields.add(field);
+                    localPreferences.set("modern_card_hidden_fields", [...fields].join(","));
+                    applyHiddenFields();
+                });
+                li.firstElementChild.classList.add("modernCardField");
+                return li;
+            });
+            const filterHeading = document.querySelector("label[for='torrentsFilterSelect']").textContent.replace(/[:\uFF1A]\s*$/, "");
+            list.replaceChildren(heading(button.title), ...sortItems, heading(filterHeading), ...filterItems, fold, ...fieldItems);
+            if (focused >= 0)
+                list.querySelectorAll("a")[focused]?.focus();
+        };
+
+        const SortMenu = class extends window.qBittorrent.ContextMenu.ContextMenu {
+            updateMenuItems() {
+                render();
+            }
+        };
+        let releaseFocus = null;
+        const menu = new SortMenu({
+            targets: "",
+            menu: "modernSortMenu",
+            onShow: () => {
+                button.setAttribute("aria-expanded", "true");
+                releaseFocus ??= responsive.trapFocus(list);
+            },
+            onHide: () => {
+                button.setAttribute("aria-expanded", "false");
+                releaseFocus?.();
+                releaseFocus = null;
+            }
+        });
+        button.addEventListener("click", (event) => {
+            // the page's click would close it again
+            event.stopPropagation();
+            if (list.classList.contains("visible"))
+                menu.hide();
+            else
+                menu.triggerMenu(event, button);
+        });
+    };
+
     const init = () => {
         if (!responsive.isModern())
             return;
@@ -832,6 +970,7 @@ window.qBittorrent.Modern ??= (() => {
         initPropertiesSheet();
         initPropertyCards();
         initPropertiesPanelHeight();
+        initSortSheet();
     };
 
     return exports();
