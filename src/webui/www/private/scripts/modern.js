@@ -35,6 +35,7 @@ window.qBittorrent.Modern ??= (() => {
     const exports = () => {
         return {
             init: init,
+            addSpeedSlider: addSpeedSlider,
         };
     };
 
@@ -1128,6 +1129,145 @@ window.qBittorrent.Modern ??= (() => {
         window.qBittorrent.Client.addServerStateListener(render);
         syncExpanded();
         scheduleLayout();
+    };
+
+    /* Speeds */
+
+    // speed limits in KiB/s, up to the most the server stores: a 32-bit number of bytes per second
+    const MAX_SPEED = 2097151;
+    // as the WebUI shows speeds
+    const SPEED_UNITS = ["QBT_TR(KiB)QBT_TR[CONTEXT=misc]", "QBT_TR(MiB)QBT_TR[CONTEXT=misc]", "QBT_TR(GiB)QBT_TR[CONTEXT=misc]"]
+        .map((unit, i) => ({ name: `${unit}QBT_TR(/s)QBT_TR[CONTEXT=misc]`, factor: 1024 ** i }));
+    const unitOf = (kib) => SPEED_UNITS.findLast((unit) => kib >= unit.factor) ?? SPEED_UNITS[0];
+
+    // a speed in the unit that fits, with two decimals at most
+    const formatSpeed = (kib) => {
+        const unit = unitOf(kib);
+        return { value: Number((kib / unit.factor).toFixed(2)).toString(), unit: unit };
+    };
+
+    // a typed speed ("5", "5 m", "1.5 GiB/s"), in KiB/s: a unit by its first letter, as shown or in English, else the
+    // given one
+    const parseSpeed = (text, unit) => {
+        const match = /^\s*(\d+(?:[.,]\d*)?|[.,]\d+)\s*(\S?)/.exec(text);
+        if (match === null)
+            return 0;
+
+        const letter = match[2].toLowerCase();
+        const typedUnit = (letter === "") ? unit : (SPEED_UNITS.find((known) => known.name[0].toLowerCase() === letter) ?? SPEED_UNITS[["k", "m", "g"].indexOf(letter)] ?? unit);
+        return Math.min(MAX_SPEED, Math.round(Number(match[1].replace(",", ".")) * typedUnit.factor));
+    };
+
+    // a logarithmic slider: its positions are 0 (no limit) and speeds with two significant digits in their unit
+    const SLIDER_STEPS = 1000;
+
+    const roundSpeed = (kib) => {
+        const unit = unitOf(kib);
+        const value = kib / unit.factor;
+        const precision = (value < 10) ? 0.1 : (10 ** (Math.floor(Math.log10(value)) - 1));
+        return Math.max(1, Math.round(Math.round(value / precision) * precision * unit.factor));
+    };
+    const speedAt = (position) => ((position <= 0) ? 0 : Math.min(MAX_SPEED, roundSpeed(MAX_SPEED ** (position / SLIDER_STEPS))));
+    const sliderPosition = (kib) => ((kib <= 0) ? 0 : Math.min(SLIDER_STEPS, Math.max(1, Math.round((Math.log(kib) / Math.log(MAX_SPEED)) * SLIDER_STEPS))));
+
+    // the next speed along the slider, up (1) or down (-1), also where several positions show the same speed
+    const stepSpeed = (kib, direction) => {
+        let position = sliderPosition(kib) + direction;
+        while ((position >= 0) && (position <= SLIDER_STEPS)) {
+            const next = speedAt(position);
+            if ((direction > 0) ? (next > kib) : (next < kib))
+                return next;
+
+            position += direction;
+        }
+        return kib;
+    };
+
+    const STEP_KEYS = { ArrowUp: 1, ArrowDown: -1, PageUp: 10, PageDown: -10 };
+
+    // a page's speed slider made logarithmic, with a field beside it that shows the speed in the unit that fits and has
+    // arrows to step it; the page's own field, hidden, keeps the speed in KiB/s, as the page reads it
+    const addSpeedSlider = (slider, input) => {
+        if (!responsive.isModern())
+            return;
+
+        const unitLabel = (input.nextElementSibling?.tagName === "SPAN") ? input.nextElementSibling : null;
+        unitLabel?.classList.add("modernSpeedUnit");
+        const field = document.createElement("input");
+        field.type = "text";
+        field.className = "modernSpeedField";
+        field.inputMode = "decimal";
+        field.setAttribute("aria-label", input.getAttribute("aria-label"));
+        field.setAttribute("role", "spinbutton");
+        field.setAttribute("aria-valuemin", "0");
+        field.setAttribute("aria-valuemax", MAX_SPEED.toString());
+        const stepper = document.createElement("span");
+        stepper.className = "modernSpeedStepper";
+
+        let kib = Number(input.value) || 0;
+        let shown = "";
+        // what the page reads: KiB/s, or ∞ for no limit
+        const pageValue = (value) => ((value === 0) ? "∞" : value.toString());
+        const show = () => {
+            const { value, unit } = formatSpeed(kib);
+            field.value = (kib === 0) ? "∞" : value;
+            shown = field.value;
+            const text = (kib === 0) ? field.value : `${value} ${unit.name}`;
+            field.setAttribute("aria-valuenow", kib.toString());
+            field.setAttribute("aria-valuetext", text);
+            slider.setAttribute("aria-valuetext", text);
+            if (unitLabel !== null) {
+                unitLabel.textContent = unit.name;
+                unitLabel.style.visibility = (kib === 0) ? "hidden" : "";
+            }
+            input.value = pageValue(kib);
+        };
+        const setSpeed = (value) => {
+            kib = value;
+            slider.value = sliderPosition(kib);
+            show();
+        };
+        // what the field shows or has typed in
+        const typed = () => ((field.value === shown) ? kib : parseSpeed(field.value, unitOf(kib)));
+        const step = (direction) => setSpeed(stepSpeed(typed(), direction));
+
+        for (const direction of [-1, 1]) {
+            const arrow = document.createElement("span");
+            arrow.className = (direction > 0) ? "modernSpeedUp" : "modernSpeedDown";
+            arrow.setAttribute("aria-hidden", "true");
+            // the focus stays in the field
+            arrow.addEventListener("mousedown", (event) => event.preventDefault());
+            arrow.addEventListener("click", (_event) => step(direction));
+            stepper.append(arrow);
+        }
+        stepper.firstElementChild.after(field);
+        input.before(stepper);
+        input.type = "hidden";
+
+        slider.min = 0;
+        slider.max = SLIDER_STEPS;
+        slider.step = 1;
+        // before the page's own handler, which reads the slider as linear
+        slider.addEventListener("input", (event) => {
+            event.stopImmediatePropagation();
+            kib = speedAt(Number(slider.value));
+            show();
+        }, true);
+        // the page reads its field before the typed speed is shown anew
+        field.addEventListener("input", (_event) => {
+            input.value = pageValue(typed());
+        });
+        field.addEventListener("change", (_event) => setSpeed(typed()));
+        field.addEventListener("keydown", (event) => {
+            const steps = STEP_KEYS[event.key];
+            if (steps === undefined)
+                return;
+
+            event.preventDefault();
+            for (let i = 0; i < Math.abs(steps); ++i)
+                step(Math.sign(steps));
+        });
+        setSpeed(kib);
     };
 
     const init = () => {

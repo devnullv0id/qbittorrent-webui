@@ -32,6 +32,8 @@
             });
 
             update(limit);
+            // Modern's sliders are logarithmic, with the speed in the unit that fits (modern.js)
+            window.qBittorrent.Modern.addSpeedSlider(slider, input);
         };
 
         const init = () => {

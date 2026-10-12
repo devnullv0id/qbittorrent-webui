@@ -66,6 +66,8 @@
     /* a check box's tick and a mixed box's dash, drawn on the accent */
     --modern-tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.5 8.5 3 3 6-7' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     --modern-dash: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8h8' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+    /* a step up, as a dash is one down */
+    --modern-plus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8h8M8 4v8' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
 
     /* the accent */
     --color-background-blue: hsl(210deg 65% 42%);
@@ -3862,5 +3864,126 @@
                 text-align: left;
             }
         }
+    }
+}
+
+/* Speed limits (modern.js): logarithmic sliders, beside fields with arrows that step them */
+
+:root.modern .speedGrid {
+    grid-template-columns: 36px auto minmax(0, 1fr) auto auto;
+}
+
+:root.modern .modernSpeedStepper {
+    display: block;
+    min-width: 0;
+    position: relative;
+
+    & > .modernSpeedField {
+        box-sizing: border-box;
+        width: 100px;
+    }
+
+    & > :where(span):is(.modernSpeedUp, .modernSpeedDown) {
+        cursor: pointer;
+
+        &::before {
+            background-color: var(--color-text-muted);
+            content: "";
+            inset: 0;
+            position: absolute;
+        }
+
+        &:hover::before {
+            background-color: var(--color-text-default);
+        }
+    }
+}
+
+/* with a mouse, arrows at the field's end */
+@media not (pointer: coarse) {
+    :root.modern .modernSpeedStepper {
+        & > .modernSpeedField {
+            padding-right: 26px;
+        }
+
+        & > :where(span):is(.modernSpeedUp, .modernSpeedDown) {
+            height: 50%;
+            position: absolute;
+            right: 8px;
+            width: 16px;
+        }
+
+        & > .modernSpeedUp {
+            top: 1px;
+
+            &::before {
+                mask: var(--modern-chevron-up) center / 10px no-repeat;
+            }
+        }
+
+        & > .modernSpeedDown {
+            bottom: 1px;
+
+            &::before {
+                mask: var(--modern-chevron-down) center / 10px no-repeat;
+            }
+        }
+    }
+}
+
+/* on touch screens, a slider as high as a touch, and - and + of a touch's size around the field */
+@media (pointer: coarse) {
+    :root.modern input[type="range"] {
+        height: var(--responsive-touch-target);
+    }
+
+    :root.modern .modernSpeedStepper {
+        display: flex;
+
+        & > .modernSpeedField {
+            text-align: center;
+            width: 72px;
+        }
+
+        & > :where(span):is(.modernSpeedUp, .modernSpeedDown) {
+            flex: none;
+            height: var(--responsive-touch-target);
+            position: relative;
+            width: var(--responsive-touch-target);
+        }
+
+        & > .modernSpeedUp::before {
+            mask: var(--modern-plus) center / 18px no-repeat;
+        }
+
+        & > .modernSpeedDown::before {
+            mask: var(--modern-dash) center / 18px no-repeat;
+        }
+    }
+}
+
+/* on phones each slider has a line of its own, below its field */
+:root.modern.responsivePhone .speedGrid {
+    grid-auto-flow: row dense;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+
+    & > .speedIcon {
+        grid-row: span 4;
+    }
+
+    & > label {
+        grid-column: 2;
+    }
+
+    & > input[type="range"] {
+        grid-column: 2 / -1;
+    }
+
+    & > .modernSpeedStepper {
+        grid-column: 3;
+    }
+
+    & > .modernSpeedUnit {
+        grid-column: 4;
     }
 }
