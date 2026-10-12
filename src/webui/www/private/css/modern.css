@@ -4093,3 +4093,741 @@
     li:has(> a:is([href="#downloadLimit"], [href="#uploadLimit"])) {
     display: none;
 }
+
+/* Options */
+:root.modern #preferencesPage {
+    --modern-sidebar-width: 184px;
+
+    /* override inline style */
+    height: min(840px, calc(100dvh - 16px)) !important;
+    min-height: min(420px, calc(100dvh - 16px));
+    width: min(730px, calc(100vw - 16px)) !important;
+
+    & .mochaOverlay {
+        display: flex;
+        flex-direction: column;
+        height: auto !important; /* override inline style */
+        inset: 0;
+        width: auto !important; /* override inline style */
+    }
+
+    & .mochaTitlebar {
+        flex: none;
+        width: auto !important; /* override inline style */
+    }
+
+    & .mochaToolbarWrapper {
+        flex: none;
+        height: auto !important; /* override inline style */
+    }
+
+    & .mochaToolbar {
+        height: auto !important; /* override inline style */
+    }
+
+    & .mochaContentBorder {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    & .mochaContentWrapper {
+        height: 100% !important; /* override inline style */
+        overflow-x: hidden !important; /* override inline style */
+        width: auto !important; /* override inline style */
+    }
+
+    & .handle {
+        display: none;
+    }
+
+    &.responsiveFullScreen {
+        height: 100dvh !important; /* override inline style */
+        width: 100vw !important; /* override inline style */
+    }
+}
+
+:root.modern:not(.responsivePhone) #preferencesPage {
+    & .mochaToolbarWrapper {
+        bottom: 0;
+        left: 0;
+        position: absolute;
+        top: var(--responsive-window-title-height);
+        width: var(--modern-sidebar-width);
+    }
+
+    & .mochaToolbar {
+        background-color: var(--color-background-default);
+        border-right: var(--modern-divider);
+        box-sizing: border-box;
+        height: 100% !important; /* override inline style */
+        overflow-y: auto;
+        padding: 10px 8px;
+    }
+
+    & .mochaContentBorder {
+        margin-left: var(--modern-sidebar-width);
+    }
+
+    & #preferencesTabs {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 2px;
+
+        & li a {
+            border-radius: var(--modern-radius-pill);
+            gap: 10px;
+            padding: 7px 10px;
+            text-align: start;
+            white-space: normal;
+        }
+
+        & li img {
+            height: 18px;
+            width: 18px;
+        }
+
+        & li.selected a {
+            background-color: color-mix(
+                in srgb,
+                var(--color-accent-blue) 22%,
+                transparent
+            );
+            color: var(--color-text-default);
+            font-weight: 600;
+        }
+    }
+}
+
+:root.modern .PrefTab {
+    --modern-select-width: max(200px, calc(200px + (100cqi - 420px) * 0.7));
+    --modern-unit-slot: 96px;
+
+    container-type: inline-size;
+    padding: 4px 6px 8px;
+
+    & > fieldset {
+        margin: 34px 0 14px;
+        padding: 6px 16px;
+    }
+
+    & > fieldset:first-child {
+        margin-top: 30px;
+    }
+
+    & fieldset.settings label {
+        padding: 0;
+    }
+
+    &
+        :where(
+            table:not(#watched_folders_tab),
+            table:not(#watched_folders_tab) > tbody
+        ) {
+        display: block;
+        width: 100%;
+    }
+
+    & table:where(:not(#watched_folders_tab)) tr:not([hidden]) {
+        align-items: center;
+        display: flex;
+    }
+
+    & tr + tr {
+        border-top: var(--modern-divider);
+    }
+
+    & td {
+        padding: 8px 0;
+    }
+
+    & td:first-child:not(:last-child) {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        padding-right: 12px;
+        text-align: start !important; /* override inline style */
+    }
+
+    & td:last-child:not(:first-child) {
+        box-sizing: border-box;
+        flex: none;
+        width: var(--modern-select-width);
+    }
+
+    & tr.modernSwitchEndRow > td:last-child {
+        text-align: end;
+    }
+
+    &
+        :is(
+            select:not([multiple]),
+            input:is(
+                [type="text"],
+                [type="number"],
+                [type="password"],
+                :not([type])
+            )
+        ) {
+        box-sizing: border-box;
+        max-width: 100%;
+    }
+
+    &
+        td:last-child:not(:first-child)
+        > :is(
+            select:not([multiple]),
+            input:is(
+                    [type="text"],
+                    [type="number"],
+                    [type="password"],
+                    :not([type])
+                ):not(.pathDirectory)
+        ):only-child,
+    &
+        div.formRow
+        > :is(
+            select:not([multiple]),
+            input:is(
+                [type="text"],
+                [type="number"],
+                [type="password"],
+                :not([type])
+            )
+        ):last-child {
+        /* override inline style */
+        width: var(--modern-select-width) !important;
+    }
+
+    & tr.modernSettingValue {
+        border-top: 0;
+    }
+
+    & tr.modernSettingValue > td {
+        flex: 1 1 auto;
+        padding-top: 0;
+
+        & > :is(select, input) {
+            width: 100% !important; /* override inline style */
+        }
+    }
+
+    & .prefField {
+        align-items: center;
+        display: inline-flex;
+        gap: 6px;
+        max-width: 100%;
+        width: var(--modern-select-width);
+
+        & > input {
+            flex: 1 1 auto;
+            min-width: 0;
+            width: auto !important; /* override inline style */
+        }
+    }
+
+    & .prefUnit {
+        color: var(--color-text-muted);
+        flex: none;
+        min-width: calc(var(--modern-unit-slot) - 6px);
+    }
+
+    & td > i {
+        color: var(--color-text-muted);
+        display: block;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    & textarea {
+        box-sizing: border-box;
+        max-width: 100%;
+        width: 100%;
+    }
+}
+
+:root.modern .PrefTab div.formRow {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin: 0 !important; /* override inline style */
+    min-height: calc(var(--modern-row-height) + 8px);
+    padding: 4px 0;
+
+    & > label:first-child {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    & > :is(select, input:not([type="checkbox"]), .prefField):last-child {
+        margin-left: auto;
+    }
+
+    &.modernFieldWithButton {
+        flex-wrap: nowrap;
+        gap: 0;
+
+        & > label:first-child {
+            flex: none;
+            width: calc(100% - var(--modern-select-width));
+        }
+
+        & > input {
+            flex: 1 1 0;
+            min-width: 0;
+            width: auto !important; /* override inline style */
+        }
+
+        & > button {
+            flex: none;
+            margin-left: 8px;
+        }
+    }
+
+    & > span.modernSwitchSpan {
+        display: contents;
+    }
+
+    & > input[type="checkbox"]:first-child,
+    & > span > input[type="checkbox"]:first-child {
+        margin: 0 0 0 auto;
+
+        & + label {
+            flex: 1 1 0;
+            min-width: 0;
+            order: -1;
+        }
+    }
+}
+
+:root.modern .PrefTab div.formRow.modernSwitchList {
+    padding-left: 0 !important; /* override inline style */
+}
+
+:root.modern
+    .PrefTab
+    div.formRow:has(> input[type="checkbox"]:not(:checked))
+    + div.formRow.modernSwitchList {
+    display: none;
+}
+
+:root.modern .PrefTab fieldset:not(.modernSwitchCard) > legend > label {
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+}
+
+:root.modern
+    .PrefTab
+    fieldset
+    > :is(
+        div.formRow + div.formRow,
+        table + div.formRow,
+        div.formRow + table,
+        fieldset + div.formRow
+    ) {
+    border-top: var(--modern-divider);
+}
+
+:root.modern .PrefTab > div.formRow {
+    background-color: var(--color-background-card);
+    border-inline: var(--modern-border);
+    padding-inline: 16px;
+
+    &:not(div.formRow + div.formRow) {
+        border-radius: var(--modern-radius-card) var(--modern-radius-card) 0 0;
+        border-top: var(--modern-border);
+        margin-top: 14px !important; /* override inline style */
+    }
+
+    & + div.formRow {
+        border-top: var(--modern-divider);
+    }
+
+    &.modernCardEnd {
+        border-bottom: var(--modern-border);
+        border-bottom-left-radius: var(--modern-radius-card);
+        border-bottom-right-radius: var(--modern-radius-card);
+        margin-bottom: 14px !important; /* override inline style */
+    }
+}
+
+:root.modern .PrefTab tr.modernSwitchRow {
+    flex-wrap: wrap;
+
+    & > td:first-child {
+        align-items: center;
+        display: flex;
+        flex: 1 1 100%;
+        gap: 10px;
+        padding-right: 0;
+
+        & > label {
+            flex: 1 1 0;
+            min-width: 0;
+        }
+
+        & > input[type="checkbox"] {
+            margin: 0 0 0 auto;
+            order: 1;
+        }
+    }
+
+    & > td:not(:first-child) {
+        display: flex;
+        flex: 1 1 100%;
+        gap: 6px;
+        overflow: clip;
+        overflow-clip-margin: 4px;
+        padding-top: 0;
+        width: auto;
+
+        & > :is(input:not([type="checkbox"]), select, .prefField) {
+            flex: 1 1 auto;
+            width: auto !important; /* override inline style */
+        }
+    }
+
+    & + tr.modernSettingValue > td.modernSwitchField {
+        overflow: clip;
+        overflow-clip-margin: 4px;
+    }
+
+    &:has(> td:first-child > input[type="checkbox"]:not(:checked))
+        > td.modernSwitchField,
+    &:has(> td:first-child > input[type="checkbox"]:not(:checked))
+        + tr.modernSettingValue
+        > td.modernSwitchField {
+        height: 0;
+        opacity: 0;
+        padding-block: 0;
+        visibility: hidden;
+    }
+}
+
+:root.modern .PrefTab table.modernIconTable > tbody {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) var(--modern-select-width);
+
+    & > tr:not([hidden]) {
+        display: contents;
+    }
+
+    & td {
+        align-items: center;
+        display: flex;
+    }
+
+    & td:not(:first-child, :last-child) {
+        padding-right: 12px;
+    }
+
+    & td[rowspan="2"] {
+        grid-row: span 2;
+    }
+
+    & > tr + tr > td {
+        border-top: var(--modern-divider);
+    }
+}
+
+:root.modern .PrefTab tr.modernSwitchFirstRow:not([hidden]) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+
+    & > td {
+        align-items: center;
+        display: flex;
+    }
+
+    & > td:first-child {
+        grid-column: 2;
+        grid-row: 1;
+        padding: 0;
+    }
+
+    & > td:nth-child(2) {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    & > td:nth-child(n + 3) {
+        gap: 8px;
+        grid-column: 1 / -1;
+        padding-top: 0;
+        width: auto;
+
+        & > :is(input, .prefField) {
+            flex: 1 1 auto;
+            min-width: 0;
+            width: auto !important; /* override inline style */
+        }
+    }
+}
+
+:root.modern
+    .PrefTab
+    div.formRow
+    > input[type="checkbox"]:first-child
+    + label
+    + input[type="text"] {
+    flex: 1 1 100%;
+}
+
+:root.modern
+    .PrefTab
+    div.formRow
+    > input[type="checkbox"]:first-child:not(:checked)
+    + label
+    + input[type="text"] {
+    display: none;
+}
+
+:root.modern .PrefTab fieldset.modernSwitchCard {
+    padding-top: calc(var(--modern-row-height) + 16px);
+
+    & > legend {
+        align-items: center;
+        color: var(--color-text-default);
+        display: flex;
+        font-size: inherit;
+        font-weight: 600;
+        gap: 10px;
+        height: calc(var(--modern-row-height) + 12px);
+        left: 16px;
+        letter-spacing: 0;
+        max-width: none;
+        right: 16px;
+        text-transform: none;
+        top: 2px;
+    }
+
+    & > legend label {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    & > legend input[type="checkbox"] {
+        margin: 0 0 0 auto;
+        order: 1;
+    }
+
+    &:has(> legend input[type="checkbox"]:not(:checked)) {
+        padding-bottom: 0;
+
+        & > .modernCardPart {
+            display: none;
+        }
+    }
+}
+
+:root.modern .PrefTab > fieldset.modernSwitchCard {
+    margin-top: 14px;
+}
+
+:root.modern .PrefTab fieldset fieldset {
+    padding-inline: 16px;
+
+    & > legend {
+        left: 16px;
+    }
+
+    &.modernSwitchCard > legend {
+        font-weight: normal;
+        top: 4px;
+    }
+}
+
+:root.modern
+    .PrefTab
+    fieldset:has(> .modernEnableRow > input[type="checkbox"]:not(:checked))
+    > .modernCardPart {
+    display: none;
+}
+
+:root.modern .PrefTab :is(#peerProxyServerTable, #fieldsetI2p table) {
+    & tr {
+        align-items: stretch;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) var(--modern-select-width);
+    }
+
+    & td {
+        align-items: center;
+        display: flex;
+    }
+
+    & tr > td:nth-child(n + 3) {
+        border-top: var(--modern-divider);
+    }
+
+    & td:last-child:not(:first-child) {
+        width: auto;
+    }
+
+    & :is(input, select) {
+        width: 100% !important; /* override inline style */
+    }
+}
+
+:root.modern
+    .PrefTab
+    :where(tr):is(
+        tr.modernSeedingAction,
+        tr.modernSeedingAction + tr.modernSettingValue
+    ) {
+    overflow: clip;
+    overflow-clip-margin: 4px;
+
+    &:is(:has(#maxRatioSelect:disabled), :has(+ tr #maxRatioSelect:disabled)) {
+        height: 0;
+        opacity: 0;
+        padding-block: 0;
+        visibility: hidden;
+    }
+}
+
+:root.modern
+    .PrefTab
+    fieldset:not(
+        :has(#autorun_checkbox:checked, #autorunOnTorrentAddedCheckbox:checked)
+    )
+    > .modernAutorunNotes {
+    display: none;
+}
+
+:root.modern .PrefTab .modernTime {
+    align-items: center;
+    background-color: var(--color-background-primary);
+    border: var(--modern-border);
+    border-radius: var(--modern-radius-pill);
+    display: inline-flex;
+    font-variant-numeric: tabular-nums;
+    margin-left: auto;
+    min-height: var(--modern-control-height);
+
+    & > input {
+        appearance: textfield;
+        background: none;
+        border: 0;
+        min-height: 0;
+        text-align: end;
+        width: 3.2em !important; /* override inline style */
+
+        & + span + input {
+            text-align: start;
+        }
+
+        &:focus-visible {
+            outline-offset: -2px;
+        }
+    }
+}
+
+:root.modern .PrefTab tr.modernApiKeyRow {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+
+    & > td {
+        white-space: nowrap;
+    }
+
+    & > td:first-child {
+        flex: none;
+    }
+
+    & > td:nth-child(2) {
+        flex: 1 1 auto;
+        min-width: 0;
+        width: auto;
+    }
+
+    & > td:last-child {
+        width: auto;
+    }
+
+    & #WebUIAPIKeyText {
+        width: 100% !important; /* override inline style */
+    }
+
+    &
+        :is(
+            #webUIAPIKeyCopyButton,
+            #webUIAPIKeyRotateButton,
+            #webUIAPIKeyDeleteButton
+        ) {
+        background-color: transparent;
+        height: var(--modern-control-height);
+        min-width: 0;
+        padding: 0;
+        width: var(--modern-control-height);
+    }
+
+    &
+        :is(
+            #webUIAPIKeyCopyButton,
+            #webUIAPIKeyRotateButton,
+            #webUIAPIKeyDeleteButton
+        )
+        img {
+        margin: 0 !important; /* override inline style */
+        position: static !important; /* override inline style */
+    }
+}
+
+:root.modern .PrefTab td {
+    & > #webuiAddressValue {
+        display: block;
+        width: 100% !important; /* override inline style */
+    }
+
+    & > label[for="webuiPortValue"] {
+        display: inline-block;
+        margin-top: 6px;
+    }
+
+    & > #webuiPortValue {
+        float: inline-end;
+        margin-top: 6px;
+        width: calc(100% - 4em) !important; /* override inline style */
+    }
+}
+
+:root.modern .PrefTab tr:has(> td.modernWideCell:last-child) {
+    flex-wrap: wrap;
+}
+
+:root.modern .PrefTab tr > td.modernWideCell:last-child {
+    flex: 1 1 100%;
+    padding-top: 0;
+    width: auto;
+
+    & > input.pathDirectory {
+        width: 100% !important; /* override inline style */
+    }
+}
+
+:root.modern #preferencesPage .mochaContent > .dialogFooter {
+    margin-inline: -12px;
+    padding-inline: 18px;
+
+    &::before {
+        background: linear-gradient(
+            to bottom,
+            transparent,
+            var(--color-background-popup)
+        );
+        bottom: calc(100% + 1px);
+        content: "";
+        height: 56px;
+        left: 0;
+        opacity: var(--modern-more-below, 0);
+        pointer-events: none;
+        position: absolute;
+        right: 0;
+    }
+}

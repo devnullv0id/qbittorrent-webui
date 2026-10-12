@@ -798,7 +798,9 @@ input[type="button"]:disabled {
 }
 
 /* Options: rows wrap in narrow windows */
-:root.responsiveRelayout #preferencesPage .mochaContentWrapper {
+:root.responsiveRelayout:where(:not(.modern))
+    #preferencesPage
+    .mochaContentWrapper {
     container: options / inline-size;
 }
 

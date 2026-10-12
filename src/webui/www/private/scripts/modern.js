@@ -35,6 +35,7 @@ window.qBittorrent.Modern ??= (() => {
             init: init,
             addSpeedSlider: addSpeedSlider,
             trimEllipsis: trimEllipsis,
+            optionsPage: optionsPage,
             initTorrentLimits: initTorrentLimits,
         };
     };
@@ -1697,6 +1698,310 @@ window.qBittorrent.Modern ??= (() => {
         initSelectionCheckboxes();
         initStatusBar();
         initTorrentSpeedLimits();
+    };
+
+    const optionsPage = ({ loadPreferences, updatePeerProxySettings }) => {
+        let modernOptions = null;
+
+        // a unit beside a field gets an element of its own, and with the field a box, so they line up with the dropdowns
+        const markFieldUnits = (page) => {
+            for (const cell of page.querySelectorAll(".PrefTab :is(td, div.formRow):has(> input)")) {
+                for (const node of [...cell.childNodes]) {
+                    if (node.nodeType !== Node.TEXT_NODE)
+                        continue;
+
+                    const text = node.textContent.trim();
+                    if (text === "") {
+                        if (node.textContent.includes(" "))
+                            node.remove();
+                        continue;
+                    }
+                    const unit = document.createElement("span");
+                    unit.className = "prefUnit";
+                    unit.textContent = text;
+                    node.replaceWith(unit);
+                    const field = unit.previousElementSibling;
+                    if (field?.matches("input")) {
+                        const box = document.createElement("span");
+                        box.className = "prefField";
+                        field.before(box);
+                        box.append(field, unit);
+                    }
+                }
+            }
+        };
+
+        // the schedule's times, hours and minutes, each on a row with its label
+        const splitSchedule = () => {
+            const row = document.getElementById("scheduleFromHourLabel").parentElement;
+            const toRow = document.createElement("div");
+            toRow.className = "formRow";
+            row.after(toRow);
+            const times = [
+                ["scheduleFromHourLabel", "schedule_from_hour", "schedule_from_min", row],
+                ["scheduleToHourLabel", "schedule_to_hour", "schedule_to_min", toRow]
+            ];
+            for (const [label, hour, minute, target] of times) {
+                const time = document.createElement("span");
+                time.className = "modernTime";
+                const colon = document.createElement("span");
+                colon.textContent = ":";
+                colon.setAttribute("aria-hidden", "true");
+                time.append(document.getElementById(hour), colon, document.getElementById(minute));
+                target.append(document.getElementById(label), time);
+            }
+            // the colons left between the fields
+            for (const node of [...row.childNodes]) {
+                if ((node.nodeType === Node.TEXT_NODE) && (node.textContent.trim() !== ""))
+                    node.remove();
+            }
+        };
+
+        // Enable proxy server: off is the type None, on the type used last
+        const addProxySwitch = (state) => {
+            const select = document.getElementById("peer_proxy_type_select");
+            const box = document.createElement("input");
+            box.type = "checkbox";
+            box.id = "modernProxyEnabled";
+            const label = document.createElement("label");
+            label.htmlFor = box.id;
+            label.textContent = "QBT_TR(Enable proxy server)QBT_TR[CONTEXT=OptionsDialog]";
+            const row = document.createElement("div");
+            row.className = "formRow modernEnableRow";
+            row.append(box, label);
+            select.closest("fieldset").querySelector(":scope > legend").after(row);
+            select.closest("table").id = "peerProxyServerTable";
+
+            let lastType = "SOCKS5";
+            const sync = () => {
+                if (select.value !== "None")
+                    lastType = select.value;
+                box.checked = (select.value !== "None");
+            };
+            box.addEventListener("change", (_event) => {
+                select.value = box.checked ? lastType : "None";
+                updatePeerProxySettings();
+            });
+            select.addEventListener("change", (_event) => sync());
+            state.onFilled.push(sync);
+        };
+
+        // Enable I2P: the switch in the heading moves to a row of its own
+        const addI2PSwitch = () => {
+            const box = document.getElementById("i2pEnabledCheckbox");
+            const legend = box.parentElement;
+            const label = document.createElement("label");
+            label.htmlFor = box.id;
+            label.textContent = "QBT_TR(Enable I2P)QBT_TR[CONTEXT=OptionsDialog]";
+            const row = document.createElement("div");
+            row.className = "formRow modernEnableRow";
+            row.append(box, label);
+            legend.after(row);
+        };
+
+        // classes for the page's structure, set once: as :has() rules, the browser would restyle most of the page whenever a
+        // switch changes
+        const STRUCTURE_CLASSES = [
+            ["modernSwitchEndRow", "tr:has(> td:last-child:not(:first-child) > input[type='checkbox']:only-child)"],
+            ["modernFieldWithButton", "div.formRow:has(> input + button)"],
+            ["modernSwitchList", "div.formRow:has(> input[type='checkbox']) + div.formRow:has(> textarea)"],
+            ["modernSwitchSpan", "div.formRow > span:has(> input[type='checkbox']:first-child + label)"],
+            ["modernCardEnd", "> div.formRow:not(:has(+ div.formRow))"],
+            ["modernSwitchRow", "tr:has(> td:first-child > input[type='checkbox']:first-child + label)"],
+            ["modernSwitchField", "tr:has(> td:first-child > input[type='checkbox']:first-child + label) > td:not(:first-child)"],
+            ["modernIconTable", "table:has(td[rowspan])"],
+            ["modernSwitchFirstRow", "tr:has(> td:first-child > input[type='checkbox']:only-child)"],
+            ["modernSwitchCard", "fieldset:has(> legend input[type='checkbox'])"],
+            ["modernCardPart", "fieldset:has(> legend input[type='checkbox'], > .modernEnableRow) > :not(legend, .modernEnableRow)"],
+            ["modernSeedingAction", "tr:has(> td > #maxRatioSelect)"],
+            ["modernAutorunNotes", "fieldset:has(#autorun_checkbox) > div:not(.formRow)"],
+            ["modernApiKeyRow", "tr:has(> td > #WebUIAPIKeyText)"],
+            ["modernWideCell", "td:has(> input.pathDirectory)"]
+        ];
+
+        const markStructures = (page) => {
+            for (const [name, selector] of STRUCTURE_CLASSES) {
+                for (const element of page.querySelectorAll(`.PrefTab ${selector}`))
+                    element.classList.add(name);
+            }
+        };
+
+        // a control wider than the column of controls gets a row of its own below its label
+        const WIDE_CONTROLS = ["select:not([multiple]):only-of-type", "input[type='text']:only-of-type"]
+            .flatMap((control) => [`.PrefTab tr > td:last-child:not(:first-child) > ${control}`, `.PrefTab tr.modernSettingValue > td > ${control}`])
+            .join(", ");
+
+        const splitWideSettings = (state) => {
+            const context = document.createElement("canvas").getContext("2d");
+            const textWidths = new WeakMap();
+
+            const split = () => {
+                const shown = state.page.querySelector(".PrefTab:not(.invisible)");
+                if (shown === null)
+                    return;
+
+                // samples on the page shown, as most controls are on hidden pages
+                const probe = document.createElement("div");
+                probe.style.width = "var(--modern-select-width)";
+                const field = document.createElement("input");
+                const dropdown = document.createElement("select");
+                probe.append(field, dropdown);
+                shown.append(probe);
+                const column = probe.getBoundingClientRect().width;
+                const fieldFontSize = Number.parseFloat(getComputedStyle(field).fontSize);
+                const style = getComputedStyle(dropdown);
+                const font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+                const frame = Number.parseFloat(style.paddingLeft) + Number.parseFloat(style.paddingRight)
+                    + Number.parseFloat(style.borderLeftWidth) + Number.parseFloat(style.borderRightWidth);
+                probe.remove();
+
+                const neededWidth = (control) => {
+                    if (control.tagName !== "SELECT")
+                        return control.style.width.endsWith("em") ? (Number.parseFloat(control.style.width) * fieldFontSize) : 0;
+
+                    let known = textWidths.get(control);
+                    if ((known?.options !== control.options.length) || (known.font !== font)) {
+                        context.font = font;
+                        known = { options: control.options.length, font: font, width: Math.max(0, ...[...control.options].map((option) => context.measureText(option.textContent).width)) };
+                        textWidths.set(control, known);
+                    }
+                    return known.width + frame;
+                };
+
+                for (const control of state.page.querySelectorAll(WIDE_CONTROLS)) {
+                    const cell = control.parentElement;
+                    const row = cell.parentElement;
+                    const valueRow = row.classList.contains("modernSettingValue");
+                    const labelRow = valueRow ? row.previousElementSibling : row;
+                    // a setting the page hides keeps its place
+                    if (labelRow.hidden || (labelRow.style.display === "none"))
+                        continue;
+
+                    const wide = (column > 0) && (neededWidth(control) > column);
+                    if (wide && !valueRow) {
+                        const newRow = document.createElement("tr");
+                        newRow.className = "modernSettingValue";
+                        cell.colSpan = row.cells.length;
+                        row.cells[0].colSpan = row.cells.length;
+                        row.after(newRow);
+                        newRow.append(cell);
+                    }
+                    else if (!wide && valueRow) {
+                        cell.colSpan = 1;
+                        labelRow.cells[0].colSpan = 1;
+                        labelRow.append(cell);
+                        row.remove();
+                    }
+                }
+            };
+            const splitSoon = window.qBittorrent.Misc.createDebounceHandler(50, split);
+
+            // first as the filled page is laid out, then as the column's width changes or a dropdown is filled later
+            state.onFilled.push(() => {
+                let width = null;
+                const resizeObserver = new ResizeObserver(() => {
+                    if (state.page.clientWidth === width)
+                        return;
+
+                    const first = (width === null);
+                    width = state.page.clientWidth;
+                    if (first)
+                        split();
+                    else
+                        splitSoon();
+                });
+                resizeObserver.observe(state.page);
+                const fillObserver = new MutationObserver(() => splitSoon());
+                for (const select of state.page.querySelectorAll(".PrefTab select:not([multiple])"))
+                    fillObserver.observe(select, { childList: true });
+                state.observers.push(resizeObserver, fillObserver);
+            });
+        };
+
+        // what a switch shows or hides slides open and shut; the sizes are measured, as not every browser animates a height
+        // to auto
+        const slideWithSwitches = (state) => {
+            const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+            const measure = (element) => {
+                const style = getComputedStyle(element);
+                return { height: style.height, opacity: style.opacity, paddingBottom: style.paddingBottom, paddingTop: style.paddingTop, visibility: style.visibility };
+            };
+            state.page.addEventListener("change", (event) => {
+                const box = event.target;
+                const table = box.closest("table");
+                if (!box.matches("input[type='checkbox']") || (table === null) || reducedMotion.matches)
+                    return;
+
+                const elements = [...table.querySelectorAll("tr, td")];
+                box.checked = !box.checked;
+                const before = elements.map(measure);
+                box.checked = !box.checked;
+                for (const [i, element] of elements.entries()) {
+                    const after = measure(element);
+                    if ((after.visibility !== before[i].visibility) && (after.height !== before[i].height))
+                        element.animate([before[i], after], { duration: 200, easing: "ease" });
+                }
+            }, { signal: state.listening.signal });
+        };
+
+        const fadeAboveFooter = (state) => {
+            const wrapper = state.instance.contentWrapperEl;
+            const footer = state.page.querySelector(":scope > .dialogFooter");
+            const update = () => {
+                const fade = Number.parseFloat(getComputedStyle(footer, "::before").height) || 1;
+                const left = wrapper.scrollHeight - wrapper.clientHeight - wrapper.scrollTop;
+                footer.style.setProperty("--modern-more-below", Math.min(1, Math.max(0, left / fade)).toString());
+            };
+            wrapper.addEventListener("scroll", (_event) => update(), { passive: true, signal: state.listening.signal });
+            const resizeObserver = new ResizeObserver(() => update());
+            resizeObserver.observe(state.page);
+            resizeObserver.observe(wrapper);
+            state.observers.push(resizeObserver);
+        };
+
+        const setupModern = () => {
+            if (!window.parent.qBittorrent.Responsive.isModern())
+                return;
+
+            const instance = window.MUI.Windows.instances["preferencesPage"];
+            const state = {
+                instance: instance,
+                page: instance.contentEl,
+                listening: new AbortController(),
+                observers: [],
+                // what follows once the page is filled
+                onFilled: []
+            };
+            modernOptions = state;
+            instance.addEvent("close", () => {
+                state.listening.abort();
+                for (const observer of state.observers)
+                    observer.disconnect();
+                if (modernOptions === state)
+                    modernOptions = null;
+            });
+
+            splitSchedule();
+            markFieldUnits(state.page);
+            addProxySwitch(state);
+            addI2PSwitch();
+            markStructures(state.page);
+            splitWideSettings(state);
+            slideWithSwitches(state);
+            fadeAboveFooter(state);
+        };
+
+        // once loadPreferences() has filled the page
+        const modernFilled = () => {
+            if (modernOptions === null)
+                return;
+
+            for (const filled of modernOptions.onFilled)
+                filled();
+            modernOptions.onFilled = [];
+        };
+
+        return { setupModern: setupModern, modernFilled: modernFilled };
     };
 
     // the torrents' upload and download limits; where the torrents' limits differ the field is mixed

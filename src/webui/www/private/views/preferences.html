@@ -2997,6 +2997,8 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
                     document.getElementById("i2pOutboundLength").value = pref.i2p_outbound_length;
                     document.getElementById("i2pInboundLengthVariance").value = pref.i2p_inbound_length_variance;
                     document.getElementById("i2pOutboundLengthVariance").value = pref.i2p_outbound_length_variance;
+
+                    modernFilled();
                 }).catch((error) => {
                     if (!page.isConnected)
                         return;
@@ -3587,6 +3589,11 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             });
         };
 
+        const { setupModern, modernFilled } = window.qBittorrent.Modern.optionsPage({
+            loadPreferences: loadPreferences,
+            updatePeerProxySettings: updatePeerProxySettings
+        });
+
         const setup = () => {
             // Options was closed while loading
             if (document.getElementById("preferencesPage") === null)
@@ -3644,6 +3651,7 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             document.getElementById("deleteTorrentFileAfterCheckbox").addEventListener("change", (e) => { updateDeleteCancelledTorrentEnabled(); });
             setupAPIKeyButtons();
 
+            setupModern();
             loadPreferences();
 
             window.qBittorrent.pathAutofill.attachPathAutofill();
