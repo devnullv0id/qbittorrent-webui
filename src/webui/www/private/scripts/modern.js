@@ -35,8 +35,10 @@ window.qBittorrent.Modern ??= (() => {
             init: init,
             addSpeedSlider: addSpeedSlider,
             addSpeedUnitPicker: addSpeedUnitPicker,
+            openOptionsPage: openOptionsPage,
             trimEllipsis: trimEllipsis,
             optionsPage: optionsPage,
+            rssPage: rssPage,
             initTorrentLimits: initTorrentLimits,
             searchPluginsPage: searchPluginsPage,
             searchPage: searchPage,
@@ -1890,6 +1892,100 @@ window.qBittorrent.Modern ??= (() => {
         downloadLimit.before(item);
     };
 
+    // settings pointed out get a ring that fades out
+    const POINT_OUT_TIME = 2400;
+    let pointedOut = [];
+    let pointOutTimer = -1;
+
+    const pointOut = (settings) => {
+        for (const section of pointedOut)
+            section.classList.remove("modernHighlight");
+        clearTimeout(pointOutTimer);
+
+        const sections = settings.map((setting) => {
+            const row = setting.closest(".formRow, tr");
+            const card = row?.closest("fieldset") ?? null;
+            if ((card !== null) && (card.querySelectorAll(".formRow, tr").length === 1))
+                return { section: card, card: null };
+            return (row === null) ? null : { section: row, card: card };
+        }).filter(Boolean);
+        sections[0]?.section.scrollIntoView({ block: "center" });
+
+        // measured, then set
+        const spans = sections.map(({ section, card }) => {
+            if (card === null)
+                return null;
+
+            const cardBox = card.getBoundingClientRect();
+            const box = section.getBoundingClientRect();
+            return { left: cardBox.left - box.left, right: box.right - cardBox.right, top: ((box.top - cardBox.top) < 12) ? (cardBox.top - box.top) : 0 };
+        });
+        for (const [i, { section }] of sections.entries()) {
+            if (spans[i] !== null) {
+                section.style.setProperty("--modern-highlight-left", `${spans[i].left}px`);
+                section.style.setProperty("--modern-highlight-right", `${spans[i].right}px`);
+                section.style.setProperty("--modern-highlight-top", `${spans[i].top}px`);
+            }
+            section.classList.add("modernHighlight");
+        }
+        pointedOut = sections.map(({ section }) => section);
+        pointOutTimer = setTimeout(() => {
+            for (const section of pointedOut)
+                section.classList.remove("modernHighlight");
+            pointedOut = [];
+        }, POINT_OUT_TIME);
+    };
+
+    // opens Options at a page and points out settings on it, at once or once its window has loaded them
+    let showWhenLoaded = null;
+    const watchedOptions = new WeakSet();
+
+    const openOptionsPage = (linkId, settingIds) => {
+        const show = () => {
+            const link = document.getElementById(linkId);
+            const settings = settingIds.map((id) => document.getElementById(id));
+            if ((link === null) || settings.includes(null))
+                return false;
+
+            link.click();
+            pointOut(settings);
+            return true;
+        };
+        if (show()) {
+            // Options, open already, may be behind another window
+            MochaUI.focusWindow(MochaUI.Windows.instances["preferencesPage"].windowEl);
+            return;
+        }
+
+        showWhenLoaded = show;
+        const instance = MochaUI.Windows.instances["preferencesPage"];
+        if (instance === undefined)
+            document.getElementById("preferencesLink").click();
+        else
+            watchOptionsWindow(instance);
+    };
+
+    // the Options window says when it has loaded its page and its tabs
+    const watchOptionsWindow = (instance) => {
+        if ((instance.options.id !== "preferencesPage") || (showWhenLoaded === null))
+            return;
+
+        const tryShow = () => {
+            if ((showWhenLoaded !== null) && showWhenLoaded())
+                showWhenLoaded = null;
+        };
+        tryShow();
+        if (watchedOptions.has(instance))
+            return;
+
+        watchedOptions.add(instance);
+        // not creation options: mocha-init.js creates the window
+        instance.addEvent("contentLoaded", tryShow);
+        instance.addEvent("close", () => {
+            showWhenLoaded = null;
+        });
+    };
+
     const init = () => {
         if (!responsive.isModern())
             return;
@@ -1909,6 +2005,7 @@ window.qBittorrent.Modern ??= (() => {
         initSelectionCheckboxes();
         initStatusBar();
         initTorrentSpeedLimits();
+        responsive.addWindowHook(watchOptionsWindow);
     };
 
     // set up by preferences.html with the functions of its page it uses
@@ -2596,6 +2693,98 @@ window.qBittorrent.Modern ??= (() => {
         };
 
         return { setupModern: setupModern, modernFilled: modernFilled, modernBeforeSave: modernBeforeSave, modernSaved: modernSaved, modernSaveLook: modernSaveLook, modernSaveSpeedLimitsMode: modernSaveSpeedLimitsMode };
+    };
+
+    const rssPage = ({ rssArticleTable, rssFeedTable }) => {
+        const setupModern = () => {
+            if (!window.qBittorrent.Responsive.isModern())
+                return;
+
+            const optionsButton = document.createElement("button");
+            optionsButton.type = "button";
+            optionsButton.textContent = "QBT_TR(Options...)QBT_TR[CONTEXT=MainWindow]";
+            optionsButton.addEventListener("click", (_event) => {
+                window.qBittorrent.Modern.openOptionsPage("PrefRSSLink", ["enable_fetching_rss_feeds_checkbox", "enable_auto_downloading_rss_torrents_checkbox"]);
+            });
+            document.getElementById("rssFetchingDisabled").append(optionsButton);
+            window.qBittorrent.Modern.trimEllipsis(document.getElementById("rssView"));
+
+            const hint = document.createElement("div");
+            hint.id = "rssDetailsHint";
+            hint.textContent = "QBT_TR(Select an article to see its details.)QBT_TR[CONTEXT=RSSWidget]";
+            document.getElementById("rssDetailsView").before(hint);
+
+            setupPhoneSteps();
+        };
+
+        // phones: the feeds, a feed's articles or an article, one at a time
+        const setupPhoneSteps = () => {
+            const view = document.getElementById("rssView");
+            const phone = window.qBittorrent.Responsive.queries.phone;
+            const bar = document.createElement("div");
+            bar.id = "rssPhoneBar";
+            const back = document.createElement("button");
+            back.type = "button";
+            back.id = "rssPhoneBack";
+            back.className = "modernSheetBack";
+            back.title = "QBT_TR(Back)QBT_TR[CONTEXT=MainWindow]";
+            back.setAttribute("aria-label", back.title);
+            const title = document.createElement("span");
+            title.id = "rssPhoneTitle";
+            bar.append(back, title);
+            document.getElementById("rssTopBar").prepend(bar);
+            view.dataset.phoneStep = "feeds";
+
+            const selectedRow = (table) => table.getTrByRowId(table.getSelectedRowId()) ?? null;
+            const show = (step, focus) => {
+                view.dataset.phoneStep = step;
+                focus?.focus({ preventScroll: true });
+            };
+            const goOn = (event, table, step) => {
+                const tr = event.target.closest("tbody tr");
+                if (!phone.matches || (tr === null))
+                    return;
+
+                // as a tap does
+                if (!table.isRowSelected(tr.rowId)) {
+                    table.deselectAll();
+                    table.selectRow(tr.rowId);
+                }
+                if (step === "articles")
+                    title.textContent = table.getRow(tr.rowId).full_data.name;
+                show(step, back);
+            };
+            const nextSteps = [
+                [rssFeedTable, "articles"],
+                [rssArticleTable, "details"]
+            ];
+            for (const [table, step] of nextSteps) {
+                table.dynamicTableDiv.addEventListener("click", (event) => goOn(event, table, step));
+                table.dynamicTableDiv.addEventListener("keydown", (event) => {
+                    if (event.key !== "Enter")
+                        return;
+
+                    // not Back's Enter as well, which has the focus by then
+                    event.preventDefault();
+                    goOn(event, table, step);
+                });
+            }
+            back.addEventListener("click", (_event) => {
+                if (view.dataset.phoneStep === "details")
+                    show("articles", selectedRow(rssArticleTable));
+                else
+                    show("feeds", selectedRow(rssFeedTable));
+            });
+        };
+
+        // the description's frame gets the page's font, text color and accent, without Modern's stylesheet
+        const modernDescriptionStyle = () => {
+            const page = getComputedStyle(document.body);
+            const accent = getComputedStyle(document.documentElement).getPropertyValue("--modern-accent-text");
+            return `<style>:root, :root.dark { --color-background-popup: transparent; } body { color: ${page.color}; font-family: ${page.fontFamily}; font-size: ${page.fontSize}; margin: 0; } a { color: ${accent}; }</style>`;
+        };
+
+        return { setupModern: setupModern, modernDescriptionStyle: modernDescriptionStyle };
     };
 
     // the torrents' upload and download limits; where the torrents' limits differ the field is mixed
