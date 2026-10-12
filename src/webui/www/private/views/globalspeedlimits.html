@@ -9,7 +9,7 @@
             };
         };
 
-        const setupSlider = (sliderId, input, limit) => {
+        const setupSlider = (sliderId, input, limit, mixed = false) => {
             const update = (value) => {
                 input.value = (value === 0) ? "∞" : value;
             };
@@ -32,7 +32,8 @@
             });
 
             update(limit);
-            window.qBittorrent.Modern.addSpeedSlider(slider, input);
+            // Modern's logarithmic sliders
+            window.qBittorrent.Modern.addSpeedSlider(slider, input, { mixed: mixed });
         };
 
         const init = () => {
@@ -42,6 +43,13 @@
             const altDownloadValue = document.getElementById("altDownloadValue");
 
             const applyButton = document.getElementById("applyButton");
+            const torrentHashes = window.MUI.Windows.instances[applyButton.closest(".mocha")?.id]?.options.limitHashes;
+            if (torrentHashes !== undefined) {
+                // the torrents' limits in Modern
+                window.qBittorrent.Modern.initTorrentLimits(torrentHashes, setupSlider);
+                return;
+            }
+
             applyButton.addEventListener("click", (_event) => {
                 const upload = Number(uploadValue.value) * 1024 || 0;
                 const download = Number(downloadValue.value) * 1024 || 0;
