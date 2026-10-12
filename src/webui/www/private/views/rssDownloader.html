@@ -522,6 +522,7 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
             document.getElementById("savetoDifferentDir").addEventListener("click", (event) => {
                 document.getElementById("saveToText").disabled = !event.target.checked;
             });
+            setupModern();
             updateRulesList();
         };
 
@@ -657,7 +658,8 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
             });
         };
 
-        const saveSettings = () => {
+        // resolves to whether the rule was saved (Modern's Save then closes the window)
+        const saveSettings = (closeWindow = window.qBittorrent.Responsive.isModern()) => {
             const lastSelectedRow = rssDownloaderRulesTable.selectedRows.at(-1);
             const rule = rssDownloaderRulesTable.getRow(lastSelectedRow).full_data.name;
 
@@ -708,18 +710,25 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
                     break;
             }
 
-            fetch("api/v2/rss/setRule", {
+            return fetch("api/v2/rss/setRule", {
                     method: "POST",
                     body: new URLSearchParams({
                         ruleName: rule,
                         ruleDef: JSON.stringify(rulesList[rule])
                     })
                 })
-                .then((response) => {
-                    if (!response.ok)
-                        return;
+                .then(async (response) => {
+                    if (!response.ok) {
+                        // Modern says why
+                        if (window.qBittorrent.Responsive.isModern())
+                            alert(`QBT_TR(Error:)QBT_TR[CONTEXT=HttpServer] ${await response.text()}`);
+                        return false;
+                    }
 
                     updateMatchingArticles(rule);
+                    if (closeWindow)
+                        window.qBittorrent.Client.closeWindow(document.getElementById("rssdownloaderpage"));
+                    return true;
                 });
         };
 
@@ -899,6 +908,8 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
             episodeFilterTitle = episodeFilterTitle.replace(/<b>/g, "").replace(/<\/b>/g, "");
             document.getElementById("episodeFilterText").title = episodeFilterTitle;
         };
+
+        const { setupModern } = window.qBittorrent.Modern.rssDownloaderPage();
 
         return exports();
     })();
