@@ -545,6 +545,8 @@ window.qBittorrent.Responsive ??= (() => {
     const MAX_WINDOW_HEIGHT = 800;
     // windows whose tabs share one size
     const ONE_SIZE_WINDOWS = new Set(["preferencesPage"]);
+    const STYLESHEET_SIZED_WINDOWS = new Set(["preferencesPage"]);
+    const isStylesheetSized = (instance) => isModern() && STYLESHEET_SIZED_WINDOWS.has(instance.windowEl.id);
 
     // resize like an edge drag, without storing the size
     const setContentSize = (instance, width, height) => {
@@ -760,7 +762,7 @@ window.qBittorrent.Responsive ??= (() => {
             return;
 
         const phone = queries.phone.matches;
-        const { fullScreen, fitted } = fitWindowSize(instance, phone);
+        const { fullScreen, fitted } = isStylesheetSized(instance) ? { fullScreen: phone, fitted: true } : fitWindowSize(instance, phone);
 
         // no dragging on phones
         if (phone)
