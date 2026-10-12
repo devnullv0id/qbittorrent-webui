@@ -635,6 +635,7 @@
     :root.modern #Filters,
     :root.modern #desktopNavbar,
     :root.modern #propertiesPanel_wrapper,
+    :root.modern .modernSheetFold > a::after,
     :root.modern input,
     :root.modern input::before,
     :root.modern select,
@@ -3242,5 +3243,150 @@
 
     :root.modern #propGeneral td[colspan] {
         grid-column: 2 / -1;
+    }
+}
+
+/* Sort sheet on phones */
+:root.modern #torrentsFilterToolbar #modernSortButton {
+    display: none;
+}
+
+:root.modern .modernGlyph[data-glyph="sort"] {
+    background:
+        linear-gradient(currentcolor 0 0) 0 3px / 100% 2px no-repeat,
+        linear-gradient(currentcolor 0 0) 0 8px / 70% 2px no-repeat,
+        linear-gradient(currentcolor 0 0) 0 13px / 40% 2px no-repeat;
+    height: 16px;
+    width: 16px;
+}
+
+@media (width < 760px) {
+    :root.modern #torrentsFilterToolbar {
+        & #modernSortButton {
+            align-items: center;
+            border-radius: var(--modern-radius-pill);
+            display: inline-flex;
+            flex: none;
+            height: var(--modern-phone-filter-height);
+            justify-content: center;
+            margin-right: 6px;
+            min-height: 0;
+            min-width: 0;
+            padding: 0;
+            width: var(--modern-phone-filter-height);
+        }
+
+        & #torrentsFilterSelect {
+            display: none;
+        }
+    }
+
+    :root.modern #torrentsSelectionBar {
+        min-height: var(--responsive-touch-target, auto);
+
+        & :is(#torrentsSortSelect, #torrentsSortOrder, #torrentsColumnsButton) {
+            display: none;
+        }
+
+        /* without them the count has room for its words */
+        & #torrentsSelectionCount > span {
+            clip-path: none;
+            height: auto;
+            overflow: visible;
+            position: static;
+            width: auto;
+        }
+    }
+
+    :root.modern #transferList #torrentsTableDiv {
+        &[data-hide~="priority"] td[data-col="priority"],
+        &[data-hide~="progress"] td[data-col="progress"],
+        &[data-hide~="status"] td[data-col="status"],
+        &[data-hide~="eta"] td[data-col="eta"],
+        &[data-hide~="size"] td[data-col="size"],
+        &[data-hide~="dlspeed"] td[data-col="dlspeed"],
+        &[data-hide~="upspeed"] td[data-col="upspeed"] {
+            display: none;
+        }
+
+        &[data-hide~="priority"] td[data-col="name"] {
+            grid-area: 1 / 1 / 2 / 5;
+        }
+    }
+}
+
+:root.modern #modernSortMenu {
+    & a[aria-checked="true"] {
+        color: var(--modern-accent-text);
+        font-weight: 600;
+    }
+
+    & .modernSortDirection {
+        margin-left: auto;
+    }
+
+    & .modernSheetHeading {
+        color: var(--color-text-muted);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        padding: 14px 12px 6px;
+        text-transform: uppercase;
+    }
+
+    & .modernCardField {
+        justify-content: space-between;
+
+        &::after {
+            background: radial-gradient(
+                    circle closest-side,
+                    var(--color-text-white) calc(var(--modern-knob) / 2),
+                    transparent calc((var(--modern-knob) / 2) + 0.5px)
+                )
+                left 3px center / var(--modern-switch-height)
+                var(--modern-switch-height) no-repeat
+                var(--color-background-row-hover);
+            border: 1px solid var(--modern-control-edge);
+            border-radius: var(--modern-radius-pill);
+            content: "";
+            flex: none;
+            height: var(--modern-switch-height);
+            width: var(--modern-switch-width);
+        }
+
+        &[aria-checked="true"] {
+            color: inherit;
+            font-weight: normal;
+
+            &::after {
+                background-color: var(--color-accent-blue);
+                background-position: right 3px center;
+                border-color: var(--color-accent-blue);
+            }
+        }
+    }
+
+    & .modernSheetFold {
+        border-top: var(--modern-divider);
+        margin-top: 6px;
+
+        & > a {
+            font-weight: 600;
+        }
+
+        & > a::after {
+            background-color: currentcolor;
+            content: "";
+            flex: none;
+            height: 20px;
+            margin-left: auto;
+            mask: var(--modern-chevron-down) center / 20px no-repeat;
+            transition: transform 0.15s;
+            width: 20px;
+        }
+
+        & > a[aria-expanded="true"]::after {
+            transform: rotate(180deg);
+        }
     }
 }
