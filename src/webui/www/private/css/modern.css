@@ -2304,3 +2304,51 @@
         position: absolute;
     }
 }
+
+/* Menus as sheets on touch screens and phones (contextmenu.js) */
+
+@keyframes modern-sheet {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: none;
+    }
+}
+
+/* above windows and drawers, below the sheet */
+:root.modern .responsiveScrim.modernMenuScrim {
+    z-index: 1999;
+}
+
+:root.modern .contextMenu.modernSheet {
+    animation: modern-sheet 0.18s ease-out;
+    border-radius: var(--modern-radius-sheet);
+    inset: auto 0 0;
+    max-height: 82dvh;
+    max-width: none;
+    overflow-y: auto;
+    padding-bottom: 8px;
+    z-index: 2000;
+
+    /* a long label wraps: the sheet is as wide as the screen */
+    & li a {
+        min-height: 44px;
+        white-space: normal;
+    }
+
+    & li ul {
+        border: 0;
+        box-shadow: none;
+        left: auto;
+        margin: 0;
+        padding-left: 24px;
+        position: static;
+        width: auto;
+    }
+
+    & li:not(.modernExpanded) > ul {
+        display: none;
+    }
+}
