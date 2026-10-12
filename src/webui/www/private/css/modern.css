@@ -56,6 +56,19 @@
     );
     --color-button-face: var(--color-background-default);
     --color-button-border: var(--color-border-default);
+    --modern-tool-height: 38px;
+    --modern-tool-width: 42px;
+    --modern-tool-icon: 24px;
+    --modern-toolbar-padding: 6px 12px 12px;
+    --modern-menu-item-padding: 5px 12px;
+    --modern-tab-padding: 6px 16px;
+    --modern-filter-item-padding: 7px 12px;
+    --modern-cell-padding: 7px 10px;
+    --modern-th-padding: 10px 10px;
+    /* read by progressbar.js; set here rather than on each bar, so that rows share their styles */
+    --progress-bar-height: 17px;
+    --progress-bar-track: var(--color-background-track);
+    --progress-bar-fill: var(--color-accent-blue);
 
     &.dark {
         --modern-search: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg fill='none' stroke='%23a3a3a3' stroke-width='2'%3E%3Ccircle cx='8.5' cy='8.5' r='5.5'/%3E%3Cpath d='m12.5 12.5 4.5 4.5' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E");
@@ -102,6 +115,7 @@
         --responsive-touch-row-height: 44px;
         --responsive-window-title-height: 48px;
         --modern-window-button: var(--responsive-touch-target);
+        --modern-tool-height: var(--responsive-touch-target);
     }
 }
 
@@ -110,6 +124,16 @@
     :root.modern.compact {
         --modern-control-height: 28px;
         --modern-row-height: 26px;
+        --modern-tool-height: 34px;
+        --modern-tool-width: 38px;
+        --modern-tool-icon: 22px;
+        --modern-toolbar-padding: 4px 10px 10px;
+        --modern-menu-item-padding: 3px 10px;
+        --modern-tab-padding: 5px 14px;
+        --modern-filter-item-padding: 5px 10px;
+        --modern-cell-padding: 5px 8px;
+        --modern-th-padding: 8px 8px;
+        --progress-bar-height: 12px;
     }
 }
 
@@ -546,6 +570,7 @@
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
+    :root.modern #desktopNavbar ul,
     :root.modern input,
     :root.modern input::before,
     :root.modern select,
@@ -554,5 +579,1206 @@
     :root.modern .categoryToggle {
         animation: none !important; /* override the animations, inline ones too */
         transition: none !important; /* override the transitions, inline ones too */
+    }
+}
+
+/* Menubar */
+:root.modern #desktopNavbar {
+    background-color: var(--color-background-surface);
+    border-bottom: 0;
+    overflow: visible;
+    padding: 6px 8px 2px;
+
+    & > ul {
+        display: flex;
+        gap: 2px;
+    }
+
+    & > ul > li {
+        float: none;
+        position: relative;
+    }
+
+    /* bridges the gap to the menu, so it stays open */
+    & > ul > li:hover::after {
+        content: "";
+        height: 4px;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 100%;
+    }
+
+    & > ul > li > a {
+        border-radius: var(--modern-radius-pill);
+        font-size: 13px;
+        font-weight: 500;
+        padding: var(--modern-menu-item-padding);
+    }
+
+    & > ul > li > a:hover,
+    & > ul > li.open > a {
+        background-color: var(--color-background-fill);
+        color: var(--color-text-default);
+    }
+
+    & li ul {
+        margin-top: 4px;
+        min-width: 220px;
+    }
+
+    & li ul li a,
+    & li ul li div.anchor {
+        align-items: center;
+        border-radius: var(--modern-radius-item);
+        display: flex;
+        font-size: 13px;
+        gap: 10px;
+        padding: 5px 12px 5px 10px;
+    }
+
+    & li ul li div.anchor label {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+    }
+
+    & .MyMenuIcon {
+        margin: 0;
+    }
+
+    & li ul li.divider {
+        border-top: var(--modern-divider);
+        margin-top: 4px;
+        padding-top: 4px;
+    }
+
+    & li.open > ul {
+        left: 0;
+    }
+
+    & > ul > li:not(.open) > ul {
+        left: -999em;
+    }
+}
+
+/* the toolbar is always shown */
+:root.modern #desktopNavbar li:has(> #showTopToolbarLink) {
+    display: none;
+}
+
+/* Menus */
+:root.modern :where(div):is(.vsb-menu, .contextMenu, .contextMenu li ul),
+:root.modern :where(ul):is(.vsb-menu, .contextMenu, .contextMenu li ul),
+:root.modern #desktopNavbar li ul {
+    background-color: var(--color-background-popup);
+    border-radius: var(--modern-radius-menu);
+    box-shadow: var(--modern-shadow);
+    padding: 4px;
+}
+
+:root.modern .contextMenu {
+    min-width: 200px;
+
+    & li a {
+        border-radius: var(--modern-radius-item);
+        font-size: 13px;
+        gap: 4px;
+        padding: 5px 24px 5px 10px;
+    }
+
+    & li a:hover {
+        background-color: var(--color-background-blue);
+        color: var(--color-text-white);
+    }
+
+    & .separator {
+        border-top-color: var(--color-border-divider);
+        margin-top: 4px;
+        padding-top: 4px;
+    }
+
+    & .separatorBottom {
+        border-bottom-color: var(--color-border-divider);
+        margin-bottom: 4px;
+    }
+
+    & li ul {
+        margin-top: -33px;
+    }
+}
+
+@keyframes modern-pop {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+:root.modern .contextMenu.visible,
+:root.modern #desktopNavbar li.open > ul {
+    animation: modern-pop 0.12s ease-out;
+    transform-origin: top left;
+}
+
+/* Toolbar */
+:root.modern #mochaToolbar {
+    align-items: center;
+    background-color: var(--color-background-surface);
+    border-bottom: var(--modern-border);
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 0; /* hides the &nbsp; text nodes */
+    gap: 6px 4px;
+    margin-top: 0;
+    padding: var(--modern-toolbar-padding);
+
+    & > :not(#toolbarButtons),
+    & #toolbarButtons > * {
+        font-size: 13px;
+    }
+
+    & :is(#toolbarButtons, #queueingButtons) > a,
+    & #uploadButton {
+        align-items: center;
+        border: 1px solid transparent;
+        border-radius: var(--modern-radius-pill);
+        display: inline-flex;
+        height: var(--modern-tool-height);
+        justify-content: center;
+        position: relative;
+        width: var(--modern-tool-width);
+    }
+
+    & #uploadButton {
+        display: inline-flex !important; /* override inline style */
+    }
+
+    & #uploadButton label {
+        display: inline-flex;
+    }
+
+    & #queueingButtons {
+        display: inline-flex;
+        gap: 2px;
+
+        &.invisible {
+            display: none;
+        }
+    }
+
+    & .mochaToolButton {
+        height: var(--modern-tool-icon);
+        margin: 0;
+        padding: 0;
+        width: var(--modern-tool-icon);
+    }
+
+    & :is(#toolbarButtons, #queueingButtons) > a:hover,
+    & #uploadButton:hover {
+        background-color: var(--color-background-surface);
+        border-color: var(--color-border-default);
+    }
+
+    & :is(#toolbarButtons, #queueingButtons) > a:active {
+        background-color: var(--color-background-fill);
+    }
+
+    & .divider {
+        background: none;
+        margin-left: 17px;
+        padding: 0;
+    }
+
+    & .divider::before {
+        background-color: var(--color-border-default);
+        content: "";
+        height: 18px;
+        left: -10px;
+        position: absolute;
+        top: calc(50% - 9px);
+        width: 1px;
+    }
+}
+
+/* the toolbar is always shown */
+:root.modern #mochaToolbar.invisible {
+    display: flex;
+}
+
+/* View tabs and filter bar */
+:root.modern #mainWindowTabs {
+    float: none;
+    margin: 0 0 0 auto;
+}
+
+:root.modern #torrentsFilterToolbar {
+    align-items: center;
+    display: flex;
+    flex: 1 1 100%;
+    gap: 8px;
+    margin: 2px 0 0;
+    order: 10;
+
+    &.invisible {
+        display: none;
+    }
+
+    & label[for="torrentsFilterSelect"] {
+        color: var(--color-text-muted);
+        white-space: nowrap;
+    }
+}
+
+:root.modern #torrentsFilterInput,
+:root.modern #torrentFilesFilterInput {
+    background: var(--color-background-primary) var(--modern-search) 10px
+        center / 16px no-repeat;
+    border-radius: var(--modern-radius-pill);
+    padding-left: 32px;
+}
+
+:root.modern #torrentsFilterInput {
+    background-color: var(--color-background-surface);
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+:root.modern #torrentsFilterRegexBox + label {
+    background-color: var(--color-background-surface);
+    background-image: none;
+    border-radius: var(--modern-radius-pill);
+    height: var(--modern-control-height);
+    margin: 0;
+    width: calc(var(--modern-control-height) + 6px);
+
+    &::before {
+        background-color: var(--color-accent-blue);
+        content: "";
+        display: block;
+        height: 100%;
+        mask: url("../images/regex.svg") center / 16px no-repeat;
+    }
+}
+
+:root.modern #torrentsFilterRegexBox:checked + label {
+    background-color: var(--color-background-blue);
+    background-image: none;
+    border-color: var(--color-background-blue);
+
+    &::before {
+        background-color: var(--color-text-white);
+    }
+}
+
+:root.modern #torrentsFilterSelect {
+    background-color: var(--color-background-surface);
+    width: 150px;
+}
+
+:root.modern #filtersButton {
+    align-items: center;
+    background-color: var(--color-background-surface);
+    border-radius: var(--modern-radius-pill);
+    gap: 6px;
+    padding-inline: 10px 14px;
+}
+
+/* Tabs */
+:root.modern .tab-menu {
+    align-items: center;
+    display: flex;
+    font-size: 13px;
+    gap: 4px;
+    padding: 2px 0;
+    scrollbar-width: none;
+
+    & li a {
+        background-color: transparent;
+        border: 1px solid transparent;
+        border-radius: var(--modern-radius-pill);
+        font-weight: 500;
+        margin: 0;
+        padding: var(--modern-tab-padding);
+        white-space: nowrap;
+    }
+
+    & li:not(.selected):hover a {
+        background-color: var(--color-background-fill);
+        color: var(--color-text-default);
+    }
+
+    & li:not(.selected):hover img {
+        filter: none;
+    }
+
+    & li.selected a {
+        background-color: var(--color-background-blue);
+        color: var(--color-text-white);
+    }
+}
+
+/* Panels and handles */
+:root.modern #pageWrapper {
+    border-bottom: 0;
+    border-top: 0;
+}
+
+:root.modern #filtersColumn,
+:root.modern #propertiesPanel,
+:root.modern #properties {
+    background-color: var(--color-background-surface);
+}
+
+:root.modern #Filters {
+    border-right: 3px solid transparent;
+    box-sizing: border-box;
+}
+
+:root.modern .columnHandle {
+    --modern-grip-dot: radial-gradient(
+        circle at 50% 50%,
+        var(--color-text-muted) 1.3px,
+        transparent 1.7px
+    );
+
+    background:
+        var(--modern-grip-dot) center calc(50% - 5px) / 5px 5px no-repeat,
+        var(--modern-grip-dot) center 50% / 5px 5px no-repeat,
+        var(--modern-grip-dot) center calc(50% + 5px) / 5px 5px no-repeat,
+        linear-gradient(var(--modern-handle-line), var(--modern-handle-line))
+            center 0 / 1px 100% no-repeat,
+        var(--color-background-surface);
+    border: 0;
+    position: relative; /* above the filters panel, which overlaps it */
+    width: 5px;
+    z-index: 1;
+
+    &:not(:hover) {
+        --modern-handle-line: var(--color-border-default);
+    }
+
+    &:hover {
+        --modern-handle-line: var(--color-accent-blue);
+    }
+}
+
+:root.modern .horizontalHandle {
+    background-clip: content-box;
+    background-color: var(--color-border-default);
+    box-sizing: content-box;
+    height: 1px;
+    padding: 2px 0;
+    position: relative;
+
+    &:hover {
+        background-color: var(--color-accent-blue);
+    }
+
+    & .handleIcon {
+        background: none;
+    }
+
+    & > .handleIcon {
+        background: radial-gradient(
+                circle at 50% 50%,
+                var(--color-text-muted) 1.3px,
+                transparent 1.7px
+            )
+            0 0 / 5px 5px repeat-x;
+        height: 5px;
+        left: calc(50% - 7px);
+        pointer-events: none;
+        position: absolute;
+        top: calc(50% - 2.5px);
+        width: 15px; /* three dots */
+    }
+}
+
+@media (pointer: coarse) {
+    :root.modern .columnHandle {
+        width: 12px;
+    }
+
+    :root.modern .horizontalHandle {
+        height: 2px;
+        padding: 5px 0;
+    }
+}
+
+:root.modern .panel {
+    border-bottom-color: transparent;
+}
+
+:root.modern :where(div):is(.panel-header, #propertiesPanel_header) {
+    background-color: var(--color-background-surface);
+    border-bottom: var(--modern-divider);
+}
+
+/* Properties tabs */
+:root.modern #propertiesPanel_header {
+    align-items: center;
+    box-sizing: border-box;
+    display: flex !important; /* override inline style */
+    height: auto;
+    min-height: calc(var(--modern-control-height) + 12px);
+    padding: 0 6px;
+
+    & .toolbarTabs {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    & .tab-menu {
+        overflow: auto hidden;
+        padding: 4px 2px;
+    }
+
+    & .panel-headerContent {
+        padding-top: 0;
+    }
+
+    & .tab-menu li a {
+        line-height: 18px;
+    }
+
+    & #propertiesPanel_headerCollapseBox {
+        align-items: center;
+        display: flex;
+        margin-left: auto;
+        margin-top: 0;
+        order: 1;
+    }
+
+    & #propertiesPanel_collapseToggle {
+        background: currentcolor;
+        margin: 0;
+        mask: var(--modern-chevron-down) center / 20px no-repeat;
+    }
+}
+
+:root.modern #torrentFilesFilterToolbar {
+    margin: 4px 4px 0 0;
+}
+
+/* Icons */
+:root.modern
+    :where(img):where(
+        [src$="/application-rss.svg"],
+        [src$="/application-url.svg"],
+        [src$="/browser-cookies.svg"],
+        [src$="/configure.svg"],
+        [src$="/directory.svg"],
+        [src$="/download.svg"],
+        [src$="/edit-copy.svg"],
+        [src$="/edit-find.svg"],
+        [src$="/edit-rename.svg"],
+        [src$="/filter-all.svg"],
+        [src$="/folder-documents.svg"],
+        [src$="/folder-new.svg"],
+        [src$="/go-bottom.svg"],
+        [src$="/go-down.svg"],
+        [src$="/go-top.svg"],
+        [src$="/go-up.svg"],
+        [src$="/hash.svg"],
+        [src$="/help-about.svg"],
+        [src$="/help-contents.svg"],
+        [src$="/insert-link.svg"],
+        [src$="/list-add.svg"],
+        [src$="/name.svg"],
+        [src$="/network-connect.svg"],
+        [src$="/network-server.svg"],
+        [src$="/peers.svg"],
+        [src$="/peers-add.svg"],
+        [src$="/plugins.svg"],
+        [src$="/preferences-advanced.svg"],
+        [src$="/preferences-bittorrent.svg"],
+        [src$="/preferences-desktop.svg"],
+        [src$="/preferences-webui.svg"],
+        [src$="/ratio.svg"],
+        [src$="/reannounce.svg"],
+        [src$="/set-location.svg"],
+        [src$="/tags.svg"],
+        [src$="/torrent-creator.svg"],
+        [src$="/torrent-magnet.svg"],
+        [src$="/trackers.svg"],
+        [src$="/view-categories.svg"],
+        [src$="/view-refresh.svg"],
+        [src$="/view-statistics.svg"],
+        [src$="/wallet-open.svg"]
+    ) {
+    background-color: var(--color-accent-blue);
+    mask: var(--modern-icon) content-box center / contain no-repeat;
+    object-position: -9999px 0;
+}
+
+/* as in the light scheme, in the accent color or their own colors, not whitened by Classic's dark filter */
+:root.modern
+    :is(#rssButtonBar, #startSearchButton, #manageSearchPlugins)
+    img:is(
+        [src$="/downloading.svg"],
+        [src$="/edit-find.svg"],
+        [src$="/list-add.svg"],
+        [src$="/plugins.svg"],
+        [src$="/task-complete.svg"],
+        [src$="/view-refresh.svg"]
+    ) {
+    filter: none;
+}
+
+:root.modern :where(img[src$="/application-rss.svg"]) {
+    --modern-icon: url("../images/application-rss.svg");
+}
+
+:root.modern :where(img[src$="/application-url.svg"]) {
+    --modern-icon: url("../images/application-url.svg");
+}
+
+:root.modern :where(img[src$="/browser-cookies.svg"]) {
+    --modern-icon: url("../images/browser-cookies.svg");
+}
+
+:root.modern :where(img[src$="/configure.svg"]) {
+    --modern-icon: url("../images/configure.svg");
+}
+
+:root.modern :where(img[src$="/directory.svg"]) {
+    --modern-icon: url("../images/directory.svg");
+}
+
+:root.modern :where(img[src$="/download.svg"]) {
+    --modern-icon: url("../images/download.svg");
+}
+
+:root.modern :where(img[src$="/edit-copy.svg"]) {
+    --modern-icon: url("../images/edit-copy.svg");
+}
+
+:root.modern :where(img[src$="/edit-find.svg"]) {
+    --modern-icon: url("../images/edit-find.svg");
+}
+
+:root.modern :where(img[src$="/edit-rename.svg"]) {
+    --modern-icon: url("../images/edit-rename.svg");
+}
+
+:root.modern :where(img[src$="/filter-all.svg"]) {
+    --modern-icon: url("../images/filter-all.svg");
+}
+
+:root.modern :where(img[src$="/folder-documents.svg"]) {
+    --modern-icon: url("../images/folder-documents.svg");
+}
+
+:root.modern :where(img[src$="/folder-new.svg"]) {
+    --modern-icon: url("../images/folder-new.svg");
+}
+
+:root.modern :where(img[src$="/go-bottom.svg"]) {
+    --modern-icon: url("../images/go-bottom.svg");
+}
+
+:root.modern :where(img[src$="/go-down.svg"]) {
+    --modern-icon: url("../images/go-down.svg");
+}
+
+:root.modern :where(img[src$="/go-top.svg"]) {
+    --modern-icon: url("../images/go-top.svg");
+}
+
+:root.modern :where(img[src$="/go-up.svg"]) {
+    --modern-icon: url("../images/go-up.svg");
+}
+
+:root.modern :where(img[src$="/hash.svg"]) {
+    --modern-icon: url("../images/hash.svg");
+}
+
+:root.modern :where(img[src$="/help-about.svg"]) {
+    --modern-icon: url("../images/help-about.svg");
+}
+
+:root.modern :where(img[src$="/help-contents.svg"]) {
+    --modern-icon: url("../images/help-contents.svg");
+}
+
+:root.modern :where(img[src$="/insert-link.svg"]) {
+    --modern-icon: url("../images/insert-link.svg");
+}
+
+:root.modern :where(img[src$="/list-add.svg"]) {
+    --modern-icon: url("../images/list-add.svg");
+}
+
+:root.modern :where(img[src$="/name.svg"]) {
+    --modern-icon: url("../images/name.svg");
+}
+
+:root.modern :where(img[src$="/network-connect.svg"]) {
+    --modern-icon: url("../images/network-connect.svg");
+}
+
+:root.modern :where(img[src$="/network-server.svg"]) {
+    --modern-icon: url("../images/network-server.svg");
+}
+
+:root.modern :where(img[src$="/peers.svg"]) {
+    --modern-icon: url("../images/peers.svg");
+}
+
+:root.modern :where(img[src$="/peers-add.svg"]) {
+    --modern-icon: url("../images/peers-add.svg");
+}
+
+:root.modern :where(img[src$="/plugins.svg"]) {
+    --modern-icon: url("../images/plugins.svg");
+}
+
+:root.modern :where(img[src$="/preferences-advanced.svg"]) {
+    --modern-icon: url("../images/preferences-advanced.svg");
+}
+
+:root.modern :where(img[src$="/preferences-bittorrent.svg"]) {
+    --modern-icon: url("../images/preferences-bittorrent.svg");
+}
+
+:root.modern :where(img[src$="/preferences-desktop.svg"]) {
+    --modern-icon: url("../images/preferences-desktop.svg");
+}
+
+:root.modern :where(img[src$="/preferences-webui.svg"]) {
+    --modern-icon: url("../images/preferences-webui.svg");
+}
+
+:root.modern :where(img[src$="/ratio.svg"]) {
+    --modern-icon: url("../images/ratio.svg");
+}
+
+:root.modern :where(img[src$="/reannounce.svg"]) {
+    --modern-icon: url("../images/reannounce.svg");
+}
+
+:root.modern :where(img[src$="/set-location.svg"]) {
+    --modern-icon: url("../images/set-location.svg");
+}
+
+:root.modern :where(img[src$="/tags.svg"]) {
+    --modern-icon: url("../images/tags.svg");
+}
+
+:root.modern :where(img[src$="/torrent-creator.svg"]) {
+    --modern-icon: url("../images/torrent-creator.svg");
+}
+
+:root.modern :where(img[src$="/torrent-magnet.svg"]) {
+    --modern-icon: url("../images/torrent-magnet.svg");
+}
+
+:root.modern :where(img[src$="/trackers.svg"]) {
+    --modern-icon: url("../images/trackers.svg");
+}
+
+:root.modern :where(img[src$="/view-categories.svg"]) {
+    --modern-icon: url("../images/view-categories.svg");
+}
+
+:root.modern :where(img[src$="/view-refresh.svg"]) {
+    --modern-icon: url("../images/view-refresh.svg");
+}
+
+:root.modern :where(img[src$="/view-statistics.svg"]) {
+    --modern-icon: url("../images/view-statistics.svg");
+}
+
+:root.modern :where(img[src$="/wallet-open.svg"]) {
+    --modern-icon: url("../images/wallet-open.svg");
+}
+
+/* speed limit icons: the needle keeps its color */
+:root.modern :where(img):where([src$="/slow.svg"], [src$="/slow_off.svg"]) {
+    background: var(--modern-needle) content-box center / contain no-repeat
+        var(--modern-gauge, var(--color-accent-blue));
+    mask: var(--modern-icon) content-box center / contain no-repeat;
+    object-position: -9999px 0;
+}
+
+:root.modern
+    :is(.tab-menu .selected, .contextMenu li a:hover)
+    img:is([src$="/slow.svg"], [src$="/slow_off.svg"]) {
+    --modern-gauge: var(--color-text-white);
+
+    filter: none;
+}
+
+:root.modern :where(img[src$="/slow.svg"]) {
+    --modern-icon: url("../images/slow.svg");
+    --modern-needle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='m5.3697171 6.0418607 7.0712359 13.7839783.0059-.0053a4 4 0 0 0 .563666.836956 4 4 0 0 0 5.647106.331963 4 4 0 0 0 .331963-5.647105 4 4 0 0 0 -.759274-.663037 4 4 0 0 0 -.0081-.0061z' fill='%23ff0000'/%3E%3C/svg%3E");
+}
+
+:root.modern :where(img[src$="/slow_off.svg"]) {
+    --modern-icon: url("../images/slow_off.svg");
+    --modern-needle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='m26.630281 6.0418607-7.071236 13.7839783-.0059-.0053a4 4 0 0 1 -.563666.836956 4 4 0 0 1 -5.647106.331963 4 4 0 0 1 -.331963-5.647105 4 4 0 0 1 .759274-.663037 4 4 0 0 1 .0081-.0061z' fill='%2332cd32'/%3E%3C/svg%3E");
+}
+
+:root.modern
+    .mochaTitlebar
+    h3:is([style*="/torrent-creator.svg"], [style*="/list-add.svg"]) {
+    background-image: none !important; /* override inline style */
+    position: relative;
+
+    &::before {
+        background-color: var(--color-accent-blue);
+        content: "";
+        height: 16px;
+        left: 12px;
+        mask: var(--modern-title-icon) center / 16px no-repeat;
+        position: absolute;
+        top: calc(50% - 8px);
+        width: 16px;
+    }
+}
+
+:root.modern .mochaTitlebar h3:not(:not([style*="/torrent-creator.svg"])) {
+    --modern-title-icon: url("../images/torrent-creator.svg");
+}
+
+:root.modern .mochaTitlebar h3:not(:not([style*="/list-add.svg"])) {
+    --modern-title-icon: url("../images/list-add.svg");
+}
+
+:root.modern .confirmWarning {
+    background: var(--color-accent-blue);
+    mask: url("../images/help-about.svg") center no-repeat;
+}
+
+/* Filters */
+:root.modern .filterWrapper {
+    border-bottom: var(--modern-divider);
+    margin: 0 10px;
+    padding: 4px 0 10px;
+
+    &:last-of-type {
+        border-bottom: 0;
+    }
+}
+
+:root.modern .filterTitle {
+    align-items: center;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+    padding: 10px 4px 6px 2px;
+    text-transform: none;
+
+    & img {
+        background-color: currentcolor;
+        mask: var(--modern-chevron-down) center / 20px no-repeat;
+        object-position: -100px 0;
+    }
+}
+
+:root.modern .categoryToggle {
+    background-image: var(--modern-chevron-down);
+    background-size: 16px;
+}
+
+:root.modern ul.filterList span.link {
+    border-radius: var(--modern-radius-pill);
+    gap: 8px;
+    margin: 0 0 1px;
+    padding: var(--modern-filter-item-padding);
+    white-space: normal;
+
+    &:hover {
+        background-color: var(--color-background-fill);
+        color: var(--color-text-default);
+    }
+
+    &:hover :is(img, button) {
+        filter: none;
+    }
+}
+
+:root.modern #categoryFilterList span.link[style*="padding-left"] {
+    border-left: 6px solid transparent;
+}
+
+:root.modern ul.filterList .selectedFilter > span.link {
+    background-color: color-mix(
+        in srgb,
+        var(--color-accent-blue) 22%,
+        transparent
+    );
+    color: var(--color-text-default);
+    font-weight: 600;
+
+    & :is(img, button) {
+        filter: none;
+    }
+}
+
+/* Tables */
+:root.modern .dynamicTableFixedHeaderDiv table {
+    background-color: var(--color-background-surface);
+}
+
+:root.modern
+    :where(.dynamicTableFixedHeaderDiv):is(
+        #propertiesPanel .dynamicTableFixedHeaderDiv,
+        #torrentsTableFixedHeaderDiv
+    ) {
+    border-bottom: var(--modern-border);
+}
+
+:root.modern .dynamicTable {
+    & th {
+        border-image: linear-gradient(
+                transparent 25%,
+                var(--color-border-divider) 25% 75%,
+                transparent 75%
+            )
+            1;
+        border-right: 1px solid;
+        color: var(--color-text-default);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0;
+        padding: var(--modern-th-padding);
+        text-transform: none;
+    }
+
+    & th:hover {
+        border-image: none;
+        border-right-color: var(--color-border-default);
+    }
+
+    & th.sorted {
+        background-image: var(--modern-chevron-up);
+        background-position: right 0 center;
+        background-size: 16px;
+    }
+
+    & th.sorted.reverse {
+        background-image: var(--modern-chevron-down);
+    }
+
+    @media (pointer: coarse) {
+        & :is(td, th) > input[type="checkbox"] {
+            margin: 0;
+        }
+
+        & th {
+            height: var(--modern-row-height);
+        }
+    }
+
+    & td > select {
+        box-sizing: border-box;
+        height: calc(var(--modern-row-height) - 6px);
+        max-width: 100%;
+        min-height: 0;
+        padding-bottom: 0;
+        padding-top: 0;
+    }
+
+    & tbody tr {
+        height: var(--modern-row-height);
+    }
+}
+
+/* the repeated class stands in for :root.modern's specificity, without matching each cell's ancestors up to the root;
+    cells as tall as the virtual list spaces the rows, also in a window's frame narrower than 760px */
+.dynamicTable.dynamicTable.dynamicTable td,
+#transferList .dynamicTable.dynamicTable td {
+    box-sizing: border-box;
+    height: var(--modern-row-height);
+    padding: var(--modern-cell-padding);
+    padding-block: 0;
+}
+
+:root.modern
+    :where(#torrentFilesTableDiv)
+    .dynamicTable
+    td:has(> input[type="checkbox"]),
+:root.modern
+    :where(#addTorrentFilesTableDiv)
+    .dynamicTable
+    td:has(> input[type="checkbox"]),
+:root.modern
+    :where(#bulkRenameFilesTableDiv)
+    .dynamicTable
+    td:has(> input[type="checkbox"]),
+:root.modern
+    :where(#rssDownloaderRuleTableDiv)
+    .dynamicTable
+    td:has(> input[type="checkbox"]),
+:root.modern
+    :where(#rssDownloaderFeedSelectionTableDiv)
+    .dynamicTable
+    td:has(> input[type="checkbox"]),
+:root.modern .dynamicTable th.column_checked {
+    --modern-check-cell-padding: 4px;
+
+    padding-left: var(--modern-check-cell-padding);
+    padding-right: var(--modern-check-cell-padding);
+    text-overflow: clip;
+
+    @media (pointer: coarse) {
+        --modern-check-cell-padding: calc(
+            (var(--responsive-touch-target) - var(--modern-check-size)) / 2
+        );
+
+        padding-bottom: var(--modern-check-cell-padding);
+        padding-top: var(--modern-check-cell-padding);
+    }
+}
+
+:root.modern
+    :where(
+        #torrentFilesTableFixedHeaderDiv,
+        #bulkRenameFilesTableFixedHeaderDiv
+    )
+    .dynamicTable
+    th.column_checked {
+    padding-left: calc(var(--modern-check-cell-padding) + 18px);
+}
+
+:root.modern
+    #propertiesPanel_wrapper
+    .dynamicTable
+    :where(th):is(
+        th:not(.column_checked),
+        td:not(:has(> input[type="checkbox"]))
+    ),
+:root.modern
+    #propertiesPanel_wrapper
+    .dynamicTable
+    :where(td):is(
+        th:not(.column_checked),
+        td:not(:has(> input[type="checkbox"]))
+    ) {
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+:root.modern .altRowColors tbody tr:nth-child(odd of :not(.invisible)) {
+    background-color: var(--color-background-zebra);
+}
+
+:root.modern .dynamicTableDiv table.dynamicTable tbody tr:hover {
+    background-color: var(--color-background-fill);
+    color: var(--color-text-default);
+}
+
+:root.modern .dynamicTable tr:hover img:not(.flags) {
+    filter: none;
+}
+
+:root.modern .dynamicTableDiv table.dynamicTable tbody tr.selected {
+    --modern-row-color: var(--color-background-blue);
+
+    background-color: var(--modern-row-color);
+    color: var(--color-text-white);
+
+    & img:not(.flags) {
+        filter: var(--color-icon-hover);
+    }
+}
+
+:root.modern progress-bar {
+    border: 0 !important; /* override inline style */
+    border-radius: var(--modern-radius-pill);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    overflow: hidden;
+}
+
+:root.modern tr.selected {
+    --progress-bar-track: hsl(0deg 0% 0% / 18%);
+    --progress-bar-fill: hsl(0deg 0% 100%);
+    --progress-bar-fill-text: var(--modern-row-color);
+    --progress-bar-text: hsl(0deg 0% 100%);
+
+    & progress-bar {
+        background-color: transparent;
+    }
+}
+
+@media not (pointer: coarse) {
+    :root.modern.compact progress-bar {
+        font-size: 10px;
+    }
+}
+
+/* General tab */
+:root.modern #propGeneral {
+    padding: 8px 10px;
+
+    & table,
+    & tbody {
+        display: block;
+        width: 100% !important; /* override inline style */
+    }
+
+    & tbody {
+        display: grid;
+    }
+
+    & tr {
+        display: contents;
+    }
+
+    & td {
+        display: block;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        padding: 2px 4px;
+    }
+
+    & td.generalLabel {
+        width: auto;
+    }
+}
+
+:root.modern #propBarsWrapper {
+    column-gap: 4px;
+    grid-template-columns: auto minmax(0, 1fr) max-content;
+    margin: 4px 2px 8px;
+
+    & .propBarLabel {
+        color: var(--color-text-muted);
+        text-align: left;
+    }
+
+    & :is(#progress, #availability) {
+        border: var(--modern-border);
+        border-radius: var(--modern-radius-pill);
+        display: block;
+        overflow: hidden;
+    }
+
+    & :is(pieces-bar, availability-bar) {
+        border: 0 !important; /* override inline style */
+    }
+
+    & :is(#progressPercentage, #averageAvailability) {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+        text-align: right;
+        white-space: nowrap;
+    }
+}
+
+:root.modern td.generalLabel {
+    color: var(--color-text-muted);
+    padding-right: 10px;
+    text-align: left;
+}
+
+@media (width >= 760px) {
+    :root.modern #propGeneral {
+        & tbody {
+            gap: 2px 12px;
+            grid-template-columns: repeat(3, 11em minmax(0, 1fr));
+        }
+
+        & td {
+            padding: 3px 0;
+        }
+
+        & td.generalLabel {
+            white-space: normal;
+        }
+
+        & td[colspan] {
+            grid-column: 2 / -1;
+        }
+
+        & td.generalLabel:has(+ td[colspan]) {
+            grid-column: 1;
+        }
+    }
+}
+
+:root.modern #propGeneral fieldset {
+    background-color: var(--color-background-surface);
+    margin-top: 32px;
+
+    & > legend {
+        color: var(--color-text-default);
+        font-size: 12px;
+        letter-spacing: 0;
+        text-transform: none;
+        top: -24px;
+    }
+}
+
+:root.modern fieldset > legend {
+    color: var(--color-text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* Cards */
+:root.modern fieldset {
+    background-color: var(--color-background-card);
+    border: var(--modern-border);
+    border-radius: var(--modern-radius-card);
+    margin: 26px 0 10px;
+    min-width: 0;
+    padding: 4px 14px;
+    position: relative;
+
+    & > legend {
+        float: left;
+        left: 2px;
+        margin: 0;
+        max-width: calc(100% - 4px);
+        overflow: hidden;
+        padding: 0;
+        position: absolute;
+        text-overflow: ellipsis;
+        top: -21px;
+        white-space: nowrap;
+    }
+
+    & > legend :is(input, label) {
+        text-transform: none;
+        vertical-align: middle;
+    }
+
+    & > legend input[type="checkbox"] {
+        margin: -4px 6px 0 0;
+    }
+
+    & > legend + * {
+        clear: left;
+    }
+}
+
+:root.modern fieldset fieldset {
+    background-color: transparent;
+    border: 0;
+    border-radius: 0;
+    border-top: var(--modern-divider);
+    margin: 0 -14px;
+    padding: 30px 14px 4px 28px;
+
+    & > legend {
+        color: var(--color-text-default);
+        font-size: 12px;
+        left: 14px;
+        letter-spacing: 0;
+        text-transform: none;
+        top: 8px;
     }
 }
