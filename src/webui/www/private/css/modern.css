@@ -1890,6 +1890,7 @@
 /* Section labels: small muted capitals */
 :root.modern .mocha #searchPluginsContainer > h2,
 :root.modern #rssContentView .dynamicTable th,
+:root.modern #RssDownloader :is(#rulesTableDesc, #articleTableDesc),
 :root.modern #statisticsContent h3,
 :root.modern #manageCookiesTable thead td,
 :root.modern fieldset > legend {
@@ -2294,6 +2295,7 @@
 }
 
 /* the main action: the accent's fill, deeper on hover */
+:root.modern #RssDownloader #saveButton:not(:disabled),
 :root.modern .dialogFooter > .dialogPrimary:not(:disabled) {
     background-color: var(--color-background-blue);
     border-color: var(--color-background-blue);
@@ -2301,6 +2303,7 @@
     font-weight: 600;
 }
 
+:root.modern #RssDownloader #saveButton:not(:disabled):hover,
 :root.modern .dialogFooter > .dialogPrimary:not(:disabled):hover {
     --modern-deeper: color-mix(
         in srgb,
@@ -5764,6 +5767,7 @@
 }
 
 /* RSS turned off: a notice with a button to its settings */
+:root.modern #RssDownloader > #rssDownloaderDisabled,
 :root.modern #rssFetchingDisabled {
     align-items: center;
     background-color: color-mix(in srgb, var(--color-text-red) 8%, transparent);
@@ -5785,6 +5789,7 @@
     }
 }
 
+:root.modern #RssDownloader > #rssDownloaderDisabled.invisible,
 :root.modern #rssFetchingDisabled.invisible {
     display: none;
 }
@@ -5914,5 +5919,270 @@
             var(--modern-highlight-left, 0);
         pointer-events: none;
         position: absolute;
+    }
+}
+
+/* RSS Downloader (rssDownloader.html) */
+
+/* Add rule and Remove rule with their names */
+:root.modern #RssDownloader .imageButton {
+    background-image: none;
+    float: none;
+    height: auto;
+    margin: 0;
+    padding-inline: 8px;
+    width: auto;
+
+    &::before {
+        background-color: currentcolor;
+        content: "";
+        height: 16px;
+        mask: var(--modern-icon) center / contain no-repeat;
+        width: 16px;
+    }
+
+    &::after {
+        content: attr(aria-label);
+    }
+}
+
+:root.modern #RssDownloader #newRuleButton {
+    --modern-icon: url("../images/list-add.svg");
+}
+
+:root.modern #RssDownloader #deleteRuleButton {
+    --modern-icon: url("../images/edit-clear.svg");
+}
+
+/* no rule shown: what belongs to one dimmed (a class rssDownloader.html sets, as :has(:disabled) would restyle every
+    page whenever a control anywhere is turned on or off) */
+:root.modern #RssDownloader.modernNoRule {
+    &
+        :is(
+            #ruleSettings,
+            #rssDownloaderFeeds,
+            #rightRssDownloaderColumn,
+            #deleteRuleButton
+        ) {
+        opacity: 0.45;
+        pointer-events: none;
+    }
+
+    /* not dimmed twice */
+    & #ruleSettings :disabled {
+        opacity: 1;
+    }
+}
+
+:root.modern #RssDownloader {
+    & > #rssDownloaderDisabled {
+        margin-bottom: 12px;
+    }
+
+    & #topMenuBar {
+        display: grid;
+        gap: 6px;
+        grid-template-columns: 1fr 1fr;
+        margin-bottom: 6px;
+
+        & #rulesTableDesc {
+            grid-column: 1 / -1;
+            line-height: var(--modern-control-height);
+        }
+    }
+
+    & #articleTableDesc {
+        display: block;
+        line-height: var(--modern-control-height);
+        margin-bottom: 6px;
+    }
+
+    /* Export and Import below the rules */
+    & #rulesFileButtons {
+        margin-top: 8px;
+        order: 1;
+    }
+
+    & :is(#rulesTable, #rssDownloaderArticlesTable) {
+        background-color: var(--color-background-card);
+        border: var(--modern-border);
+        border-radius: var(--modern-radius-card);
+        box-sizing: border-box;
+    }
+
+    /* the rule like an Options card: a setting a row, switches at the row's end */
+    & #ruleSettings {
+        padding: 0 16px;
+
+        & > hr {
+            display: none;
+        }
+
+        & table,
+        & tbody {
+            display: contents;
+        }
+
+        & tr,
+        & > div.formRow {
+            align-items: center;
+            border-top: var(--modern-divider);
+            display: flex;
+            gap: 12px;
+            margin: 0;
+            padding: 4px 0;
+        }
+
+        & > legend + div.formRow {
+            border-top: 0;
+        }
+
+        & td {
+            padding: 0;
+            width: auto;
+        }
+
+        & td:first-child {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        & td:first-child label {
+            white-space: normal;
+        }
+
+        /* fields 200px wide, narrower on the narrowest phones */
+        & td:last-child:not(:first-child) {
+            flex: 0 1 200px;
+            min-width: 0;
+        }
+
+        & td:last-child:not(:first-child) > :is(input, select) {
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        & > div.formRow > label {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        & > div.formRow > input[type="checkbox"] {
+            flex: none;
+            margin: 0 0 0 auto;
+            order: 2;
+        }
+
+        /* the days field as wide as it is, the last match below it */
+        & td:has(> #ignoreDaysValue) {
+            flex: none;
+            white-space: nowrap;
+
+            & > #ignoreDaysValue {
+                margin-right: 6px;
+                width: 6em;
+            }
+        }
+
+        & #lastMatchDiv {
+            color: var(--color-text-muted);
+            float: none;
+            font-size: 12px;
+            padding: 0 0 8px;
+            text-align: right;
+        }
+    }
+
+    /* opaque, the page scrolls under it */
+    & #saveButton:disabled {
+        background-color: var(--color-background-default);
+        color: var(--color-text-muted);
+        opacity: 1;
+    }
+}
+
+/* wide windows: the rules beside the rule, its feeds and its articles, Cancel and Save below them */
+@container rss-downloader (width >= 700px) {
+    :root.modern #RssDownloader {
+        gap: 0 20px;
+        grid-template:
+            "notice notice notice" auto
+            "rules rule rule" auto
+            "rules feeds articles" minmax(220px, 1fr)
+            "footer footer footer" auto
+            / minmax(200px, 240px) minmax(0, 1fr) minmax(0, 1fr);
+
+        & > #rssDownloaderDisabled {
+            grid-area: notice;
+        }
+
+        & > #leftRssDownloaderColumn {
+            grid-area: rules;
+        }
+
+        /* the rules scroll in the height the others leave, rather than making the page taller */
+        & #rulesTable {
+            contain: size;
+            min-height: 120px;
+        }
+
+        & > #centerRssDownloaderColumn {
+            display: contents;
+        }
+
+        & #ruleSettings {
+            align-self: start;
+            grid-area: rule;
+            margin-top: 26px;
+        }
+
+        & #rssDownloaderFeeds {
+            grid-area: feeds;
+            margin: 26px 0 0;
+        }
+
+        & > #rightRssDownloaderColumn {
+            grid-area: articles;
+        }
+
+        & :is(#saveButton, #rssDownloaderCancel) {
+            grid-area: footer;
+            margin-top: 12px;
+            min-width: 120px;
+            place-self: start end;
+            width: auto;
+        }
+
+        /* in view, as Save is */
+        & #rssDownloaderCancel {
+            bottom: var(--responsive-row-space);
+            justify-self: start;
+            position: sticky;
+        }
+    }
+}
+
+/* wider: the rule in two columns */
+@container rss-downloader (width >= 950px) {
+    :root.modern #RssDownloader #ruleSettings {
+        column-gap: 32px;
+        display: grid;
+        grid-auto-flow: column;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-rows: repeat(7, auto);
+
+        & > div.formRow:has(#savetoDifferentDir) {
+            border-top: 0;
+        }
+    }
+}
+
+/* large screens: the window opens wide enough for the rule in two columns (responsive.js fits it to its page) */
+@media (width >= 1100px) {
+    @container rss-downloader (width >= 700px) {
+        :root.modern #rssdownloaderpage .mochaContent {
+            box-sizing: border-box;
+            min-width: 1000px;
+        }
     }
 }
