@@ -3008,7 +3008,8 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
                 });
         };
 
-        const applyPreferences = () => {
+        // Modern's Apply saves without closing Options
+        const applyPreferences = (close = true) => {
             modernBeforeSave();
             const settings = {};
             const clientData = {};
@@ -3572,6 +3573,9 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
                 window.parent.qBittorrent.Cache.preferences.set(settings)
             ]).then((results) => {
                 if (results.every((result) => result.status === "fulfilled")) {
+                    if (modernSaved(close))
+                        return;
+
                     // the reloaded page starts with the look just saved
                     window.parent.qBittorrent.ColorScheme.applyClientData();
                     window.parent.location.reload();
@@ -3590,7 +3594,7 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             });
         };
 
-        const { setupModern, modernFilled, modernBeforeSave } = window.qBittorrent.Modern.optionsPage({
+        const { setupModern, modernFilled, modernBeforeSave, modernSaved } = window.qBittorrent.Modern.optionsPage({
             addWatchFolder: addWatchFolder,
             applyPreferences: applyPreferences,
             loadPreferences: loadPreferences,
