@@ -470,6 +470,71 @@ window.qBittorrent.Modern ??= (() => {
         instance.controlsEl.append(button);
     };
 
+    // windows the stylesheet sizes (Options, About) resize at their corner only, once a drag has moved a few pixels; the
+    // size is stored under Modern's own keys
+    const RESIZE_THRESHOLD = 4;
+    const sizeKey = (instance, side) => `modern_window_${instance.options.id}_${side}`;
+
+    const setSize = (instance, width, height) => {
+        instance.windowEl.style.setProperty("--modern-window-width", `${width}px`);
+        instance.windowEl.style.setProperty("--modern-window-height", `${height}px`);
+    };
+
+    // the hooks run again as a window's page loads
+    const cornerWindows = new WeakSet();
+
+    const resizeAtCorner = (instance) => {
+        const windowEl = instance.windowEl;
+        const corner = instance.se;
+        if (!responsive.isStylesheetSized(instance) || !corner || cornerWindows.has(instance))
+            return;
+
+        cornerWindows.add(instance);
+        const stored = { width: Number(localPreferences.get(sizeKey(instance, "width"))), height: Number(localPreferences.get(sizeKey(instance, "height"))) };
+        if ((stored.width > 0) && (stored.height > 0))
+            setSize(instance, stored.width, stored.height);
+
+        // Mocha's drag would set an inline size over the stylesheet's
+        instance.resizable3?.detach();
+        corner.addEventListener("pointerdown", (event) => {
+            if (!event.isPrimary || (event.button !== 0))
+                return;
+
+            event.preventDefault();
+            event.stopPropagation();
+            corner.setPointerCapture(event.pointerId);
+            const style = getComputedStyle(windowEl);
+            const min = { width: Number.parseFloat(style.minWidth) || 0, height: Number.parseFloat(style.minHeight) || 0 };
+            const start = { x: event.clientX, y: event.clientY, width: windowEl.offsetWidth, height: windowEl.offsetHeight };
+            let resizing = false;
+            const listening = new AbortController();
+            corner.addEventListener("pointermove", (moveEvent) => {
+                const x = moveEvent.clientX - start.x;
+                const y = moveEvent.clientY - start.y;
+                if (!resizing && (Math.hypot(x, y) < RESIZE_THRESHOLD))
+                    return;
+
+                if (!resizing)
+                    setMoved(instance, true);
+                resizing = true;
+                const room = {
+                    width: document.documentElement.clientWidth - windowEl.offsetLeft - responsive.windowMargin,
+                    height: document.documentElement.clientHeight - windowEl.offsetTop - responsive.windowMargin
+                };
+                setSize(instance, Math.max(min.width, Math.min(room.width, start.width + x)), Math.max(min.height, Math.min(room.height, start.height + y)));
+            }, { signal: listening.signal });
+            corner.addEventListener("lostpointercapture", (_event) => {
+                listening.abort();
+                if (!resizing)
+                    return;
+
+                savePlace(instance);
+                localPreferences.set(sizeKey(instance, "width"), windowEl.offsetWidth);
+                localPreferences.set(sizeKey(instance, "height"), windowEl.offsetHeight);
+            }, { once: true });
+        });
+    };
+
     // on phones the toolbar keeps the buttons used most; the others, and on narrow phones Execution Log, are in a menu
     const NARROW_PHONE = window.matchMedia("(width < 480px)");
     const OVERFLOW_ITEMS = [
@@ -1691,6 +1756,7 @@ window.qBittorrent.Modern ??= (() => {
         initDialogs();
         initRemovalQuestions();
         responsive.addWindowHook(placeWindow);
+        responsive.addWindowHook(resizeAtCorner);
         initPhoneHeader();
         initPropertiesSheet();
         initPropertyCards();

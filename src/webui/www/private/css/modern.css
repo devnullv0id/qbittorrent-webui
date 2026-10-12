@@ -4100,10 +4100,17 @@
 :root.modern #preferencesPage {
     --modern-sidebar-width: 184px;
 
-    /* override inline style */
-    height: min(840px, calc(100dvh - 16px)) !important;
+    /* override inline style: the size chosen at the corner */
+    height: min(
+        var(--modern-window-height, 840px),
+        calc(100dvh - 16px)
+    ) !important;
     min-height: min(420px, calc(100dvh - 16px));
-    width: min(730px, calc(100vw - 16px)) !important;
+    min-width: min(640px, calc(100vw - 16px));
+    width: min(
+        var(--modern-window-width, 730px),
+        calc(100vw - 16px)
+    ) !important;
 
     & .mochaOverlay {
         display: flex;
@@ -4138,7 +4145,7 @@
         width: auto !important; /* override inline style */
     }
 
-    & .handle {
+    & .handle:not([id$="_se"]) {
         display: none;
     }
 
