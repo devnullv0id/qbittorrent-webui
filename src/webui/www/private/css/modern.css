@@ -5217,3 +5217,21 @@
         }
     }
 }
+
+/* a speed and its unit picked beside it (modern.js), together as wide as the column */
+:root.modern .PrefTab .modernSpeedPicker {
+    display: inline-flex;
+    gap: 6px;
+    max-width: 100%;
+    width: var(--modern-select-width);
+
+    & > input {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    & > select {
+        flex: none;
+        width: 7.5em;
+    }
+}

@@ -36,6 +36,7 @@ window.qBittorrent.Modern ??= (() => {
         return {
             init: init,
             addSpeedSlider: addSpeedSlider,
+            addSpeedUnitPicker: addSpeedUnitPicker,
         };
     };
 
@@ -1251,6 +1252,50 @@ window.qBittorrent.Modern ??= (() => {
     };
 
     const STEP_KEYS = { ArrowUp: 1, ArrowDown: -1, PageUp: 10, PageDown: -10 };
+
+    // a page's field of KiB/s with a unit to pick beside it: the speed shows in the largest unit that holds it exactly,
+    // and what is typed counts in the unit picked. The page's own field, hidden, keeps whole KiB/s, as the server
+    // does: a speed above none is at least 1 KiB/s, as 0 is none. Returns what shows the field's speed again
+    const addSpeedUnitPicker = (input) => {
+        const picker = document.createElement("span");
+        picker.className = "modernSpeedPicker";
+        const value = document.createElement("input");
+        value.type = "number";
+        value.min = "0";
+        value.step = "any";
+        value.setAttribute("aria-label", input.labels[0]?.textContent.trim() ?? "");
+        const unit = document.createElement("select");
+        unit.setAttribute("aria-label", "QBT_TR(Unit)QBT_TR[CONTEXT=OptionsDialog]");
+        for (const [i, { name }] of SPEED_UNITS.entries())
+            unit.add(new Option(name, i.toString()));
+        picker.append(value, unit);
+        input.hidden = true;
+        input.after(picker);
+
+        const write = () => {
+            const kib = Number(value.value) * SPEED_UNITS[unit.value].factor;
+            // what isn't a speed is left for the page to point out
+            input.value = ((value.value !== "") && (kib > 0)) ? Math.min(MAX_SPEED, Math.max(1, Math.round(kib))).toString() : value.value;
+            // MooTools replaces window.Event
+            input.dispatchEvent(new CustomEvent("input", { bubbles: true }));
+        };
+        value.addEventListener("input", (_event) => write());
+        unit.addEventListener("change", (_event) => write());
+        // the field is switched on and off with its setting
+        const follow = () => {
+            value.disabled = input.disabled;
+            unit.disabled = input.disabled;
+        };
+        new MutationObserver(follow).observe(input, { attributes: true, attributeFilter: ["disabled"] });
+        follow();
+
+        return () => {
+            const kib = Number(input.value);
+            const index = Math.max(0, SPEED_UNITS.findLastIndex(({ factor }) => (kib > 0) && ((kib % factor) === 0)));
+            unit.value = index.toString();
+            value.value = (input.value === "") ? "" : (kib / SPEED_UNITS[index].factor).toString();
+        };
+    };
 
     // the limits of torrents that have different ones
     const MIXED = "QBT_TR(Mixed)QBT_TR[CONTEXT=PropListDelegate]";

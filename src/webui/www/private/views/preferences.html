@@ -3826,6 +3826,18 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             });
         };
 
+        // speeds get a unit to pick (modern.js), in place of the page's KiB/s
+        const SPEED_FIELDS = ["upLimitValue", "dlLimitValue", "altUpLimitValue", "altDlLimitValue", "dlRateThresholdValue", "ulRateThresholdValue"];
+
+        const addSpeedUnits = (state) => {
+            for (const id of SPEED_FIELDS) {
+                const field = document.getElementById(id);
+                if (field.nextSibling?.nodeType === Node.TEXT_NODE)
+                    field.nextSibling.remove();
+                state.onFilled.push(window.parent.qBittorrent.Modern.addSpeedUnitPicker(field));
+            }
+        };
+
         // some lists are edited entry by entry: the entries, each with a button that removes it, and a field that
         // adds more; the page's own field, hidden, keeps the list as the page loads and saves it. Entries with spaces
         // are added a line each; trackers keep their tiers, a blank line apart
@@ -4088,6 +4100,7 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             });
 
             splitSchedule();
+            addSpeedUnits(state);
             markFieldUnits(state.page);
             addProxySwitch(state);
             addI2PSwitch();
