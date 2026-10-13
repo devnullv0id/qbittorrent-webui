@@ -133,7 +133,8 @@ window.qBittorrent.DynamicTable ??= (() => {
                     const scrollTop = this.dynamicTableDiv.scrollTop;
                     if (scrollTop !== this.renderedOffset) {
                         this.renderedOffset = scrollTop;
-                        this.rerender();
+                        // scrolling doesn't change the rows
+                        this.rerender(this.renderedRows, true);
                     }
                 }
             });
@@ -1008,9 +1009,13 @@ window.qBittorrent.DynamicTable ??= (() => {
             }
         }
 
-        rerender(rows = this.getFilteredAndSortedRows()) {
+        rerender(rows = this.getFilteredAndSortedRows(), scrolled = false) {
+            const rowHeight = this.rowHeight;
+            // after a scroll, the rows that stay in view are left as they are
+            const onlyNewRows = scrolled && (rows === this.renderedRows) && (rowHeight === this.renderedRowHeight);
+
             // set the scrollable height
-            const tableHeight = rows.length * this.rowHeight;
+            const tableHeight = rows.length * rowHeight;
             if (tableHeight !== this.previousTableHeight) {
                 this.previousTableHeight = tableHeight;
                 this.table.style.height = `${tableHeight}px`;
@@ -1018,41 +1023,97 @@ window.qBittorrent.DynamicTable ??= (() => {
 
             if (this.renderedHeight === 0)
                 return;
+            // reused when the list scrolls
+            this.renderedRows = rows;
+            this.renderedRowHeight = rowHeight;
             // show extra rows at top/bottom to reduce flickering
             const extraRowCount = 20;
             // how many rows can be shown in the visible area
-            const visibleRowCount = Math.ceil(this.renderedHeight / this.rowHeight) + (extraRowCount * 2);
+            const visibleRowCount = Math.ceil(this.renderedHeight / rowHeight) + (extraRowCount * 2);
             // start position of visible rows, offsetted by renderedOffset
-            let startRow = Math.max((Math.trunc(this.renderedOffset / this.rowHeight) - extraRowCount), 0);
+            let startRow = Math.max((Math.trunc(this.renderedOffset / rowHeight) - extraRowCount), 0);
             // ensure startRow is even
             if ((startRow % 2) === 1)
                 startRow = Math.max(0, startRow - 1);
             const endRow = Math.min((startRow + visibleRowCount), rows.length);
 
-            const elements = [];
+            // rows changed since the last render: filter and sort again
+            if (scrolled && rows.slice(startRow, endRow).some(row => ((row !== undefined) && (this.rows.get(row.rowId) !== row)))) {
+                this.rerender();
+                return;
+            }
+
+            const shownElements = new Map();
+            for (const tr of this.tableBody.children)
+                shownElements.set(tr.rowId, tr);
+            const shownRows = [];
+            let keptCount = 0;
             for (let i = startRow; i < endRow; ++i) {
                 const row = rows[i];
                 if (row === undefined)
                     continue;
-                const offset = i * this.rowHeight;
-                const position = i - startRow;
+                const offset = i * rowHeight;
                 // reuse existing elements
-                let element = this.cachedElements[position];
+                let element = shownElements.get(row.rowId);
+                shownElements.delete(row.rowId);
+                if ((element !== undefined) && (element.style.top !== `${offset}px`))
+                    element = undefined;
                 if (element !== undefined)
-                    this.updateRowElement(element, row.rowId, offset);
-                else
-                    element = this.cachedElements[position] = this.createRowElement(row, offset);
-                elements.push(element);
+                    ++keptCount;
+                shownRows.push({ row: row, offset: offset, element: element, kept: (element !== undefined) });
             }
+            // mostly new rows (a sort, filter or jump): reuse the elements in order
+            if (keptCount < (shownRows.length / 2)) {
+                const children = this.tableBody.children;
+                for (const [i, shownRow] of shownRows.entries()) {
+                    shownRow.element = children[i];
+                    shownRow.kept = false;
+                }
+            }
+
             const hadFocus = this.dynamicTableDiv.contains(document.activeElement);
-            this.tableBody.replaceChildren(...elements);
+            // remove the rows that left the view, without moving the others
+            const keptElements = new Set(shownRows.map(shownRow => shownRow.element));
+            for (const tr of [...this.tableBody.children]) {
+                if (!keptElements.has(tr))
+                    tr.remove();
+            }
+
+            // rows that come into view take free elements, or new ones
+            const freeElements = this.cachedElements.filter(tr => (tr.parentNode !== this.tableBody));
+            const updatedElements = [];
+            let next = this.tableBody.firstElementChild;
+            for (const shownRow of shownRows) {
+                let element = shownRow.element;
+                if (element === undefined) {
+                    element = freeElements.pop();
+                    if (element === undefined) {
+                        element = this.createRowElement(shownRow.row, shownRow.offset);
+                        this.cachedElements.push(element);
+                    }
+                    else {
+                        this.updateRowElement(element, shownRow.row.rowId, shownRow.offset);
+                    }
+                    updatedElements.push(element);
+                }
+                else if (!shownRow.kept || !onlyNewRows) {
+                    this.updateRowElement(element, shownRow.row.rowId, shownRow.offset);
+                    updatedElements.push(element);
+                }
+
+                // keep the rows in order, which row colors and keyboard navigation follow
+                if (element === next)
+                    next = element.nextElementSibling;
+                else
+                    this.tableBody.insertBefore(element, next);
+            }
 
             // update row classes
             this.setRowClass();
 
             // update visible rows
-            for (const row of this.tableBody.children)
-                this.updateRow(row, true);
+            for (const element of updatedElements)
+                this.updateRow(element, true);
 
             // restore focus so keyboard navigation continues working
             if (hadFocus)
@@ -3183,7 +3244,8 @@ window.qBittorrent.DynamicTable ??= (() => {
                     const scrollTop = this.dynamicTableDiv.scrollTop;
                     if (scrollTop !== this.renderedOffset) {
                         this.renderedOffset = scrollTop;
-                        this.rerender();
+                        // scrolling doesn't change the rows
+                        this.rerender(this.renderedRows, true);
                     }
                 }
             });
