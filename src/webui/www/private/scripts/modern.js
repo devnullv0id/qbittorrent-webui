@@ -621,6 +621,25 @@ window.qBittorrent.Modern ??= (() => {
     };
 
     const initPhoneHeader = () => {
+        const logo = document.createElement("img");
+        logo.src = "images/qbittorrent-tray.svg";
+        logo.alt = "";
+        logo.width = 22;
+        logo.height = 22;
+        const title = document.getElementById("menuDrawerTitle");
+        title.before(logo);
+        title.textContent = "qBittorrent WebUI";
+        const closeAsGlyph = (close) => {
+            close.title = close.textContent;
+            close.setAttribute("aria-label", close.title);
+            const glyph = document.createElement("span");
+            glyph.className = "modernGlyph";
+            glyph.dataset.glyph = "close";
+            close.replaceChildren(glyph);
+        };
+        closeAsGlyph(document.getElementById("menuDrawerClose"));
+        responsive.whenElement("filtersDrawerClose").then(closeAsGlyph);
+
         const button = document.createElement("button");
         button.type = "button";
         button.id = "toolbarOverflowButton";
