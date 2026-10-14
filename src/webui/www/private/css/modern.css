@@ -822,8 +822,11 @@
         left: 0;
     }
 
-    & > ul > li:not(.open) > ul {
-        left: -999em;
+    /* without hover, a tap opens a menu */
+    @media (hover: none) {
+        & > ul > li:not(.open) > ul {
+            left: -999em;
+        }
     }
 }
 
