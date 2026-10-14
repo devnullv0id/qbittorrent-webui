@@ -261,6 +261,56 @@ window.qBittorrent.Modern ??= (() => {
         labelFooterButtons(footer);
     };
 
+    // Remember choice as a switch, saved with Remove torrent; Enter removes unless a button has the focus
+    const setUpRemoveDialog = (instance) => {
+        const page = instance.contentEl;
+        const lock = page.querySelector("#rememberBtn");
+        const contentFiles = page.querySelector("#deleteFromDiskCB");
+        const removeButton = page.querySelector("#confirmDeletionButton");
+        if ((lock === null) || (contentFiles === null) || (removeButton === null) || (page.querySelector("#modernRememberChoice") !== null))
+            return;
+
+        const remember = document.createElement("input");
+        remember.type = "checkbox";
+        remember.id = "modernRememberChoice";
+        remember.checked = localPreferences.get("remove_remember_choice") === "true";
+        remember.addEventListener("change", (_event) => localPreferences.set("remove_remember_choice", remember.checked.toString()));
+        const label = document.createElement("label");
+        label.htmlFor = remember.id;
+        const name = document.createElement("em");
+        name.textContent = lock.title;
+        label.append(name);
+        const row = document.createElement("span");
+        row.className = "deletionGridItem modernDeletionOption";
+        row.append(remember, label);
+        contentFiles.parentElement.classList.add("modernDeletionOption");
+        contentFiles.parentElement.after(row);
+        lock.parentElement.hidden = true;
+
+        removeButton.addEventListener("click", (_event) => {
+            if (!remember.checked)
+                return;
+
+            window.qBittorrent.Cache.preferences.set({ delete_torrent_content_files: contentFiles.checked }).catch((error) => {
+                if (error.name === "ServerError")
+                    alert(`QBT_TR(Error:)QBT_TR[CONTEXT=HttpServer] ${error.message}`);
+                else
+                    alert("QBT_TR(Unable to save preferences, qBittorrent is probably unreachable.)QBT_TR[CONTEXT=HttpServer]");
+            });
+        });
+
+        // the page gives Cancel the focus; the dialog takes it, so Enter reaches it
+        instance.windowEl.setAttribute("tabindex", "-1");
+        instance.windowEl.focus();
+        instance.windowEl.addEventListener("keydown", (event) => {
+            if ((event.key !== "Enter") || event.target.matches(ENTER_TARGETS))
+                return;
+
+            event.preventDefault();
+            removeButton.click();
+        });
+    };
+
     // every window: no empty strip below its page; then the windows whose pages aren't framed
     const setUpWindow = (instance) => {
         if (instance.iframeEl !== undefined)
@@ -271,6 +321,8 @@ window.qBittorrent.Modern ??= (() => {
             setUpFooter(footer, null);
         trimEllipsis(instance.contentEl);
         labelFooterButtons(footer);
+        if (instance.windowEl.id === "confirmDeletionPage")
+            setUpRemoveDialog(instance);
     };
 
     const initDialogs = () => {
