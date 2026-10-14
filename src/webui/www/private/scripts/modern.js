@@ -57,7 +57,20 @@ window.qBittorrent.Modern ??= (() => {
     const SWALLOW_TIME = 500;
     let swallowUntil = 0;
 
+    // Escape on an open dropdown list closes only the list: a list the page styles passes the key on to the page
+    const LISTS_CAN_BE_OPEN = CSS.supports("selector(:open)");
+    const keepEscapeInLists = (view) => {
+        if (!LISTS_CAN_BE_OPEN)
+            return;
+
+        view.addEventListener("keydown", (event) => {
+            if ((event.key === "Escape") && (event.target.closest?.("select")?.matches(":open") === true))
+                event.stopPropagation();
+        }, true);
+    };
+
     const initPopups = () => {
+        keepEscapeInLists(window);
         document.addEventListener("pointerdown", (event) => {
             for (const popup of popups.toReversed()) {
                 if (popup.element.contains(event.target) || ((popup.keepOpenFor !== null) && ((event.target.closest?.(popup.keepOpenFor) ?? null) !== null)))
@@ -236,6 +249,7 @@ window.qBittorrent.Modern ??= (() => {
         const footer = doc.querySelector(".dialogFooter");
         if (footer !== null)
             setUpFooter(footer, doc.defaultView);
+        keepEscapeInLists(doc.defaultView);
         // New and Edit Category: spaced like the share limits' rows
         for (const id of ["categoryName", "savePath", "useDownloadPath", "downloadPath"])
             doc.getElementById(id)?.parentElement.classList.add("modernFieldRow");
