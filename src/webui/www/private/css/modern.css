@@ -2205,6 +2205,11 @@
     border-radius: var(--modern-radius-button);
 }
 
+/* Remove torrent dialog */
+:root.modern .confirmDeletionGrid > .modernDeletionOption {
+    grid-column: 2;
+}
+
 /* Statistics */
 :root.modern #statisticsContent {
     & table {
