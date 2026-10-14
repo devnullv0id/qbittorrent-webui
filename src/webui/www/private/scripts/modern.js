@@ -255,10 +255,22 @@ window.qBittorrent.Modern ??= (() => {
     // Enter on a focused button presses that button, not the main action the page presses on Enter
     const ENTER_TARGETS = "button, input:is([type='button'], [type='submit'], [type='reset']), a[href]";
 
+    // whether nothing is shown after the button row
+    const endsPage = (footer, body) => {
+        for (let element = footer; element !== body; element = element.parentElement) {
+            for (let next = element.nextElementSibling; next !== null; next = next.nextElementSibling) {
+                if (!next.matches("script, style, template") && (next.getClientRects().length > 0))
+                    return false;
+            }
+        }
+        return true;
+    };
+
     const setUpFrame = (doc) => {
         const footer = doc.querySelector(".dialogFooter");
         if (footer !== null)
             setUpFooter(footer, doc.defaultView);
+        doc.body.classList.toggle("modernEndsWithRow", (footer !== null) && endsPage(footer, doc.body));
         keepEscapeInLists(doc.defaultView);
         // New and Edit Category: spaced like the share limits' rows
         for (const id of ["categoryName", "savePath", "useDownloadPath", "downloadPath"])
@@ -414,6 +426,10 @@ window.qBittorrent.Modern ??= (() => {
 
     // every window: no empty strip below its page; then the windows whose pages aren't framed
     const setUpWindow = (instance) => {
+        if (instance.options.footerHeight !== 0) {
+            instance.options.footerHeight = 0;
+            instance.drawWindow();
+        }
         if (instance.iframeEl !== undefined)
             return;
 
