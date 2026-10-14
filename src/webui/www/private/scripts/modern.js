@@ -387,6 +387,25 @@ window.qBittorrent.Modern ??= (() => {
             () => removeUnusedTags());
     };
 
+    // About's text in cards
+    const setUpAbout = (instance) => {
+        const page = instance.contentEl;
+        const intro = page.querySelector("#aboutAboutContent");
+        if ((intro === null) || (page.querySelector(".modernAboutCard") !== null))
+            return;
+
+        const wrap = (nodes) => {
+            const card = document.createElement("div");
+            card.className = "modernAboutCard";
+            nodes[0].before(card);
+            card.append(...nodes);
+            return card;
+        };
+        wrap([...intro.children].filter((child) => child.tagName !== "TABLE")).classList.add("modernAboutIntro");
+        for (const id of ["aboutSpecialThanksContent", "aboutTranslatorsContent", "aboutLicenseContent"])
+            wrap([...page.querySelector(`#${id}`).childNodes]);
+    };
+
     // every window: no empty strip below its page; then the windows whose pages aren't framed
     const setUpWindow = (instance) => {
         if (instance.iframeEl !== undefined)
@@ -399,6 +418,8 @@ window.qBittorrent.Modern ??= (() => {
         labelFooterButtons(footer);
         if (instance.windowEl.id === "confirmDeletionPage")
             setUpRemoveDialog(instance);
+        if (instance.windowEl.id === "aboutpage")
+            setUpAbout(instance);
     };
 
     const initDialogs = () => {

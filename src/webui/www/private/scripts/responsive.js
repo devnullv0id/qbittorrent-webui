@@ -534,7 +534,8 @@ window.qBittorrent.Responsive ??= (() => {
     const MAX_WINDOW_HEIGHT = 800;
     // windows whose tabs share one size
     const ONE_SIZE_WINDOWS = new Set(["preferencesPage"]);
-    const STYLESHEET_SIZED_WINDOWS = new Set(["preferencesPage"]);
+    // windows Modern's stylesheet sizes; they are only placed
+    const STYLESHEET_SIZED_WINDOWS = new Set(["preferencesPage", "aboutpage"]);
     const isStylesheetSized = (instance) => isModern() && STYLESHEET_SIZED_WINDOWS.has(instance.windowEl.id);
 
     // resize like an edge drag, without storing the size
