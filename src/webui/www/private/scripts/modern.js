@@ -311,6 +311,78 @@ window.qBittorrent.Modern ??= (() => {
         });
     };
 
+    // ask before removing a category or tag; Enter answers Yes unless a button has the focus
+    const askToRemove = (title, message, remove) => {
+        const id = "modernRemovalQuestion";
+        if (document.getElementById(id) !== null)
+            return;
+
+        const warning = document.createElement("span");
+        warning.className = "confirmGridItem confirmWarning";
+        const text = document.createElement("span");
+        text.className = "confirmGridItem dialogMessage";
+        text.textContent = message;
+        const grid = document.createElement("div");
+        grid.className = "genericConfirmGrid";
+        grid.append(warning, text);
+        const yes = document.createElement("input");
+        yes.type = "button";
+        yes.id = "confirmRemovalButton";
+        yes.value = "QBT_TR(Yes)QBT_TR[CONTEXT=MainWindow]";
+        const no = document.createElement("input");
+        no.type = "button";
+        no.id = "cancelRemovalButton";
+        no.value = "QBT_TR(No)QBT_TR[CONTEXT=MainWindow]";
+        const footer = document.createElement("div");
+        footer.className = "dialogFooter";
+        footer.append(yes, no);
+        const content = document.createElement("div");
+        content.append(grid, footer);
+
+        new MochaUI.Modal({
+            ...window.qBittorrent.Dialog.baseModalOptions,
+            id: id,
+            title: title,
+            loadMethod: "html",
+            content: content
+        });
+        const close = () => window.qBittorrent.Client.closeWindow(document.getElementById(id));
+        yes.addEventListener("click", (_event) => {
+            remove();
+            close();
+        });
+        no.addEventListener("click", (_event) => close());
+        const windowEl = document.getElementById(id);
+        windowEl.setAttribute("tabindex", "-1");
+        windowEl.focus();
+        windowEl.addEventListener("keydown", (event) => {
+            if ((event.key !== "Enter") || event.target.matches(ENTER_TARGETS))
+                return;
+
+            event.preventDefault();
+            yes.click();
+        });
+    };
+
+    const initRemovalQuestions = () => {
+        const removeCategory = removeCategoryFN;
+        removeCategoryFN = (category) => askToRemove("QBT_TR(Remove category)QBT_TR[CONTEXT=CategoryFilterWidget]",
+            "QBT_TR(Are you sure you want to remove the category %1?)QBT_TR[CONTEXT=CategoryFilterWidget]".replace("%1", () => `"${category}"`),
+            () => removeCategory(category));
+        const removeUnusedCategories = deleteUnusedCategoriesFN;
+        deleteUnusedCategoriesFN = () => askToRemove("QBT_TR(Remove unused categories)QBT_TR[CONTEXT=CategoryFilterWidget]",
+            "QBT_TR(Are you sure you want to remove all unused categories?)QBT_TR[CONTEXT=CategoryFilterWidget]",
+            () => removeUnusedCategories());
+        const removeTag = removeTagFN;
+        removeTagFN = (tag) => askToRemove("QBT_TR(Remove tag)QBT_TR[CONTEXT=TagFilterWidget]",
+            "QBT_TR(Are you sure you want to remove the tag %1?)QBT_TR[CONTEXT=TagFilterWidget]".replace("%1", () => `"${tag}"`),
+            () => removeTag(tag));
+        const removeUnusedTags = deleteUnusedTagsFN;
+        deleteUnusedTagsFN = () => askToRemove("QBT_TR(Remove unused tags)QBT_TR[CONTEXT=TagFilterWidget]",
+            "QBT_TR(Are you sure you want to remove all unused tags?)QBT_TR[CONTEXT=TagFilterWidget]",
+            () => removeUnusedTags());
+    };
+
     // every window: no empty strip below its page; then the windows whose pages aren't framed
     const setUpWindow = (instance) => {
         if (instance.iframeEl !== undefined)
@@ -346,6 +418,7 @@ window.qBittorrent.Modern ??= (() => {
         initMenubar();
         initPropertiesTabs();
         initDialogs();
+        initRemovalQuestions();
     };
 
     return exports();
