@@ -1966,6 +1966,10 @@
     padding-inline: 12px;
 }
 
+:root.modern body.modernEndsWithRow:not(:has(#desktop)) {
+    padding-bottom: 0;
+}
+
 :root.modern
     body:not(:has(#desktop))
     > div
@@ -2257,6 +2261,8 @@
 
 /* Button rows */
 :root.modern .dialogFooter {
+    --responsive-row-space: 12px;
+
     align-items: center;
     border-image: linear-gradient(
             var(--color-border-divider),
