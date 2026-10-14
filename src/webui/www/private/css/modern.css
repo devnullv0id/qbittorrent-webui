@@ -235,6 +235,45 @@
     color: var(--color-text-default);
 }
 
+/* open lists look like the menus where the browser lets a page style them; touch screens keep the system's picker */
+@supports (appearance: base-select) {
+    @media (pointer: fine) {
+        :root.modern select:not([multiple]),
+        :root.modern select:not([multiple])::picker(select) {
+            appearance: base-select;
+        }
+
+        :root.modern select:not([multiple]) {
+            /* the styled dropdown is a flex box, which would put the text at the top */
+            align-items: center;
+
+            &::picker(select) {
+                background-color: var(--color-background-popup);
+                border: 0;
+                border-radius: var(--modern-radius-menu);
+                box-shadow: var(--modern-shadow);
+                padding: 4px;
+            }
+
+            /* Modern draws its own chevron, and the tint marks the current option */
+            &::picker-icon,
+            & option::checkmark {
+                display: none;
+            }
+
+            & option {
+                border-radius: var(--modern-radius-item);
+                padding: 5px 10px;
+            }
+
+            & option:is(:hover, :focus-visible) {
+                background-color: var(--color-background-blue);
+                color: var(--color-text-white);
+            }
+        }
+    }
+}
+
 :root.modern textarea {
     background-color: var(--color-background-primary);
     border: var(--modern-border);
@@ -328,6 +367,14 @@
     ):focus {
     outline: var(--modern-focus-ring);
     outline-offset: -2px;
+}
+
+/* an open styled list moves the focus into the list */
+@supports selector(:open) {
+    :root.modern select:open {
+        outline: var(--modern-focus-ring);
+        outline-offset: -2px;
+    }
 }
 
 /* Check boxes: switches for settings, boxes in lists and menus */
