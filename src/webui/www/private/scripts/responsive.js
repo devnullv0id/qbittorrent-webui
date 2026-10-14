@@ -300,6 +300,9 @@ window.qBittorrent.Responsive ??= (() => {
         restoreProperties = false;
         if (restore ? restorePropertiesPanel() : fitPropertiesPanel())
             MochaUI.Desktop.setDesktopSize();
+        // Modern's windows stay between the header and the status bar
+        if (isModern())
+            fitWindows();
     };
 
     const initLayout = () => {
@@ -610,12 +613,25 @@ window.qBittorrent.Responsive ??= (() => {
         return (page.scrollWidth > page.clientWidth) ? (fullWidth - page.clientWidth) : 0;
     }) ?? 0;
 
+    // in Modern, outside phones, windows open between the header and the status bar; the stylesheet gets the area's height
+    const windowArea = () => {
+        if (!isModern() || queries.phone.matches)
+            return { top: 0, height: root.clientHeight };
+
+        const page = document.getElementById("pageWrapper").getBoundingClientRect();
+        const area = { top: page.top, height: Math.round(page.height) };
+        const height = `${area.height}px`;
+        if (root.style.getPropertyValue("--responsive-window-area-height") !== height)
+            root.style.setProperty("--responsive-window-area-height", height);
+        return area;
+    };
+
     const roomOnScreen = (instance) => {
         const wrapper = instance.contentWrapperEl;
         const margin = queries.phone.matches ? PHONE_WINDOW_MARGIN : WINDOW_MARGIN;
         return {
             width: root.clientWidth - (2 * margin) - (instance.windowEl.offsetWidth - wrapper.offsetWidth),
-            height: root.clientHeight - (2 * margin) - (instance.windowEl.offsetHeight - wrapper.offsetHeight)
+            height: windowArea().height - (2 * margin) - (instance.windowEl.offsetHeight - wrapper.offsetHeight)
         };
     };
 
@@ -703,6 +719,8 @@ window.qBittorrent.Responsive ??= (() => {
             return;
 
         const phone = queries.phone.matches;
+        // before measuring, as the stylesheet sizes some windows by the area
+        const area = windowArea();
         const { fullScreen, fitted } = isStylesheetSized(instance) ? { fullScreen: phone, fitted: true } : fitWindowSize(instance, phone);
 
         // no dragging on phones
@@ -723,7 +741,7 @@ window.qBittorrent.Responsive ??= (() => {
         // Mocha centers a window at its opening size: recenter fitted windows until the user moves them
         else if (phone || wasFullScreen || ((isRelayout() || fitted) && !instance.responsiveUserMoved)) {
             windowEl.style.left = `${Math.max(margin, Math.round((maxLeft + margin) / 2))}px`;
-            windowEl.style.top = `${Math.max(margin, Math.round((maxTop + margin) / 2))}px`;
+            windowEl.style.top = `${Math.round(area.top + Math.max(margin, (area.height - windowEl.offsetHeight) / 2))}px`;
         }
         else {
             windowEl.style.left = `${Math.max(margin, Math.min(windowEl.offsetLeft, maxLeft))}px`;
@@ -752,7 +770,7 @@ window.qBittorrent.Responsive ??= (() => {
         const wantedHeight = wrapper.offsetHeight;
         const margin = phone ? PHONE_WINDOW_MARGIN : WINDOW_MARGIN;
         const maxWidth = root.clientWidth - (2 * margin) - frameWidth;
-        const maxHeight = root.clientHeight - (2 * margin) - frameHeight;
+        const maxHeight = windowArea().height - (2 * margin) - frameHeight;
         const fitWidth = Math.min(maxWidth, MAX_WINDOW_WIDTH);
         const fitHeight = Math.min(maxHeight, MAX_WINDOW_HEIGHT);
 
