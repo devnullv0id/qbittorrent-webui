@@ -2466,7 +2466,9 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
                 });
         };
 
+        let interfaceAddressesRequest = 0;
         const updateInterfaceAddresses = (iface, default_addr) => {
+            const request = ++interfaceAddressesRequest;
             const combobox = document.getElementById("optionalIPAddressToBind");
             for (const el of [...combobox.children])
                 el.remove();
@@ -2490,6 +2492,9 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
                     }
 
                     const addresses = await response.json();
+                    // another interface was chosen while the request ran
+                    if (request !== interfaceAddressesRequest)
+                        return;
                     if (!addresses)
                         return;
 
