@@ -928,8 +928,8 @@ window.qBittorrent.Search ??= (() => {
     };
 
     const searchSeedsFilterChanged = () => {
-        searchSeedsFilter.min = document.getElementById("searchMinSeedsFilter").value;
-        searchSeedsFilter.max = document.getElementById("searchMaxSeedsFilter").value;
+        searchSeedsFilter.min = Number(document.getElementById("searchMinSeedsFilter").value);
+        searchSeedsFilter.max = Number(document.getElementById("searchMaxSeedsFilter").value);
 
         searchFilterChanged();
     };
