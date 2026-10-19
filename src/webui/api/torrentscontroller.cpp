@@ -1646,13 +1646,8 @@ void TorrentsController::setShareLimitsAction()
 {
     requireParams({u"hashes"_s, u"ratioLimit"_s, u"seedingTimeLimit"_s, u"inactiveSeedingTimeLimit"_s, u"shareLimitAction"_s, u"shareLimitsMode"_s});
 
-    const BitTorrent::ShareLimits shareLimits {
-        .ratioLimit = params()[u"ratioLimit"_s].toDouble(),
-        .seedingTimeLimit = params()[u"seedingTimeLimit"_s].toInt(),
-        .inactiveSeedingTimeLimit = params()[u"inactiveSeedingTimeLimit"_s].toInt(),
-        .mode = Utils::String::toEnum(params()[u"shareLimitsMode"_s], BitTorrent::ShareLimitsMode::Default),
-        .action = Utils::String::toEnum(params()[u"shareLimitAction"_s], BitTorrent::ShareLimitAction::Default)
-    };
+    BitTorrent::ShareLimits shareLimits;
+    applyShareLimitsParams(shareLimits, params());
 
     const QStringList hashes = params()[u"hashes"_s].split(u'|');
 
