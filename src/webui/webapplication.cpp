@@ -409,6 +409,15 @@ void WebApplication::setPasswordHash(const QByteArray &passwordHash)
     m_passwordHash = passwordHash;
 }
 
+void WebApplication::setHttpsEnabled(const bool enabled)
+{
+    if (enabled == m_isHttpsEnabled)
+        return;
+
+    m_isHttpsEnabled = enabled;
+    configure();
+}
+
 void WebApplication::processAPIRequest(const QString &endpoint, const Http::HeaderMap &commonHeaders, Http::ResponseWriter &responseWriter)
 {
     const auto [scope, action] = parseAPIEndpoint(endpoint);
@@ -620,7 +629,6 @@ void WebApplication::configure()
     m_isCSRFProtectionEnabled = pref->isWebUICSRFProtectionEnabled();
     m_isSecureCookieEnabled = pref->isWebUISecureCookieEnabled();
     m_isHostHeaderValidationEnabled = pref->isWebUIHostHeaderValidationEnabled();
-    m_isHttpsEnabled = pref->isWebUIHttpsEnabled();
 
     m_prebuiltHeaders.clear();
     m_prebuiltHeaders.insert(Http::HEADER_X_XSS_PROTECTION, u"1; mode=block"_s);
