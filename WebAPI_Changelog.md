@@ -33,6 +33,7 @@
 * `torrents/downloadFile` endpoint responds to `bytes=-0` with a 416, instead of a 400
 * `torrents/downloadFile` endpoint responds to a `Range` header it cannot serve with a 200 and the whole file, instead of a 400
 * `torrents/webseeds` endpoint lists URLs percent-encoded, as `torrents/editWebSeed` and `torrents/removeWebSeeds` take them
+* WebAPI responds with a 404 to a request for a file missing from an alternative WebUI, instead of a 500
 * [#24955](https://github.com/qbittorrent/qBittorrent/pull/24955)
   * `search/results` endpoint includes `engineFullName` (string) data as the display name of the engine
 

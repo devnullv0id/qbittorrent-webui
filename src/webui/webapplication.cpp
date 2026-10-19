@@ -325,6 +325,8 @@ void WebApplication::sendWebUIFile(const Http::HeaderMap &commonHeaders, Http::R
                 preferences->apply();
             }
 #endif
+            if (!localPath.exists())
+                throw NotFoundHTTPError();
             throw InternalServerErrorHTTPError(tr("Unacceptable file type, only regular file is allowed."));
         }
 
