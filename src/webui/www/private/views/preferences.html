@@ -3240,10 +3240,17 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             const schedulingEnabled = document.getElementById("limitSchedulingCheckbox").checked;
             settings["scheduler_enabled"] = schedulingEnabled;
             if (schedulingEnabled) {
-                settings["schedule_from_hour"] = Number(document.getElementById("schedule_from_hour").value);
-                settings["schedule_from_min"] = Number(document.getElementById("schedule_from_min").value);
-                settings["schedule_to_hour"] = Number(document.getElementById("schedule_to_hour").value);
-                settings["schedule_to_min"] = Number(document.getElementById("schedule_to_min").value);
+                // the server stores an invalid time, which reads back as -1:-1
+                for (const key of ["schedule_from_hour", "schedule_from_min", "schedule_to_hour", "schedule_to_min"]) {
+                    const max = key.endsWith("_hour") ? 23 : 59;
+                    const text = document.getElementById(key).value.trim();
+                    const value = Number(text);
+                    if ((text === "") || !Number.isInteger(value) || (value < 0) || (value > max)) {
+                        alert("QBT_TR(Scheduled times must be between 00:00 and 23:59.)QBT_TR[CONTEXT=HttpServer]");
+                        return;
+                    }
+                    settings[key] = value;
+                }
                 settings["scheduler_days"] = Number(document.getElementById("schedule_freq_select").value);
             }
 
