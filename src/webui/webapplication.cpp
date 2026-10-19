@@ -735,9 +735,9 @@ void WebApplication::sendFile(const Path &path, const Http::HeaderMap &commonHea
 
     Http::Response response {.status = {.code = 200}, .headers = commonHeaders};
 
-    // find translated file in cache
+    // find translated file in cache, unless the file has changed (to an older time too)
     if (const auto it = m_translatedFiles.constFind(path);
-        (it != m_translatedFiles.constEnd()) && (lastModified <= it->lastModified))
+        (it != m_translatedFiles.constEnd()) && (lastModified == it->lastModified))
     {
         response.headers.insert(Http::HEADER_CONTENT_TYPE, it->mimeType);
         response.headers.insert(Http::HEADER_CACHE_CONTROL, getCachingInterval(it->mimeType));
