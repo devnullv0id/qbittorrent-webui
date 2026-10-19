@@ -469,11 +469,11 @@ void WebApplication::configure()
 
     const bool isAltUIUsed = pref->isAltWebUIEnabled();
     const Path rootFolder = (!isAltUIUsed ? Path(WWW_FOLDER) : pref->getWebUIRootFolder());
-    if ((isAltUIUsed != m_isAltUIUsed) || (rootFolder != m_rootFolder))
+    const bool isRootFolderChanged = (isAltUIUsed != m_isAltUIUsed) || (rootFolder != m_rootFolder);
+    if (isRootFolderChanged)
     {
         m_isAltUIUsed = isAltUIUsed;
         m_rootFolder = rootFolder;
-        m_translatedFiles.clear();
         if (!m_isAltUIUsed)
             LogMsg(tr("Using built-in WebUI."));
         else
@@ -481,7 +481,8 @@ void WebApplication::configure()
     }
 
     const QString newLocale = pref->getLocale();
-    if (m_currentLocale != newLocale)
+    // the translation is loaded from the root folder
+    if (isRootFolderChanged || (m_currentLocale != newLocale))
     {
         m_currentLocale = newLocale;
         m_translatedFiles.clear();
