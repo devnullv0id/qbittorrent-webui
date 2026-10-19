@@ -240,7 +240,7 @@ window.qBittorrent.MultiRename ??= (() => {
                     ? parentPath + window.qBittorrent.Filesystem.PathSeparator + newName
                     : newName;
                 try {
-                    await fetch((isFolder ? "api/v2/torrents/renameFolder" : "api/v2/torrents/renameFile"), {
+                    const response = await fetch((isFolder ? "api/v2/torrents/renameFolder" : "api/v2/torrents/renameFile"), {
                         method: "POST",
                         body: new URLSearchParams({
                             hash: this.hash,
@@ -248,6 +248,11 @@ window.qBittorrent.MultiRename ??= (() => {
                             newPath: newPath
                         })
                     });
+                    if (!response.ok) {
+                        this.onRenameError(response, match);
+                        return;
+                    }
+
                     replaced.push(match);
                 }
                 catch (response) {
