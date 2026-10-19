@@ -178,7 +178,9 @@ QByteArray Http::serializeResponse(const Http::Response &response, const Http::R
         }
     }
 
-    responseHeaders.insert(Http::HEADER_CONTENT_LENGTH, QString::number(responseContent.size()));
+    // [RFC 9110] 8.6. Content-Length: a 204 response has none
+    if (response.status.code != 204)
+        responseHeaders.insert(Http::HEADER_CONTENT_LENGTH, QString::number(responseContent.size()));
 
     QByteArray data = serializeResponseHead(response.status, responseHeaders);
     if (request.method != Http::HEADER_REQUEST_METHOD_HEAD)
