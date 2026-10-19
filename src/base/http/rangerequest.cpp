@@ -67,7 +67,7 @@ std::optional<Http::RangeRequest> Http::parseRangeHeader(const QStringView range
     const QStringView suffixlengthStr = match.capturedView(u"suffixlength");
     bool isValidNumber = false;
     const qint64 suffixlength = suffixlengthStr.toLongLong(&isValidNumber);
-    if (!isValidNumber || (suffixlength <= 0))
+    if (!isValidNumber)  // a length of 0 is valid, but selects nothing
         return std::nullopt;
 
     return suffixlength;
