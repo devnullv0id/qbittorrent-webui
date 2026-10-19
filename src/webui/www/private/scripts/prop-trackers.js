@@ -231,15 +231,14 @@ window.qBittorrent.PropTrackers ??= (() => {
             return;
 
         const selectedTorrents = torrentsTable.selectedRowsIds();
-        if (selectedTorrents.length !== 0)
-            current_hash = selectedTorrents.map(encodeURIComponent).join("|");
+        const hashes = (selectedTorrents.length !== 0) ? selectedTorrents.map(encodeURIComponent).join("|") : current_hash;
 
         new MochaUI.Window({
             id: "trackersPage",
             icon: "images/qbittorrent-tray.svg",
             title: "QBT_TR(Add trackers)QBT_TR[CONTEXT=TrackersAdditionDialog]",
             loadMethod: "iframe",
-            contentURL: `addtrackers.html?v=${CACHEID}&hash=${current_hash}`,
+            contentURL: `addtrackers.html?v=${CACHEID}&hash=${hashes}`,
             scrollbars: true,
             resizable: false,
             maximizable: false,
@@ -292,13 +291,12 @@ window.qBittorrent.PropTrackers ??= (() => {
             return;
 
         const selectedTorrents = torrentsTable.selectedRowsIds();
-        if (selectedTorrents.length !== 0)
-            current_hash = selectedTorrents.map(encodeURIComponent).join("|");
+        const hashes = (selectedTorrents.length !== 0) ? selectedTorrents.map(encodeURIComponent).join("|") : current_hash;
 
         fetch("api/v2/torrents/removeTrackers", {
                 method: "POST",
                 body: new URLSearchParams({
-                    hash: current_hash,
+                    hash: hashes,
                     urls: torrentTrackersTable.selectedRowsIds().map(encodeURIComponent).join("|")
                 })
             })
