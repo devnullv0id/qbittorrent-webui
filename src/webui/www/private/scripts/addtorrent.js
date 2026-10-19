@@ -80,7 +80,7 @@ window.qBittorrent.AddTorrent ??= (() => {
             search: false,
             disableSelectAll: true,
             translations: {
-                all: (window.parent.qBittorrent.Client.tagMap.length === 0) ? "" : "QBT_TR(All)QBT_TR[CONTEXT=AddNewTorrentDialog]",
+                all: (window.parent.qBittorrent.Client.tagMap.size === 0) ? "" : "QBT_TR(All)QBT_TR[CONTEXT=AddNewTorrentDialog]",
             },
             keepInlineStyles: false
         });
