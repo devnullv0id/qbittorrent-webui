@@ -42,6 +42,7 @@ window.qBittorrent.MonkeyPatch ??= (() => {
         patchMochaGetAsset();
         patchMochaWindowOptions();
         patchMochaFocusWindow();
+        patchMochaUnderlay();
     };
 
     const patchMootoolsDocumentId = () => {
@@ -167,6 +168,23 @@ window.qBittorrent.MonkeyPatch ??= (() => {
                 element.style.zIndex = `${MUI.Windows.indexLevel}`;
             }
             document.getElementById("windowUnderlay").style.zIndex = `${MUI.Windows.indexLevel - 1}`;
+        };
+    };
+
+    /**
+     * Size the underlay to this page; MochaUI reads the global `parent`, which is the embedding page in a frame
+     */
+    const patchMochaUnderlay = () => {
+        MUI.underlayInitialize = () => {
+            const windowUnderlay = document.createElement("div");
+            windowUnderlay.id = "windowUnderlay";
+            windowUnderlay.style.height = `${document.documentElement.clientHeight}px`;
+            windowUnderlay.style.opacity = "0.01";
+            windowUnderlay.style.display = "none";
+            document.body.append(windowUnderlay);
+        };
+        MUI.setUnderlaySize = () => {
+            document.getElementById("windowUnderlay").style.height = `${document.documentElement.clientHeight}px`;
         };
     };
 
