@@ -177,8 +177,17 @@
         };
 
         const isFormValid = () => {
-            return !((getSelectedRadioValue("shareLimit") === "custom") && !document.getElementById("setRatio").checked
-                && !document.getElementById("setTotalMinutes").checked && !document.getElementById("setInactiveMinutes").checked);
+            if (getSelectedRadioValue("shareLimit") !== "custom")
+                return true;
+
+            // at least one limit, and a value in each one that is checked
+            const limits = [
+                ["setRatio", "ratio"],
+                ["setTotalMinutes", "totalMinutes"],
+                ["setInactiveMinutes", "inactiveMinutes"]
+            ];
+            const checkedLimits = limits.filter(([checkbox]) => document.getElementById(checkbox).checked);
+            return (checkedLimits.length > 0) && checkedLimits.every(([, input]) => (document.getElementById(input).value !== ""));
         };
     </script>
 </head>
@@ -192,17 +201,17 @@
         <div style="margin-left: 40px; margin-bottom: 5px;">
             <input type="checkbox" id="setRatio" class="shareLimitInput" onclick="enableInputBoxes()">
             <label id="ratioLabel" for="setRatio">QBT_TR(ratio)QBT_TR[CONTEXT=UpDownRatioDialog]</label>
-            <input type="number" id="ratio" value="0.00" step=".01" min="0" class="shareLimitInput" aria-labelledby="ratioLabel">
+            <input type="number" id="ratio" value="0.00" step=".01" min="0" class="shareLimitInput" aria-labelledby="ratioLabel" oninput="enableInputBoxes()">
         </div>
         <div style="margin-left: 40px; margin-bottom: 5px;">
             <input type="checkbox" id="setTotalMinutes" class="shareLimitInput" onclick="enableInputBoxes()">
             <label id="totalMinutesLabel" for="setTotalMinutes">QBT_TR(total minutes)QBT_TR[CONTEXT=UpDownRatioDialog]</label>
-            <input type="number" id="totalMinutes" value="0" step="1" min="0" class="shareLimitInput" aria-labelledby="totalMinutesLabel">
+            <input type="number" id="totalMinutes" value="0" step="1" min="0" class="shareLimitInput" aria-labelledby="totalMinutesLabel" oninput="enableInputBoxes()">
         </div>
         <div style="margin-left: 40px; margin-bottom: 5px;">
             <input type="checkbox" id="setInactiveMinutes" class="shareLimitInput" onclick="enableInputBoxes()">
             <label id="inactiveMinutesLabel" for="setInactiveMinutes">QBT_TR(inactive minutes)QBT_TR[CONTEXT=UpDownRatioDialog]</label>
-            <input type="number" id="inactiveMinutes" value="0" step="1" min="0" class="shareLimitInput" aria-labelledby="inactiveMinutesLabel">
+            <input type="number" id="inactiveMinutes" value="0" step="1" min="0" class="shareLimitInput" aria-labelledby="inactiveMinutesLabel" oninput="enableInputBoxes()">
         </div>
         <div style="margin-left: 40px; margin-bottom: 5px;">
             <label id="shareLimitsModeLabel" for="shareLimitsModeActions">QBT_TR(Mode)QBT_TR[CONTEXT=UpDownRatioDialog]</label>
