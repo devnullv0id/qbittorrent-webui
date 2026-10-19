@@ -78,7 +78,7 @@
     </table>
 
     <div class="buttonContainer dialogFooter">
-        <button type="button" id="saveButton">QBT_TR(Save)QBT_TR[CONTEXT=HttpServer]</button>
+        <button type="button" id="saveCookiesButton">QBT_TR(Save)QBT_TR[CONTEXT=HttpServer]</button>
     </div>
 </div>
 
@@ -182,7 +182,7 @@
                 addCookie();
             });
 
-            document.getElementById("saveButton").addEventListener("click", (event) => {
+            document.getElementById("saveCookiesButton").addEventListener("click", (event) => {
                 save();
             });
         };
