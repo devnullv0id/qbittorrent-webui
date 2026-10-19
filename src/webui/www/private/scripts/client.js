@@ -1137,8 +1137,15 @@ window.addEventListener("DOMContentLoaded", async (event) => {
                             updateTags = true;
                         }
                         if (responseJSON["tags_removed"]) {
-                            for (const tag of responseJSON["tags_removed"])
+                            for (const tag of responseJSON["tags_removed"]) {
                                 window.qBittorrent.Client.tagMap.delete(tag);
+                                if (selectedTag === tag) {
+                                    selectedTag = TAGS_ALL;
+                                    localPreferences.set("selected_tag", selectedTag);
+                                    // its torrents may not have changed
+                                    updateTorrents = true;
+                                }
+                            }
                             updateTags = true;
                         }
                         if (responseJSON["trackers"]) {
