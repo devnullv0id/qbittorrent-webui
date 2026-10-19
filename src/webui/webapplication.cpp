@@ -660,7 +660,8 @@ void WebApplication::configure()
                 continue;
             }
 
-            const QString header = line.first(idx).trimmed().toString();
+            // header names are case-insensitive, so a custom header replaces the built-in one of the same name
+            const QString header = line.first(idx).trimmed().toString().toLower();
             const QString value = line.sliced(idx + 1).trimmed().toString();
             m_prebuiltHeaders.insert(header, value);
         }
