@@ -39,7 +39,8 @@
         if (hashes.length === 1) {
             // the torrent may have been removed before this ran
             const name = torrentsTable.getRow(hashes[0])?.full_data.name ?? hashes[0];
-            deleteMessage = "QBT_TR(Are you sure you want to remove %1 from the transfer list?)QBT_TR[CONTEXT=HttpServer]".replace("%1", `"${name}"`);
+            // a function, so that "$&" and the like in the name aren't expanded
+            deleteMessage = "QBT_TR(Are you sure you want to remove %1 from the transfer list?)QBT_TR[CONTEXT=HttpServer]".replace("%1", () => `"${name}"`);
         }
         else {
             deleteMessage = "QBT_TR(Are you sure you want to remove these %1 torrents from the transfer list?)QBT_TR[CONTEXT=HttpServer]".replace("%1", hashes.length);
