@@ -81,11 +81,15 @@
                     cache: "no-store"
                 })
                 .then(async (response) => {
+                    if (!response.ok)
+                        return;
+
                     const limits = await response.json();
                     setupSlider("uploadSlider", uploadValue, (limits.up_limit / 1024));
                     setupSlider("downloadSlider", downloadValue, (limits.dl_limit / 1024));
                     setupSlider("altUploadSlider", altUploadValue, (limits.alt_up_limit / 1024));
                     setupSlider("altDownloadSlider", altDownloadValue, (limits.alt_dl_limit / 1024));
+                    applyButton.disabled = false;
                 });
         };
 
@@ -160,5 +164,5 @@
     </div>
 </fieldset>
 <div class="dialogFooter" style="text-align: center; margin-top: 10px;">
-    <button id="applyButton" type="button">QBT_TR(Apply)QBT_TR[CONTEXT=SpeedLimit]</button>
+    <button id="applyButton" type="button" disabled>QBT_TR(Apply)QBT_TR[CONTEXT=SpeedLimit]</button>
 </div>
