@@ -1182,6 +1182,11 @@ window.addEventListener("DOMContentLoaded", async (event) => {
                             updateTrackers = true;
                         }
                         if (responseJSON["torrents"]) {
+                            // Active and Inactive go by a torrent's speeds, which can change without its state
+                            const isTransferring = (hash) => {
+                                const data = torrentsTable.getRow(hash)?.full_data;
+                                return (data !== undefined) && ((data.upspeed > 0) || (data.dlspeed > 0));
+                            };
                             for (const key in responseJSON["torrents"]) {
                                 if (!Object.hasOwn(responseJSON["torrents"], key))
                                     continue;
@@ -1194,7 +1199,10 @@ window.addEventListener("DOMContentLoaded", async (event) => {
                                     responseJSON["torrents"][key]["_statusOrder"] = statusSortOrder[state];
                                     updateStatuses = true;
                                 }
+                                const wasTransferring = isTransferring(key);
                                 torrentsTable.updateRowData(responseJSON["torrents"][key]);
+                                if (isTransferring(key) !== wasTransferring)
+                                    updateStatuses = true;
                                 if (addTorrentToCategoryList(responseJSON["torrents"][key]))
                                     updateCategories = true;
                                 if (addTorrentToTagList(responseJSON["torrents"][key]))
