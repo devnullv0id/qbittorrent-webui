@@ -2723,6 +2723,8 @@ window.qBittorrent.DynamicTable ??= (() => {
         }
 
         clear() {
+            // before the rows: the list's height comes from the tree
+            this.fileTree = new window.qBittorrent.FileTree.FileTree();
             super.clear();
             this.collapseState.clear();
         }
