@@ -114,8 +114,6 @@ window.qBittorrent.PropGeneral ??= (() => {
                     return;
                 }
 
-                document.getElementById("error_div").textContent = "";
-
                 const data = await response.json();
                 if (data) {
                     // Update Torrent data
@@ -279,8 +277,6 @@ window.qBittorrent.PropGeneral ??= (() => {
                     loadTorrentDataTimer = loadTorrentData.delay(10000);
                     return;
                 }
-
-                document.getElementById("error_div").textContent = "";
 
                 const data = await response.json();
                 if (data)

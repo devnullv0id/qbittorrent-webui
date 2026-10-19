@@ -177,6 +177,8 @@
         };
 
         let logFilterTimer = -1;
+        // the "not reachable" message was set here, so it's this one's to clear
+        let errorShown = false;
         let inputtedFilterText = "";
         let selectBox;
         let selectedLogLevels = window.qBittorrent.ClientData.get("qbt_selected_log_levels") ?? ["1", "2", "4", "8"];
@@ -367,12 +369,16 @@
                         const errorDiv = document.getElementById("error_div");
                         if (errorDiv)
                             errorDiv.textContent = "QBT_TR(qBittorrent client is not reachable)QBT_TR[CONTEXT=HttpServer]";
+                        errorShown = true;
                         tableInfo[curTab].progress = false;
                         syncLogWithInterval(10000);
                         return;
                     }
 
-                    document.getElementById("error_div").textContent = "";
+                    if (errorShown) {
+                        document.getElementById("error_div").textContent = "";
+                        errorShown = false;
+                    }
 
                     if (document.getElementById("logTabColumn").classList.contains("invisible")) {
                         tableInfo[curTab].progress = false;
@@ -417,6 +423,7 @@
                     console.error(error);
 
                     document.getElementById("error_div").textContent = "QBT_TR(qBittorrent client is not reachable)QBT_TR[CONTEXT=HttpServer]";
+                    errorShown = true;
                     tableInfo[curTab].progress = false;
                     syncLogWithInterval(10000);
                 })
