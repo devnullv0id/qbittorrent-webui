@@ -64,6 +64,8 @@ window.qBittorrent.pathAutofill ??= (() => {
         }
     };
 
+    const requestIds = new WeakMap();
+
     const showPathSuggestions = (element, mode) => {
         const partialPath = element.value;
         if (partialPath === "")
@@ -75,12 +77,19 @@ window.qBittorrent.pathAutofill ??= (() => {
             mode: mode
         });
 
+        const requestId = (requestIds.get(element) ?? 0) + 1;
+        requestIds.set(element, requestId);
+
         fetch(url, {
                 method: "GET",
                 cache: "no-store"
             })
-            .then(response => response.json())
-            .then(filesList => { showInputSuggestions(element, filesList); })
+            .then(response => (response.ok ? response.json() : []))
+            .then(filesList => {
+                // an earlier request may be answered last
+                if (requestIds.get(element) === requestId)
+                    showInputSuggestions(element, filesList);
+            })
             .catch(error => {});
     };
 
