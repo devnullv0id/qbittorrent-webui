@@ -1231,6 +1231,15 @@ window.addEventListener("DOMContentLoaded", async (event) => {
                             // re-select previously selected rows
                             torrentsTable.reselectRows(torrentsTableSelectedRows);
                     }
+                    // the session ended, e.g. by a restart: back to the login page,
+                    // but only after an answer, so a server refusing every request isn't reloaded in a loop
+                    else if ((response.status === 403) && (syncMainDataLastResponseId > 0)) {
+                        window.location.reload();
+                        return;
+                    }
+                    else {
+                        document.getElementById("error_div").textContent = "QBT_TR(qBittorrent client is not reachable)QBT_TR[CONTEXT=HttpServer]";
+                    }
 
                     syncRequestInProgress = false;
                     syncData(window.qBittorrent.Client.getSyncMainDataInterval());
