@@ -267,7 +267,8 @@
         const logLevelChanged = () => {
             const value = selectBox.getResult().sort();
 
-            if (selectedLogLevels !== value) {
+            // compare the levels, not the arrays
+            if ((value.length !== selectedLogLevels.length) || value.some((level) => !selectedLogLevels.includes(level))) {
                 tableInfo[currentSelectedTab].last_id = -1;
                 selectedLogLevels = value;
                 // don't await this
