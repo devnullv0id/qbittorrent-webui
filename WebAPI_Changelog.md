@@ -12,6 +12,8 @@
 * `torrents/parseMetadata` endpoint responds in the order of the files in the request
 * `torrents/add` endpoint checks every uploaded file before adding anything, so a request answered with a 415 adds no torrent
 * `torrents/removeTrackers`, `torrents/reannounce` and `torrentcreator/addTask` endpoints take URLs as sent, as `torrents/addTrackers` does, instead of percent-decoding them once more
+* `transfer/setUploadLimit`, `transfer/setDownloadLimit`, `transfer/setSpeedLimits`, `torrents/setUploadLimit` and `torrents/setDownloadLimit` endpoints respond with a 400 to a limit that is not an integer, instead of setting no limit
+* `transfer/setSpeedLimits` endpoint sets none of the limits when one of them is invalid
 * [#24955](https://github.com/qbittorrent/qBittorrent/pull/24955)
   * `search/results` endpoint includes `engineFullName` (string) data as the display name of the engine
 

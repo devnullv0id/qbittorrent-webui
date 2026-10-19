@@ -1616,7 +1616,10 @@ void TorrentsController::setUploadLimitAction()
 {
     requireParams({u"hashes"_s, u"limit"_s});
 
-    qlonglong limit = params()[u"limit"_s].toLongLong();
+    bool ok = false;
+    int limit = params()[u"limit"_s].toInt(&ok);
+    if (!ok)
+        throw APIError(APIErrorType::BadParams, tr("'%1' parameter has invalid value").arg(u"limit"_s));
     if (limit == 0)
         limit = -1;
 
@@ -1630,7 +1633,10 @@ void TorrentsController::setDownloadLimitAction()
 {
     requireParams({u"hashes"_s, u"limit"_s});
 
-    qlonglong limit = params()[u"limit"_s].toLongLong();
+    bool ok = false;
+    int limit = params()[u"limit"_s].toInt(&ok);
+    if (!ok)
+        throw APIError(APIErrorType::BadParams, tr("'%1' parameter has invalid value").arg(u"limit"_s));
     if (limit == 0)
         limit = -1;
 

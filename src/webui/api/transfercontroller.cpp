@@ -104,10 +104,12 @@ void TransferController::downloadLimitAction()
 void TransferController::setUploadLimitAction()
 {
     requireParams({u"limit"_s});
-    qlonglong limit = params()[u"limit"_s].toLongLong();
+    std::optional<int> limit = Utils::String::parseInt(params()[u"limit"_s]);
+    if (!limit)
+        throw APIError(APIErrorType::BadParams, tr("'%1' parameter has invalid value").arg(u"limit"_s));
     if (limit == 0) limit = -1;
 
-    BitTorrent::Session::instance()->setUploadSpeedLimit(limit);
+    BitTorrent::Session::instance()->setUploadSpeedLimit(*limit);
 
     setResult(QString());
 }
@@ -115,10 +117,12 @@ void TransferController::setUploadLimitAction()
 void TransferController::setDownloadLimitAction()
 {
     requireParams({u"limit"_s});
-    qlonglong limit = params()[u"limit"_s].toLongLong();
+    std::optional<int> limit = Utils::String::parseInt(params()[u"limit"_s]);
+    if (!limit)
+        throw APIError(APIErrorType::BadParams, tr("'%1' parameter has invalid value").arg(u"limit"_s));
     if (limit == 0) limit = -1;
 
-    BitTorrent::Session::instance()->setDownloadSpeedLimit(limit);
+    BitTorrent::Session::instance()->setDownloadSpeedLimit(*limit);
 
     setResult(QString());
 }
@@ -141,12 +145,25 @@ void TransferController::setSpeedLimitsAction()
 {
     requireParams({KEY_TRANSFER_UP_LIMIT, KEY_TRANSFER_DL_LIMIT, KEY_TRANSFER_ALT_UP_LIMIT, KEY_TRANSFER_ALT_DL_LIMIT});
 
+    // all four are checked before any of them is set
+    const auto parseLimit = [this](const QString &key)
+    {
+        const std::optional<int> limit = Utils::String::parseInt(params().value(key));
+        if (!limit)
+            throw APIError(APIErrorType::BadParams, tr("'%1' parameter has invalid value").arg(key));
+        return *limit;
+    };
+    const int upLimit = parseLimit(KEY_TRANSFER_UP_LIMIT);
+    const int dlLimit = parseLimit(KEY_TRANSFER_DL_LIMIT);
+    const int altUpLimit = parseLimit(KEY_TRANSFER_ALT_UP_LIMIT);
+    const int altDlLimit = parseLimit(KEY_TRANSFER_ALT_DL_LIMIT);
+
     BitTorrent::Session *const session = BitTorrent::Session::instance();
 
-    session->setGlobalUploadSpeedLimit(params().value(KEY_TRANSFER_UP_LIMIT).toInt());
-    session->setGlobalDownloadSpeedLimit(params().value(KEY_TRANSFER_DL_LIMIT).toInt());
-    session->setAltGlobalUploadSpeedLimit(params().value(KEY_TRANSFER_ALT_UP_LIMIT).toInt());
-    session->setAltGlobalDownloadSpeedLimit(params().value(KEY_TRANSFER_ALT_DL_LIMIT).toInt());
+    session->setGlobalUploadSpeedLimit(upLimit);
+    session->setGlobalDownloadSpeedLimit(dlLimit);
+    session->setAltGlobalUploadSpeedLimit(altUpLimit);
+    session->setAltGlobalDownloadSpeedLimit(altDlLimit);
 }
 
 void TransferController::toggleSpeedLimitsModeAction()
