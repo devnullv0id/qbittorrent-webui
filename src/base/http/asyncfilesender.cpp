@@ -154,7 +154,8 @@ private:
             const auto suffixLength = std::get<qint64>(rangeRequest);
             Q_ASSERT(suffixLength >= 0); // `suffixLength` is actually unsigned
 
-            size = suffixLength;
+            // [rfc9110] 14.1.2. Byte Ranges: a suffix longer than the file selects all of it
+            size = std::min(suffixLength, fileSize);
             offset = fileSize - size;
             rangeEnd = fileSize - 1;
         }
@@ -164,7 +165,8 @@ private:
             offset = range.start;
             if (range.end >= 0)
             {
-                rangeEnd = range.end;
+                // [rfc9110] 14.1.2. Byte Ranges: an end past the file is the end of the file
+                rangeEnd = std::min(range.end, (fileSize - 1));
                 size = (rangeEnd + 1) - offset;
             }
             else
