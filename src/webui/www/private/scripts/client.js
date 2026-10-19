@@ -1033,6 +1033,8 @@ window.addEventListener("DOMContentLoaded", async (event) => {
 
     let syncMainDataTimeoutID = -1;
     let syncRequestInProgress = false;
+    // the shortest delay asked for while a request ran
+    let pendingSyncDelay = null;
     const syncMainData = () => {
         syncRequestInProgress = true;
         const url = new URL("api/v2/sync/maindata", window.location);
@@ -1268,8 +1270,16 @@ window.addEventListener("DOMContentLoaded", async (event) => {
     };
 
     const syncData = (delay) => {
-        if (syncRequestInProgress)
+        if (syncRequestInProgress) {
+            // used once the request ends
+            pendingSyncDelay = Math.min(delay, pendingSyncDelay ?? delay);
             return;
+        }
+
+        if (pendingSyncDelay !== null) {
+            delay = Math.min(delay, pendingSyncDelay);
+            pendingSyncDelay = null;
+        }
 
         clearTimeout(syncMainDataTimeoutID);
         syncMainDataTimeoutID = -1;
