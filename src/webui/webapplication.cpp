@@ -35,6 +35,7 @@
 #include <QDateTime>
 #include <QDebug>
 #include <QDir>
+#include <QDirIterator>
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QMetaObject>
@@ -200,6 +201,40 @@ namespace
         }
 
         responseWriter.setResponse(response);
+    }
+
+    // a digest of the files a WebUI folder serves: their paths, in order, and their content
+    QByteArray folderDigest(const Path &rootFolder)
+    {
+        QStringList filePaths;
+        for (const QString &folder : {PUBLIC_FOLDER, PRIVATE_FOLDER})
+        {
+            QDirIterator iter {(rootFolder / Path(folder)).data(), (QDir::Files | QDir::Hidden | QDir::NoSymLinks), QDirIterator::Subdirectories};
+            while (iter.hasNext())
+                filePaths.append(iter.next());
+        }
+        filePaths.sort();
+
+        QCryptographicHash hash {QCryptographicHash::Sha256};
+        for (const QString &filePath : asConst(filePaths))
+        {
+            const auto readResult = Utils::IO::readFile(Path(filePath), MAX_ALLOWED_FILESIZE);
+            hash.addData(filePath.toUtf8());
+            hash.addData(QCryptographicHash::hash(readResult.value_or(QByteArray()), QCryptographicHash::Sha256));
+        }
+        return hash.result();
+    }
+
+    // the same for the same files and translation, so that the browser keeps its cached scripts and styles over a restart
+    QString cacheID(const QByteArray &rootFolderDigest, const QString &locale, const Path &translationFile)
+    {
+        QCryptographicHash hash {QCryptographicHash::Sha256};
+        hash.addData(rootFolderDigest);
+        hash.addData(locale.toUtf8());
+        if (!translationFile.isEmpty())
+            hash.addData(Utils::IO::readFile(translationFile, MAX_ALLOWED_FILESIZE).value_or(QByteArray()));
+        // only letters and digits, as the URLs of the scripts loaded by MochaUI must end with "?v=\w+"
+        return QString::fromLatin1(hash.result().toHex().left(16));
     }
 
     QString createLanguagesOptionsHtml()
@@ -530,6 +565,7 @@ void WebApplication::configure()
     {
         m_isAltUIUsed = isAltUIUsed;
         m_rootFolder = rootFolder;
+        m_rootFolderDigest.clear();
         if (!m_isAltUIUsed)
             LogMsg(tr("Using built-in WebUI."));
         else
@@ -542,8 +578,8 @@ void WebApplication::configure()
     {
         m_currentLocale = newLocale;
         m_translatedFiles.clear();
-        // the browser caches scripts and styles by their URL, which carries the cache ID
-        m_cacheID = QString::number(Utils::Random::rand(), 36);
+        // the browser caches scripts and styles by their URL, which carries the cache ID; it is computed when first needed
+        m_cacheID.clear();
 
         m_translationFileLoaded = m_translator.load((m_rootFolder / Path(u"translations/webui_"_s) + newLocale).data());
         if (m_translationFileLoaded)
@@ -720,6 +756,14 @@ void WebApplication::sendFile(const Path &path, const Http::HeaderMap &commonHea
 
     if (isTranslatable)
     {
+        if (m_cacheID.isEmpty())
+        {
+            // the folder's files are read once, the translation again after a change of the language
+            if (m_rootFolderDigest.isEmpty())
+                m_rootFolderDigest = folderDigest(m_rootFolder);
+            m_cacheID = cacheID(m_rootFolderDigest, m_currentLocale, (m_translationFileLoaded ? Path(m_translator.filePath()) : Path()));
+        }
+
         auto dataStr = QString::fromUtf8(data);
         // Translate the file
         translateDocument(dataStr);
