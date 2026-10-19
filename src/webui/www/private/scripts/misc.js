@@ -380,7 +380,7 @@ window.qBittorrent.Misc ??= (() => {
             const fileNamePrefix = "attachment; filename=";
             const fileNameHeader = response.headers.get("content-disposition");
             let fileName = defaultFileName;
-            if (fileNameHeader.startsWith(fileNamePrefix)) {
+            if ((fileNameHeader !== null) && fileNameHeader.startsWith(fileNamePrefix)) {
                 fileName = fileNameHeader.substring(fileNamePrefix.length);
                 if (fileName.startsWith("\"") && fileName.endsWith("\""))
                     fileName = fileName.slice(1, -1);
@@ -396,6 +396,7 @@ window.qBittorrent.Misc ??= (() => {
             link.download = fileName;
             link.click();
             link.remove();
+            window.URL.revokeObjectURL(link.href);
         }
         catch (error) {
             alert(errorMessage);
