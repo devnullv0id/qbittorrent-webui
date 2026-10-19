@@ -54,5 +54,6 @@ namespace Http
         QHash<QString, QByteArray> query;
         QHash<QString, QString> posts;
         QList<UploadedFile> files;
+        bool hasUnsupportedContent = false;  // a POST body of a type the parser doesn't read
     };
 }
