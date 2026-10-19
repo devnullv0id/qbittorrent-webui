@@ -2124,12 +2124,14 @@ window.addEventListener("DOMContentLoaded", async (event) => {
         if (document.hidden)
             return;
 
+        // the status bar and title show main data on every tab
+        syncData(100);
+
         switch (localPreferences.get("selected_window_tab")) {
             case "log":
                 window.qBittorrent.Log.load();
                 break;
             case "transfers":
-                syncData(100);
                 updatePropertiesPanel();
                 break;
         }
