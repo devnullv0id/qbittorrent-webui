@@ -171,7 +171,6 @@ namespace
 
 WebApplication::WebApplication(IApplication *app, QObject *parent)
     : ApplicationComponent(app, parent)
-    , m_cacheID {QString::number(Utils::Random::rand(), 36)}
     , m_trRegex {u"QBT_TR\\((([^\\)]|\\)(?!QBT_TR))+)\\)QBT_TR\\[CONTEXT=([a-zA-Z_][a-zA-Z0-9_]*)\\]"_s}
     , m_authController {new AuthController(this, app, this)}
     , m_torrentCreationManager {new BitTorrent::TorrentCreationManager(app, this)}
@@ -486,6 +485,8 @@ void WebApplication::configure()
     {
         m_currentLocale = newLocale;
         m_translatedFiles.clear();
+        // the browser caches scripts and styles by their URL, which carries the cache ID
+        m_cacheID = QString::number(Utils::Random::rand(), 36);
 
         m_translationFileLoaded = m_translator.load((m_rootFolder / Path(u"translations/webui_"_s) + newLocale).data());
         if (m_translationFileLoaded)

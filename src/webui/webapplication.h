@@ -138,7 +138,7 @@ private:
     WebSession *m_currentSession = nullptr;
     Http::Request m_request;
     Http::Environment m_env;
-    const QString m_cacheID;
+    QString m_cacheID;
 
     enum class SessionStateChange
     {
