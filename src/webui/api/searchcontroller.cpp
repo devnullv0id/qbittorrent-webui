@@ -258,6 +258,12 @@ void SearchController::uninstallPluginAction()
 
     const QStringList names = params()[u"names"_s].split(u'|');
     for (const QString &name : names)
+    {
+        if (!SearchPluginManager::instance()->pluginInfo(name.trimmed()))
+            throw APIError(APIErrorType::NotFound, tr("Search plugin \"%1\" is not installed").arg(name.trimmed()));
+    }
+
+    for (const QString &name : names)
         SearchPluginManager::instance()->uninstallPlugin(name.trimmed());
 
     setResult(QString());
@@ -269,6 +275,12 @@ void SearchController::enablePluginAction()
 
     const QStringList names = params()[u"names"_s].split(u'|');
     const bool enable = Utils::String::parseBool(params()[u"enable"_s].trimmed()).value_or(false);
+
+    for (const QString &name : names)
+    {
+        if (!SearchPluginManager::instance()->pluginInfo(name.trimmed()))
+            throw APIError(APIErrorType::NotFound, tr("Search plugin \"%1\" is not installed").arg(name.trimmed()));
+    }
 
     for (const QString &name : names)
         SearchPluginManager::instance()->enablePlugin(name.trimmed(), enable);
