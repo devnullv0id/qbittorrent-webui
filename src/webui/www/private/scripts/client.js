@@ -1242,7 +1242,14 @@ window.addEventListener("DOMContentLoaded", async (event) => {
                     syncData(document.hidden
                         ? (window.qBittorrent.Cache.preferences.get().web_ui_session_timeout * 1000) / 2
                         : 2000);
-                });
+                })
+            .catch((error) => {
+                console.error(error);
+                // the update may have been applied in part, so start over
+                syncMainDataLastResponseId = 0;
+                syncRequestInProgress = false;
+                syncData(window.qBittorrent.Client.getSyncMainDataInterval());
+            });
     };
 
     updateMainData = () => {
