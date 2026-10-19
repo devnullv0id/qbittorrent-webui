@@ -598,6 +598,8 @@ namespace BitTorrent
         bool addTorrent_impl(const TorrentDescriptor &source, const AddTorrentParams &addTorrentParams);
 
         void updateShareLimitsTimer();
+        QHash<TorrentImpl *, ShareLimits> effectiveShareLimitsOfTorrents() const;
+        void notifyShareLimitsChanged(const QHash<TorrentImpl *, ShareLimits> &oldShareLimits);
         void backupTorrentFile(const Torrent *torrent, const TorrentDescriptor &torrentDescr);
         void backupTorrentFile(const Torrent *torrent, const QString &magnetURI, const Path &backupDirPathConf);
 
