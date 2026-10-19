@@ -40,4 +40,6 @@ namespace Http
 
     QByteArray serializeResponseHead(const ResponseStatus &responseStatus, const HeaderMap &responseHeaders);
     QByteArray serializeResponse(const Response &response, const Request &request);
+
+    QString contentDispositionAttachment(const QString &fileName);
 }

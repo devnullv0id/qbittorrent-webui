@@ -34,6 +34,7 @@
 #include <QLocale>
 #include <QStringTokenizer>
 #include <QStringView>
+#include <QUrl>
 
 #include "base/utils/gzip.h"
 #include "constants.h"
@@ -189,4 +190,23 @@ QByteArray Http::serializeResponse(const Http::Response &response, const Http::R
         data.append(responseContent);
 
     return data;
+}
+
+QString Http::contentDispositionAttachment(const QString &fileName)
+{
+    // [RFC 6266] 4.3. Disposition Parameter: 'Filename'
+    // headers are sent as Latin-1: a name that isn't plain ASCII gets an ASCII stand-in in `filename`
+    // and itself in `filename*`
+    QString asciiFileName = fileName;
+    for (QChar &ch : asciiFileName)
+    {
+        if ((ch < u' ') || (ch > u'~') || (ch == u'"') || (ch == u'\\'))
+            ch = u'_';
+    }
+
+    if (asciiFileName == fileName)
+        return u"attachment; filename=\"%1\""_s.arg(fileName);
+
+    return u"attachment; filename=\"%1\"; filename*=UTF-8''%2"_s
+        .arg(asciiFileName, QString::fromLatin1(QUrl::toPercentEncoding(fileName)));
 }
