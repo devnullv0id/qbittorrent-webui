@@ -56,6 +56,7 @@ namespace Http
 
     private:
         void abort(const ResponseStatus &responseStatus);
+        void refuse(const ResponseStatus &responseStatus);
         bool processRequest();
         void read();
 
@@ -65,6 +66,7 @@ namespace Http
         QElapsedTimer m_idleTimer;
         bool m_isProcessingRequest = false;
         bool m_isReadyRead = false;
+        bool m_isRefused = false;
         ResponseWriterImpl m_responseWriter;
     };
 }

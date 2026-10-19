@@ -58,6 +58,13 @@ Http::Connection::Connection(QTcpSocket *socket, IRequestHandler *requestHandler
     m_idleTimer.start();
     connect(m_socket, &QIODevice::readyRead, this, [this]
     {
+        if (m_isRefused)
+        {
+            // the timer isn't reset here, so the connection expires however much the client still sends
+            m_socket->skip(m_socket->bytesAvailable());
+            return;
+        }
+
         m_idleTimer.start();
         m_isReadyRead = true;
         read();
@@ -145,7 +152,7 @@ bool Http::Connection::processRequest()
             qWarning("%s", qUtf8Printable(tr("Http request size exceeds limitation, closing socket. Limit: %1, IP: %2")
                     .arg(QString::number(bufferLimit), m_socket->peerAddress().toString())));
 
-            abort({413, u"Payload Too Large"_s});
+            refuse({413, u"Payload Too Large"_s});
         }
         else if (m_isReadyRead)
         {
@@ -172,7 +179,7 @@ bool Http::Connection::processRequest()
         qWarning("%s", qUtf8Printable(tr("Http request size exceeds limitation, closing socket. Limit: %1, IP: %2")
                 .arg(QString::number(RequestParser::MAX_CONTENT_SIZE), m_socket->peerAddress().toString())));
 
-        abort({413, u"Payload Too Large"_s});
+        refuse({413, u"Payload Too Large"_s});
         break;
     }
 
@@ -183,6 +190,19 @@ void Http::Connection::abort(const ResponseStatus &responseStatus)
 {
     ResponseWriterImpl(m_socket, {}).setResponse({.status = responseStatus, .headers = {{HEADER_CONNECTION, u"close"_s}}});
     m_socket->close();
+}
+
+// The client is still sending the request: closing the socket now would reset the connection, and the client could
+// lose the answer. So the rest of the request is dropped until the client closes the connection or it expires.
+void Http::Connection::refuse(const ResponseStatus &responseStatus)
+{
+    // the status text is the body too, as for the WebAPI's other errors, so that the client has a message to show
+    ResponseWriterImpl(m_socket, {}).setResponse({.status = responseStatus
+            , .headers = {{HEADER_CONNECTION, u"close"_s}, {HEADER_CONTENT_TYPE, CONTENT_TYPE_TXT}}
+            , .content = responseStatus.text.toUtf8()});
+    m_isRefused = true;
+    m_receivedData.clear();
+    m_socket->skip(m_socket->bytesAvailable());
 }
 
 bool Http::Connection::hasExpired(const qint64 timeout) const
