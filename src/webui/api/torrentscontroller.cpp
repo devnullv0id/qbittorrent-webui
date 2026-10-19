@@ -2333,6 +2333,10 @@ void TorrentsController::fetchMetadataAction()
             throw APIError(APIErrorType::BadData, tr("'%1' is not a valid torrent file.").arg(source));
         }
 
+        // a failed download is reported once, the next request tries again
+        if (m_failedTorrentSource.contains(source))
+            throw APIError(APIErrorType::BadParams, tr("Unable to download '%1': %2").arg(source, m_failedTorrentSource.take(source)));
+
         if (!m_requestedTorrentSource.contains(source))
         {
             if (!downloaderParam.isEmpty())
@@ -2489,10 +2493,12 @@ void TorrentsController::onDownloadFinished(const Net::DownloadResult &result)
         {
             LogMsg(tr("Parse magnet URI failed. URI: \"%1\". Error: \"%2\".").arg(result.magnetURI, parseResult.error()), Log::WARNING);
             m_torrentSourceCache.remove(source);
+            m_failedTorrentSource.insert(source, parseResult.error());
         }
         break;
 
     default:
+        m_failedTorrentSource.insert(source, result.errorString);
         break;
     }
 }
@@ -2535,6 +2541,7 @@ void TorrentsController::onSearchPluginTorrentDownloaded(const QString &source, 
     {
         LogMsg(tr("Reading downloaded torrent data failed. Data: \"%1\". Error: \"%2\".").arg(data, readResult.error().message), Log::WARNING);
         m_torrentSourceCache.remove(source);
+        m_failedTorrentSource.insert(source, readResult.error().message);
     }
 }
 
