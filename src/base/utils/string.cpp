@@ -107,9 +107,9 @@ QStringList Utils::String::splitCommand(const QString &command)
 
 std::optional<bool> Utils::String::parseBool(const QString &string)
 {
-    if (string.compare(u"true", Qt::CaseInsensitive) == 0)
+    if ((string.compare(u"true", Qt::CaseInsensitive) == 0) || (string == u"1"))
         return true;
-    if (string.compare(u"false", Qt::CaseInsensitive) == 0)
+    if ((string.compare(u"false", Qt::CaseInsensitive) == 0) || (string == u"0"))
         return false;
 
     return std::nullopt;

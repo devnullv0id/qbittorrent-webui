@@ -628,8 +628,11 @@ namespace
         return priority;
     }
 
-    TorrentFilter::Status parseTorrentStatus(const QString &statusStr)
+    std::optional<TorrentFilter::Status> parseTorrentStatus(const QString &statusStr)
     {
+        if (statusStr.isEmpty() || (statusStr == u"all"))
+            return TorrentFilter::All;
+
         if (statusStr == u"downloading")
             return TorrentFilter::Downloading;
 
@@ -639,10 +642,11 @@ namespace
         if (statusStr == u"completed")
             return TorrentFilter::Completed;
 
-        if (statusStr == u"stopped")
+        // "paused" and "resumed" are the names used before v5.0
+        if ((statusStr == u"stopped") || (statusStr == u"paused"))
             return TorrentFilter::Stopped;
 
-        if (statusStr == u"running")
+        if ((statusStr == u"running") || (statusStr == u"resumed"))
             return TorrentFilter::Running;
 
         if (statusStr == u"active")
@@ -669,7 +673,7 @@ namespace
         if (statusStr == u"errored")
             return TorrentFilter::Errored;
 
-        return TorrentFilter::All;
+        return std::nullopt;
     }
 }
 
@@ -730,7 +734,9 @@ void TorrentsController::countAction()
 //   - offset (int): set offset (if less than 0 - offset from end)
 void TorrentsController::infoAction()
 {
-    const QString filter {params()[u"filter"_s]};
+    const std::optional<TorrentFilter::Status> status = parseTorrentStatus(params()[u"filter"_s]);
+    if (!status)
+        throw APIError(APIErrorType::BadParams, tr("'%1' parameter has invalid value").arg(u"filter"_s));
     const std::optional<QString> category = Utils::Dict::get(params(), u"category"_s);
     const std::optional<Tag> tag = getOptionalTag(params(), u"tag"_s);
     const QString sortedColumn {params()[u"sort"_s]};
@@ -750,7 +756,7 @@ void TorrentsController::infoAction()
             idSet->insert(BitTorrent::TorrentID::fromString(hash));
     }
 
-    const TorrentFilter torrentFilter {parseTorrentStatus(filter), idSet, category, tag, isPrivate};
+    const TorrentFilter torrentFilter {*status, idSet, category, tag, isPrivate};
     QVariantList torrentList;
     for (const BitTorrent::Torrent *torrent : asConst(BitTorrent::Session::instance()->torrents()))
     {
