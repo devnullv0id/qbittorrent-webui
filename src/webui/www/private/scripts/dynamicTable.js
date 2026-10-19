@@ -888,7 +888,8 @@ window.qBittorrent.DynamicTable ??= (() => {
 
         reselectRows(rowIds) {
             this.deselectAll();
-            this.selectedRows = rowIds.slice();
+            // rows removed meanwhile can't stay selected
+            this.selectedRows = rowIds.filter((rowId) => this.rows.has(rowId));
             this.setRowClass();
         }
 
