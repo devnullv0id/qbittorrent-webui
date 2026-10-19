@@ -79,9 +79,12 @@
         windowEl.addEventListener("keydown", (e) => {
             switch (e.key) {
                 case "Enter":
-                    e.preventDefault();
                     e.stopPropagation();
-                    cloneButton.click();
+                    // a focused button handles Enter itself
+                    if (e.target.type !== "button") {
+                        e.preventDefault();
+                        cloneButton.click();
+                    }
                     break;
                 case "Escape":
                     e.preventDefault();
