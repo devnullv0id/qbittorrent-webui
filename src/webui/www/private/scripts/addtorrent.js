@@ -368,7 +368,9 @@ window.qBittorrent.AddTorrent ??= (() => {
         if (!isAutoTMMEnabled())
             document.getElementById("useDownloadPathHidden").value = document.getElementById("useDownloadPath").checked;
 
-        document.getElementById("loadingSpinner").style.display = "block";
+        const loadingSpinner = document.getElementById("loadingSpinner");
+        const loadingSpinnerDisplay = loadingSpinner.style.display;
+        loadingSpinner.style.display = "block";
 
         if (document.getElementById("setDefaultCategory").checked) {
             const category = document.getElementById("category").value.trim();
@@ -398,7 +400,18 @@ window.qBittorrent.AddTorrent ??= (() => {
             requests.push(fetch("api/v2/torrents/add", { method: "POST", body: groupFormData }));
         }
 
-        Promise.allSettled(requests).then(() => {
+        Promise.allSettled(requests).then((results) => {
+            const failedEngines = [...groupedByEngine.keys()]
+                .filter((engine, i) => (results[i].status === "rejected") || !results[i].value.ok);
+            if (failedEngines.length > 0) {
+                // submitting again sends only the URLs that weren't added
+                urlEntries = urlEntries.filter((entry) => failedEngines.includes(entry.engine));
+                alert("QBT_TR(Unable to add torrents.)QBT_TR[CONTEXT=HttpServer]");
+                loadingSpinner.style.display = loadingSpinnerDisplay;
+                form.querySelector("button[type=submit]").disabled = false;
+                return;
+            }
+
             window.parent.qBittorrent.Client.closeFrameWindow(window);
         });
     };
