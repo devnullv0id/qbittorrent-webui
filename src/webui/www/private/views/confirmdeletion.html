@@ -37,7 +37,8 @@
 
         let deleteMessage;
         if (hashes.length === 1) {
-            const { full_data: { name } } = torrentsTable.getRow(hashes[0]);
+            // the torrent may have been removed before this ran
+            const name = torrentsTable.getRow(hashes[0])?.full_data.name ?? hashes[0];
             deleteMessage = "QBT_TR(Are you sure you want to remove %1 from the transfer list?)QBT_TR[CONTEXT=HttpServer]".replace("%1", `"${name}"`);
         }
         else {
