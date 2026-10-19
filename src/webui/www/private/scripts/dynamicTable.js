@@ -1981,7 +1981,7 @@ window.qBittorrent.DynamicTable ??= (() => {
                     : null;
             }
             catch (e) { // SyntaxError: Invalid regex pattern
-                return filteredRows;
+                return rowsHashes;
             }
 
             for (const row of this.rows.values()) {
