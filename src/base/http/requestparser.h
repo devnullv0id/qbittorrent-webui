@@ -42,7 +42,8 @@ namespace Http
             OK,
             Incomplete,
             BadMethod,
-            BadRequest
+            BadRequest,
+            PayloadTooLarge
         };
 
         struct ParseResult

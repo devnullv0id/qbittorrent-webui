@@ -3,6 +3,7 @@
 ## 2.17.0
 
 * `torrents/fetchMetadata` and `torrents/saveMetadata` endpoints use `source` as sent and no longer percent-decode it a second time
+* WebAPI responds with a 413 to a request whose body is over the size limit, instead of a 400
 * [#24955](https://github.com/qbittorrent/qBittorrent/pull/24955)
   * `search/results` endpoint includes `engineFullName` (string) data as the display name of the engine
 
