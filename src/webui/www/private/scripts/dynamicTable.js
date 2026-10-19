@@ -3832,9 +3832,9 @@ window.qBittorrent.DynamicTable ??= (() => {
             };
 
             this.columns["state_icon"].onVisibilityChange = (columnName) => {
-                // show state icon in name column only when standalone
+                // show state icon in source path column only when standalone
                 // state icon column is hidden
-                this.updateColumn("name", true);
+                this.updateColumn("source_path", true);
             };
 
             // source_path
