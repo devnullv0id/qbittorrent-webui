@@ -134,10 +134,19 @@ window.qBittorrent.Client ??= (() => {
         MochaUI.closeWindow(window.frameElement.closest("div.mocha"));
     };
 
+    // the longest delay setTimeout() takes
+    const MAX_TIMER_DELAY = (2 ** 31) - 1;
+
     const getSyncMainDataInterval = () => {
-        // Sync at half of the session timeout (in ms), to prevent timing out
-        if (document.hidden)
-            return (window.qBittorrent.Cache.preferences.get().web_ui_session_timeout * 1000) / 2;
+        if (document.hidden) {
+            // 0 never times out, also taken when the preferences failed to load
+            const sessionTimeout = window.qBittorrent.Cache.preferences.get().web_ui_session_timeout ?? 0;
+            // nothing to keep alive then, showing the page syncs again
+            if (sessionTimeout <= 0)
+                return MAX_TIMER_DELAY;
+            // Sync at half of the session timeout (in ms), to prevent timing out
+            return Math.min((sessionTimeout * 1000) / 2, MAX_TIMER_DELAY);
+        }
         return customSyncMainDataInterval ? customSyncMainDataInterval : serverSyncMainDataInterval;
     };
 
@@ -1251,9 +1260,7 @@ window.addEventListener("DOMContentLoaded", async (event) => {
                     if (errorDiv)
                         errorDiv.textContent = "QBT_TR(qBittorrent client is not reachable)QBT_TR[CONTEXT=HttpServer]";
                     syncRequestInProgress = false;
-                    syncData(document.hidden
-                        ? (window.qBittorrent.Cache.preferences.get().web_ui_session_timeout * 1000) / 2
-                        : 2000);
+                    syncData(document.hidden ? window.qBittorrent.Client.getSyncMainDataInterval() : 2000);
                 })
             .catch((error) => {
                 console.error(error);
