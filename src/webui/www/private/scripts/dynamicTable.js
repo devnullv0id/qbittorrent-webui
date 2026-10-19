@@ -2204,7 +2204,7 @@ window.qBittorrent.DynamicTable ??= (() => {
 
             const displayNum = function(td, row) {
                 const value = this.getRowValue(row);
-                const formattedValue = (value === "-1") ? "Unknown" : value;
+                const formattedValue = (value === -1) ? "QBT_TR(Unknown)QBT_TR[CONTEXT=HttpServer]" : value;
                 setCellText(td, formattedValue);
                 td.title = formattedValue;
             };
