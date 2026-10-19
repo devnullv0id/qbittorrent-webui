@@ -2138,6 +2138,9 @@ window.addEventListener("DOMContentLoaded", async (event) => {
             case "log":
                 window.qBittorrent.Log.load();
                 break;
+            case "rss":
+                window.qBittorrent.Rss.load();
+                break;
             case "transfers":
                 updatePropertiesPanel();
                 break;
