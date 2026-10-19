@@ -153,6 +153,10 @@ namespace
             return u"private, max-age=43200"_s;  // 12 hrs
         }
 
+        // checked with its ETag on every load, since a page carries the cache ID of its scripts and styles
+        if (mimeType == mimeDatabase.mimeTypeForName(Http::CONTENT_TYPE_HTML))
+            return u"private, no-cache"_s;
+
         return u"no-store"_s;
     }
 
