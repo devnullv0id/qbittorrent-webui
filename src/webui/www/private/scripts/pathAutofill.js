@@ -69,7 +69,13 @@ window.qBittorrent.pathAutofill ??= (() => {
         if (partialPath === "")
             return;
 
-        fetch(`api/v2/app/getDirectoryContent?dirPath=${partialPath}&mode=${mode}`, {
+        const url = new URL("api/v2/app/getDirectoryContent", window.location);
+        url.search = new URLSearchParams({
+            dirPath: partialPath,
+            mode: mode
+        });
+
+        fetch(url, {
                 method: "GET",
                 cache: "no-store"
             })
