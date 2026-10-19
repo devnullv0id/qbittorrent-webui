@@ -111,7 +111,7 @@ window.qBittorrent.PropPeers ??= (() => {
                     }
                     torrentPeersTable.updateTable(full_update);
 
-                    if (responseJSON["show_flags"]) {
+                    if (responseJSON["show_flags"] !== undefined) {
                         if (show_flags !== responseJSON["show_flags"]) {
                             show_flags = responseJSON["show_flags"];
                             torrentPeersTable.columns["country"].force_hide = !show_flags;
