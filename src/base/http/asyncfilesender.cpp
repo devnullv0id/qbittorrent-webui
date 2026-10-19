@@ -176,9 +176,22 @@ private:
 
         if ((offset < 0) || (size <= 0) || ((offset + size) > fileSize))
         {
+            HeaderMap headers = m_responseHeaders;
+            headers.insert(HEADER_CONTENT_RANGE, u"bytes */%1"_s.arg(QString::number(fileSize)));
             const QByteArray data = serializeResponse(
-                    {.status = {.code = 416, .text = u"Range Not Satisfiable"_s},
-                            .headers = {{HEADER_CONTENT_RANGE, u"bytes */%1"_s.arg(QString::number(fileSize))}}}
+                    {.status = {.code = 416, .text = u"Range Not Satisfiable"_s}, .headers = headers}
+                    , m_request);
+            m_dataPipe->write(data);
+            return false;
+        }
+
+        if ((offset > 0) && !file.seek(offset))
+        {
+            HeaderMap headers = m_responseHeaders;
+            headers.insert(HEADER_CONTENT_TYPE, CONTENT_TYPE_TXT);
+            const QByteArray data = serializeResponse(
+                    {.status = {.code = 500, .text = u"Internal Server Error"_s}, .headers = headers
+                            , .content = file.errorString().toUtf8()}
                     , m_request);
             m_dataPipe->write(data);
             return false;
@@ -186,16 +199,6 @@ private:
 
         m_responseHeaders.insert(HEADER_CONTENT_RANGE, u"bytes %1-%2/%3"_s
                 .arg(QString::number(offset), QString::number(rangeEnd), QString::number(fileSize)));
-
-        if ((offset > 0) && !file.seek(offset))
-        {
-            const QByteArray data = serializeResponse(
-                    {.status = {.code = 500, .text = u"Internal Server Error"_s},
-                            .content = file.errorString().toUtf8()}
-                    , m_request);
-            m_dataPipe->write(data);
-            return false;
-        }
 
         return true;
     }
@@ -208,7 +211,9 @@ private:
             const std::optional<RangeRequest> parseRangeResult = parseRangeHeader(rangeHeader);
             if (!parseRangeResult)
             {
-                const QByteArray data = serializeResponse({.status = {.code = 400, .text = u"Bad Request"_s}}, m_request);
+                const QByteArray data = serializeResponse(
+                        {.status = {.code = 400, .text = u"Bad Request"_s}, .headers = m_responseHeaders}
+                        , m_request);
                 m_dataPipe->write(data);
                 return;
             }
@@ -220,8 +225,11 @@ private:
 
         if (!file.open(QIODevice::ReadOnly))
         {
+            HeaderMap headers = m_responseHeaders;
+            headers.insert(HEADER_CONTENT_TYPE, CONTENT_TYPE_TXT);
             const QByteArray data = serializeResponse(
-                    {.status = {.code = 500, .text = u"Internal Server Error"_s}, .content = file.errorString().toUtf8()}
+                    {.status = {.code = 500, .text = u"Internal Server Error"_s}, .headers = headers
+                            , .content = file.errorString().toUtf8()}
                     , m_request);
             m_dataPipe->write(data);
             return;
