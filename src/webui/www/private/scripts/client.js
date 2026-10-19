@@ -2057,6 +2057,27 @@ window.addEventListener("DOMContentLoaded", async (event) => {
                             || ((str.length === 32) && !(/[^2-7A-Z]/i.test(str))); // v1 Base32 encoded SHA-1 info-hash
                     });
 
+                const addTorrentWindowEnabled = clientData.get("add_new_torrent_dialog_enabled") ?? true;
+                if (!addTorrentWindowEnabled) {
+                    if (urls.length === 0)
+                        return;
+
+                    fetch("api/v2/torrents/add", {
+                            method: "POST",
+                            body: new URLSearchParams({
+                                urls: urls.join("\n")
+                            })
+                        })
+                        .then((response) => {
+                            if (!response.ok)
+                                alert("QBT_TR(Unable to add torrents.)QBT_TR[CONTEXT=HttpServer]");
+                        })
+                        .catch((error) => {
+                            alert("QBT_TR(Unable to add torrents.)QBT_TR[CONTEXT=HttpServer]");
+                        });
+                    return;
+                }
+
                 for (const url of urls)
                     qBittorrent.Client.createAddTorrentWindow(url, url);
             }
