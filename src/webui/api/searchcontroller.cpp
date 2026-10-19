@@ -227,10 +227,11 @@ void SearchController::downloadTorrentAction()
     else
     {
         SearchDownloadHandler *downloadHandler = SearchPluginManager::instance()->downloadTorrent(pluginName, torrentUrl);
-        connect(downloadHandler, &SearchDownloadHandler::downloadFinished, this
-            , [this, downloadHandler](const QString &source, [[maybe_unused]] const QString &errorMessage)
+        // not tied to this session, which may end before the download does
+        connect(downloadHandler, &SearchDownloadHandler::downloadFinished, downloadHandler
+            , [app = app(), downloadHandler](const QString &source, [[maybe_unused]] const QString &errorMessage)
         {
-            app()->addTorrentManager()->addTorrent(source);
+            app->addTorrentManager()->addTorrent(source);
             downloadHandler->deleteLater();
         });
     }
