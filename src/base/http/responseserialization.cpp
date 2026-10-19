@@ -93,11 +93,8 @@ namespace
         });
     }
 
-    bool needCompressContent(const Http::Response &response, const Http::Request &request)
+    bool canCompressContent(const Http::Response &response)
     {
-        if (!acceptsGzipEncoding(request.headers.value(u"accept-encoding"_s)))
-            return false;
-
         // for very small files, compressing them only wastes cpu cycles
         if (response.content.size() <= 1024)  // 1 kb
             return false;
@@ -162,7 +159,12 @@ QByteArray Http::serializeResponse(const Http::Response &response, const Http::R
     Http::HeaderMap responseHeaders = response.headers;
     QByteArray responseContent = response.content;
 
-    if ((responseContentSize > 0) && needCompressContent(response, request))
+    const bool isCompressible = (responseContentSize > 0) && canCompressContent(response);
+    // the encoding of such a response depends on the request's Accept-Encoding
+    if (isCompressible)
+        responseHeaders.insert(Http::HEADER_VARY, u"Accept-Encoding"_s);
+
+    if (isCompressible && acceptsGzipEncoding(request.headers.value(u"accept-encoding"_s)))
     {
         // try compressing
         bool ok = false;

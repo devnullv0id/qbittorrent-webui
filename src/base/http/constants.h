@@ -57,6 +57,7 @@ namespace Http
     inline const QString HEADER_REFERRER_POLICY = u"referrer-policy"_s;
     inline const QString HEADER_SEC_FETCH_SITE = u"sec-fetch-site"_s;
     inline const QString HEADER_SET_COOKIE = u"set-cookie"_s;
+    inline const QString HEADER_VARY = u"vary"_s;
     inline const QString HEADER_X_API_KEY = u"x-api-key"_s;
     inline const QString HEADER_X_CONTENT_TYPE_OPTIONS = u"x-content-type-options"_s;
     inline const QString HEADER_X_FORWARDED_FOR = u"x-forwarded-for"_s;
