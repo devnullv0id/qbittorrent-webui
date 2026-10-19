@@ -1628,12 +1628,9 @@ window.addEventListener("DOMContentLoaded", async (event) => {
             // we must wait until the panel is fully loaded before proceeding.
             // this include's the panel's custom js, which is loaded via MochaUI.Panel's 'require' field.
             // MochaUI loads these files asynchronously and thus all required libs may not be available immediately
-            if (!isSearchPanelLoaded) {
-                setTimeout(() => {
-                    showSearchTab();
-                }, 100);
+            // (the panel's onload then shows the tab)
+            if (!isSearchPanelLoaded)
                 return;
-            }
 
             if (!searchTabInitialized) {
                 window.qBittorrent.Search.init();
@@ -1662,12 +1659,9 @@ window.addEventListener("DOMContentLoaded", async (event) => {
             // we must wait until the panel is fully loaded before proceeding.
             // this include's the panel's custom js, which is loaded via MochaUI.Panel's 'require' field.
             // MochaUI loads these files asynchronously and thus all required libs may not be available immediately
-            if (!isRssPanelLoaded) {
-                setTimeout(() => {
-                    showRssTab();
-                }, 100);
+            // (the panel's onload then shows the tab)
+            if (!isRssPanelLoaded)
                 return;
-            }
 
             if (!rssTabInitialized) {
                 window.qBittorrent.Rss.init();
@@ -1700,12 +1694,9 @@ window.addEventListener("DOMContentLoaded", async (event) => {
             // we must wait until the panel is fully loaded before proceeding.
             // this include's the panel's custom js, which is loaded via MochaUI.Panel's 'require' field.
             // MochaUI loads these files asynchronously and thus all required libs may not be available immediately
-            if (!isLogPanelLoaded) {
-                setTimeout(() => {
-                    showLogTab();
-                }, 100);
+            // (the panel's onload then shows the tab)
+            if (!isLogPanelLoaded)
                 return;
-            }
 
             if (!logTabInitialized) {
                 window.qBittorrent.Log.init();
@@ -1748,6 +1739,9 @@ window.addEventListener("DOMContentLoaded", async (event) => {
                 js: ["scripts/search.js?v=${CACHEID}"],
                 onload: () => {
                     isSearchPanelLoaded = true;
+                    // chosen while loading
+                    if (document.getElementById("searchTabLink").classList.contains("selected"))
+                        showSearchTab();
                 },
             },
             content: "",
@@ -1771,6 +1765,9 @@ window.addEventListener("DOMContentLoaded", async (event) => {
             contentURL: "views/rss.html?v=${CACHEID}",
             onContentLoaded: () => {
                 isRssPanelLoaded = true;
+                // chosen while loading
+                if (document.getElementById("rssTabLink").classList.contains("selected"))
+                    showRssTab();
             },
             content: "",
             column: "rssTabColumn",
@@ -1796,6 +1793,9 @@ window.addEventListener("DOMContentLoaded", async (event) => {
                 js: ["scripts/lib/vanillaSelectBox.js?v=${CACHEID}"],
                 onload: () => {
                     isLogPanelLoaded = true;
+                    // chosen while loading
+                    if (document.getElementById("logTabLink").classList.contains("selected"))
+                        showLogTab();
                 },
             },
             tabsURL: "views/logTabs.html?v=${CACHEID}",
