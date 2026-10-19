@@ -158,7 +158,7 @@ RequestParser::ParseResult RequestParser::doParse(const QByteArrayView data)
             if (httpBodyView.length() < contentLength)
             {
                 qDebug() << Q_FUNC_INFO << "incomplete request";
-                return {ParseStatus::Incomplete, Request(), 0};
+                return {ParseStatus::Incomplete, m_request, 0};
             }
 
             if (!parsePostMessage(httpBodyView))

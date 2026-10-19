@@ -49,6 +49,7 @@ namespace Http
     inline const QString HEADER_CROSS_ORIGIN_OPENER_POLICY  = u"cross-origin-opener-policy"_s;
     inline const QString HEADER_DATE = u"date"_s;
     inline const QString HEADER_ETAG = u"etag"_s;
+    inline const QString HEADER_EXPECT = u"expect"_s;
     inline const QString HEADER_HOST = u"host"_s;
     inline const QString HEADER_IF_NONE_MATCH = u"if-none-match"_s;
     inline const QString HEADER_ORIGIN = u"origin"_s;
