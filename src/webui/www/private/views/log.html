@@ -373,8 +373,10 @@
 
                     document.getElementById("error_div").textContent = "";
 
-                    if (document.getElementById("logTabColumn").classList.contains("invisible"))
+                    if (document.getElementById("logTabColumn").classList.contains("invisible")) {
+                        tableInfo[curTab].progress = false;
                         return;
+                    }
 
                     const responseJSON = await response.json();
                     if (responseJSON.length > 0) {
@@ -416,6 +418,11 @@
                     document.getElementById("error_div").textContent = "QBT_TR(qBittorrent client is not reachable)QBT_TR[CONTEXT=HttpServer]";
                     tableInfo[curTab].progress = false;
                     syncLogWithInterval(10000);
+                })
+                .catch((error) => {
+                    console.error(error);
+                    tableInfo[curTab].progress = false;
+                    syncLogWithInterval(getSyncLogDataInterval());
                 });
         };
 
