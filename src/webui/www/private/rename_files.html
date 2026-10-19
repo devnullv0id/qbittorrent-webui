@@ -96,7 +96,7 @@
                 fileRenamer.appliesTo = window.qBittorrent.MultiRename.AppliesTo[multirename_appliesTo];
                 document.getElementById("applies_to_option").value = fileRenamer.appliesTo;
 
-                const multirename_includeFiles = localPreferences.get("multirename_includeFiles", true);
+                const multirename_includeFiles = localPreferences.get("multirename_includeFiles", "true");
                 fileRenamer.includeFiles = multirename_includeFiles === "true";
                 document.getElementById("include_files").checked = fileRenamer.includeFiles;
 
