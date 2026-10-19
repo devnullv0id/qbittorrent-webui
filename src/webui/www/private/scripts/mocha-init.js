@@ -469,12 +469,17 @@ const initializeWindows = () => {
         const hashes = torrentsTable.selectedRowsIds();
         if (hashes.length) {
             fetch("api/v2/torrents/toggleSequentialDownload", {
-                method: "POST",
-                body: new URLSearchParams({
-                    hashes: hashes.join("|")
+                    method: "POST",
+                    body: new URLSearchParams({
+                        hashes: hashes.join("|")
+                    })
                 })
-            });
-            updateMainData();
+                .then((response) => {
+                    if (!response.ok)
+                        return;
+
+                    updateMainData();
+                });
         }
     };
 
@@ -482,12 +487,17 @@ const initializeWindows = () => {
         const hashes = torrentsTable.selectedRowsIds();
         if (hashes.length) {
             fetch("api/v2/torrents/toggleFirstLastPiecePrio", {
-                method: "POST",
-                body: new URLSearchParams({
-                    hashes: hashes.join("|")
+                    method: "POST",
+                    body: new URLSearchParams({
+                        hashes: hashes.join("|")
+                    })
                 })
-            });
-            updateMainData();
+                .then((response) => {
+                    if (!response.ok)
+                        return;
+
+                    updateMainData();
+                });
         }
     };
 
@@ -495,13 +505,18 @@ const initializeWindows = () => {
         const hashes = torrentsTable.selectedRowsIds();
         if (hashes.length) {
             fetch("api/v2/torrents/setSuperSeeding", {
-                method: "POST",
-                body: new URLSearchParams({
-                    hashes: hashes.join("|"),
-                    value: val
+                    method: "POST",
+                    body: new URLSearchParams({
+                        hashes: hashes.join("|"),
+                        value: val
+                    })
                 })
-            });
-            updateMainData();
+                .then((response) => {
+                    if (!response.ok)
+                        return;
+
+                    updateMainData();
+                });
         }
     };
 
@@ -509,13 +524,18 @@ const initializeWindows = () => {
         const hashes = torrentsTable.selectedRowsIds();
         if (hashes.length) {
             fetch("api/v2/torrents/setForceStart", {
-                method: "POST",
-                body: new URLSearchParams({
-                    hashes: hashes.join("|"),
-                    value: "true"
+                    method: "POST",
+                    body: new URLSearchParams({
+                        hashes: hashes.join("|"),
+                        value: "true"
+                    })
                 })
-            });
-            updateMainData();
+                .then((response) => {
+                    if (!response.ok)
+                        return;
+
+                    updateMainData();
+                });
         }
     };
 
@@ -622,12 +642,17 @@ const initializeWindows = () => {
         const hashes = torrentsTable.selectedRowsIds();
         if (hashes.length) {
             fetch("api/v2/torrents/stop", {
-                method: "POST",
-                body: new URLSearchParams({
-                    hashes: hashes.join("|")
+                    method: "POST",
+                    body: new URLSearchParams({
+                        hashes: hashes.join("|")
+                    })
                 })
-            });
-            updateMainData();
+                .then((response) => {
+                    if (!response.ok)
+                        return;
+
+                    updateMainData();
+                });
         }
     };
 
@@ -635,12 +660,17 @@ const initializeWindows = () => {
         const hashes = torrentsTable.selectedRowsIds();
         if (hashes.length) {
             fetch("api/v2/torrents/start", {
-                method: "POST",
-                body: new URLSearchParams({
-                    hashes: hashes.join("|")
+                    method: "POST",
+                    body: new URLSearchParams({
+                        hashes: hashes.join("|")
+                    })
                 })
-            });
-            updateMainData();
+                .then((response) => {
+                    if (!response.ok)
+                        return;
+
+                    updateMainData();
+                });
         }
     };
 
@@ -739,12 +769,17 @@ const initializeWindows = () => {
         const hashes = torrentsTable.selectedRowsIds();
         if (hashes.length) {
             fetch("api/v2/torrents/reannounce", {
-                method: "POST",
-                body: new URLSearchParams({
-                    hashes: hashes.join("|")
+                    method: "POST",
+                    body: new URLSearchParams({
+                        hashes: hashes.join("|")
+                    })
                 })
-            });
-            updateMainData();
+                .then((response) => {
+                    if (!response.ok)
+                        return;
+
+                    updateMainData();
+                });
         }
     };
 
@@ -1121,12 +1156,18 @@ const initializeWindows = () => {
             return;
 
         fetch((isSet ? "api/v2/torrents/addTags" : "api/v2/torrents/removeTags"), {
-            method: "POST",
-            body: new URLSearchParams({
-                hashes: hashes.join("|"),
-                tags: tag
+                method: "POST",
+                body: new URLSearchParams({
+                    hashes: hashes.join("|"),
+                    tags: tag
+                })
             })
-        });
+            .then((response) => {
+                if (!response.ok)
+                    return;
+
+                updateMainData();
+            });
     };
 
     torrentRemoveAllTagsFN = () => {
@@ -1137,11 +1178,17 @@ const initializeWindows = () => {
                 return;
 
             fetch("api/v2/torrents/removeTags", {
-                method: "POST",
-                body: new URLSearchParams({
-                    hashes: hashes.join("|")
+                    method: "POST",
+                    body: new URLSearchParams({
+                        hashes: hashes.join("|")
+                    })
                 })
-            });
+                .then((response) => {
+                    if (!response.ok)
+                        return;
+
+                    updateMainData();
+                });
         }
     };
 
@@ -1170,12 +1217,17 @@ const initializeWindows = () => {
 
     removeTagFN = (tag) => {
         fetch("api/v2/torrents/deleteTags", {
-            method: "POST",
-            body: new URLSearchParams({
-                tags: tag
+                method: "POST",
+                body: new URLSearchParams({
+                    tags: tag
+                })
             })
-        });
-        window.qBittorrent.Filters.clearTagFilter();
+            .then((response) => {
+                if (!response.ok)
+                    return;
+
+                window.qBittorrent.Filters.clearTagFilter();
+            });
     };
 
     deleteUnusedTagsFN = () => {
@@ -1185,12 +1237,17 @@ const initializeWindows = () => {
                 tags.push(tag);
         }
         fetch("api/v2/torrents/deleteTags", {
-            method: "POST",
-            body: new URLSearchParams({
-                tags: tags.join(",")
+                method: "POST",
+                body: new URLSearchParams({
+                    tags: tags.join(",")
+                })
             })
-        });
-        window.qBittorrent.Filters.clearTagFilter();
+            .then((response) => {
+                if (!response.ok)
+                    return;
+
+                window.qBittorrent.Filters.clearTagFilter();
+            });
     };
 
     deleteTrackerFN = (trackerHost) => {
@@ -1338,12 +1395,17 @@ const initializeWindows = () => {
 
         if (confirm("QBT_TR(Would you like to stop all torrents?)QBT_TR[CONTEXT=MainWindow]")) {
             fetch("api/v2/torrents/stop", {
-                method: "POST",
-                body: new URLSearchParams({
-                    hashes: "all"
+                    method: "POST",
+                    body: new URLSearchParams({
+                        hashes: "all"
+                    })
                 })
-            });
-            updateMainData();
+                .then((response) => {
+                    if (!response.ok)
+                        return;
+
+                    updateMainData();
+                });
         }
     });
 
@@ -1353,12 +1415,17 @@ const initializeWindows = () => {
 
         if (confirm("QBT_TR(Would you like to start all torrents?)QBT_TR[CONTEXT=MainWindow]")) {
             fetch("api/v2/torrents/start", {
-                method: "POST",
-                body: new URLSearchParams({
-                    hashes: "all"
+                    method: "POST",
+                    body: new URLSearchParams({
+                        hashes: "all"
+                    })
                 })
-            });
-            updateMainData();
+                .then((response) => {
+                    if (!response.ok)
+                        return;
+
+                    updateMainData();
+                });
         }
     });
 
@@ -1420,12 +1487,17 @@ const initializeWindows = () => {
         const hashes = torrentsTable.selectedRowsIds();
         if (hashes.length) {
             fetch(`api/v2/torrents/${cmd}`, {
-                method: "POST",
-                body: new URLSearchParams({
-                    hashes: hashes.join("|")
+                    method: "POST",
+                    body: new URLSearchParams({
+                        hashes: hashes.join("|")
+                    })
                 })
-            });
-            updateMainData();
+                .then((response) => {
+                    if (!response.ok)
+                        return;
+
+                    updateMainData();
+                });
         }
     };
 
