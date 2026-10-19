@@ -125,6 +125,8 @@ void WebUI::configure()
         {
             m_httpServer->disableHttps();
         }
+        // what the server does, not what was asked for: a failed setup falls back to HTTP
+        m_webapp->setHttpsEnabled(m_httpServer->isHttps());
 
         if (!m_httpServer->isListening())
         {

@@ -92,6 +92,7 @@ public:
 
     void setUsername(const QString &username);
     void setPasswordHash(const QByteArray &passwordHash);
+    void setHttpsEnabled(bool enabled);
 
 private:
     QString clientId() const;
