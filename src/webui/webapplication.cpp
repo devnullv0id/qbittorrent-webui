@@ -139,7 +139,11 @@ namespace
         if (contentType.startsWith(u"image/"))
             return u"private, max-age=604800"_s;  // 1 week
 
-        if ((contentType == Http::CONTENT_TYPE_CSS) || (contentType == Http::CONTENT_TYPE_JS))
+        // MIME databases differ in which name of a type is the main one, e.g. text/javascript or application/javascript
+        const QMimeDatabase mimeDatabase;
+        const QMimeType mimeType = mimeDatabase.mimeTypeForName(contentType);
+        if ((mimeType == mimeDatabase.mimeTypeForName(Http::CONTENT_TYPE_CSS))
+            || (mimeType == mimeDatabase.mimeTypeForName(Http::CONTENT_TYPE_JS)))
         {
             // short interval in case of program update
             return u"private, max-age=43200"_s;  // 12 hrs
