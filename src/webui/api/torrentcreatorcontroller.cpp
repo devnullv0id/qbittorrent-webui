@@ -67,13 +67,15 @@ namespace
     using Utils::String::parseInt;
 
 #ifdef QBT_USES_LIBTORRENT2
-    BitTorrent::TorrentFormat parseTorrentFormat(const QString &str)
+    std::optional<BitTorrent::TorrentFormat> parseTorrentFormat(const QString &str)
     {
         if (str == u"v1")
             return BitTorrent::TorrentFormat::V1;
         if (str == u"v2")
             return BitTorrent::TorrentFormat::V2;
-        return BitTorrent::TorrentFormat::Hybrid;
+        if (str.isEmpty() || (str == u"hybrid"))
+            return BitTorrent::TorrentFormat::Hybrid;
+        return std::nullopt;
     }
 
     QString torrentFormatToString(const BitTorrent::TorrentFormat torrentFormat)
@@ -112,6 +114,19 @@ namespace
             return u"Finished"_s;
         }
     }
+
+    // an absent or empty parameter gets the default; any other value that isn't an integer is refused
+    int parseIntParam(const StringMap &params, const QString &name, const int defaultValue)
+    {
+        const QString value = params.value(name);
+        if (value.isEmpty())
+            return defaultValue;
+
+        const std::optional<int> number = parseInt(value);
+        if (!number)
+            throw APIError(APIErrorType::BadParams, TorrentCreatorController::tr("'%1' parameter has invalid value").arg(name));
+        return *number;
+    }
 }
 
 TorrentCreatorController::TorrentCreatorController(BitTorrent::TorrentCreationManager *torrentCreationManager, IApplication *app, QObject *parent)
@@ -124,17 +139,23 @@ void TorrentCreatorController::addTaskAction()
 {
     requireParams({KEY_SOURCE_PATH});
 
+#ifdef QBT_USES_LIBTORRENT2
+    const std::optional<BitTorrent::TorrentFormat> torrentFormat = parseTorrentFormat(params()[KEY_FORMAT].toLower());
+    if (!torrentFormat)
+        throw APIError(APIErrorType::BadParams, tr("'%1' parameter has invalid value").arg(KEY_FORMAT));
+#endif
+
     const BitTorrent::TorrentCreatorParams createTorrentParams
     {
         .ignoreDotfiles = parseBool(params()[KEY_IGNORE_DOTFILES]).value_or(true),
         .isPrivate = parseBool(params()[KEY_PRIVATE]).value_or(false),
 #ifdef QBT_USES_LIBTORRENT2
-        .torrentFormat = parseTorrentFormat(params()[KEY_FORMAT].toLower()),
+        .torrentFormat = *torrentFormat,
 #else
         .isAlignmentOptimized = parseBool(params()[KEY_OPTIMIZE_ALIGNMENT]).value_or(true),
-        .paddedFileSizeLimit = parseInt(params()[KEY_PADDED_FILE_SIZE_LIMIT]).value_or(-1),
+        .paddedFileSizeLimit = parseIntParam(params(), KEY_PADDED_FILE_SIZE_LIMIT, -1),
 #endif
-        .pieceSize = parseInt(params()[KEY_PIECE_SIZE]).value_or(0),
+        .pieceSize = parseIntParam(params(), KEY_PIECE_SIZE, 0),
         .sourcePath = Path(params()[KEY_SOURCE_PATH]),
         .torrentFilePath = Path(params()[KEY_TORRENT_FILE_PATH]),
         .comment = params()[KEY_COMMENT],

@@ -25,6 +25,10 @@
 * WebAPI accepts a `Host` header whose domain is in the server domains on any port
 * WebAPI responds with a 405 that includes the `Allow` header when an endpoint does not take the request's method
 * WebAPI responds with a 403 instead of a 401 when the cross-site request check or the Host header validation refuses a request
+* Boolean parameters accept `1` and `0` as well as `true` and `false`
+* `torrents/info` endpoint responds to an unknown `filter` with a 400
+* `torrents/info` endpoint accepts `paused` and `resumed` as `filter`, meaning `stopped` and `running`
+* `torrentcreator/addTask` endpoint responds with a 400 to an unknown `format`, and to a `pieceSize` or `paddedFileSizeLimit` that isn't an integer
 * [#24955](https://github.com/qbittorrent/qBittorrent/pull/24955)
   * `search/results` endpoint includes `engineFullName` (string) data as the display name of the engine
 
