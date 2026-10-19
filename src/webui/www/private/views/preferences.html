@@ -2892,6 +2892,7 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
                         document.getElementById("webUIAPIKeyCopyButton").disabled = false;
                         document.getElementById("webUIAPIKeyRotateButton").dataset.hasKey = "true";
                         document.querySelector("#webUIAPIKeyRotateButton img").title = "QBT_TR(Rotate API key)QBT_TR[CONTEXT=OptionsDialog]";
+                        document.getElementById("webUIAPIKeyRotateButton").setAttribute("aria-label", "QBT_TR(Rotate API key)QBT_TR[CONTEXT=OptionsDialog]");
                         document.getElementById("webUIAPIKeyDeleteButton").disabled = false;
                     }
 
@@ -3703,6 +3704,7 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
                     document.getElementById("webUIAPIKeyCopyButton").disabled = false;
                     document.getElementById("webUIAPIKeyRotateButton").dataset.hasKey = "true";
                     document.querySelector("#webUIAPIKeyRotateButton img").title = "QBT_TR(Rotate API key)QBT_TR[CONTEXT=OptionsDialog]";
+                    document.getElementById("webUIAPIKeyRotateButton").setAttribute("aria-label", "QBT_TR(Rotate API key)QBT_TR[CONTEXT=OptionsDialog]");
                     document.getElementById("webUIAPIKeyDeleteButton").disabled = false;
                 })
                 .catch((error) => {
@@ -3727,6 +3729,7 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
                     document.getElementById("webUIAPIKeyCopyButton").disabled = true;
                     document.getElementById("webUIAPIKeyRotateButton").dataset.hasKey = "false";
                     document.querySelector("#webUIAPIKeyRotateButton img").title = "QBT_TR(Generate API key)QBT_TR[CONTEXT=OptionsDialog]";
+                    document.getElementById("webUIAPIKeyRotateButton").setAttribute("aria-label", "QBT_TR(Generate API key)QBT_TR[CONTEXT=OptionsDialog]");
                     document.getElementById("webUIAPIKeyDeleteButton").disabled = true;
                 })
                 .catch((error) => {
