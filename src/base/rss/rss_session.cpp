@@ -235,8 +235,22 @@ nonstd::expected<void, QString> Session::moveItem(Item *item, const QString &des
         srcFolder->removeItem(item);
         destFolder->addItem(item);
     }
-    m_itemsByPath.insert(destPath, m_itemsByPath.take(item->path()));
-    item->setPath(destPath);
+
+    // the items inside a moved folder move with it
+    const QString srcPath = item->path();
+    QList<std::pair<Item *, QString>> movedItems {{item, destPath}};
+    for (Item *subItem : asConst(m_itemsByPath))
+    {
+        if (subItem->path().startsWith(srcPath + Item::PathSeparator))
+            movedItems.append({subItem, (destPath + subItem->path().sliced(srcPath.size()))});
+    }
+
+    // every path is updated before `pathChanged` lets anyone look up an item's folder
+    for (const auto &[movedItem, path] : asConst(movedItems))
+        m_itemsByPath.insert(path, m_itemsByPath.take(movedItem->path()));
+    for (const auto &[movedItem, path] : asConst(movedItems))
+        movedItem->setPath(path);
+
     store();
     return {};
 }
