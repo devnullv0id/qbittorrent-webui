@@ -237,6 +237,11 @@
         const rssFeedTable = new window.qBittorrent.DynamicTable.RssFeedTable();
         const rssArticleTable = new window.qBittorrent.DynamicTable.RssArticleTable();
 
+        // whether the item at itemPath is the one at folderPath or inside it; "" is the root folder
+        const containsPath = (folderPath, itemPath) => {
+            return (folderPath === "") || (itemPath === folderPath) || itemPath.startsWith(`${folderPath}\\`);
+        };
+
         const init = () => {
             const pref = window.parent.qBittorrent.Cache.preferences.get();
 
@@ -252,7 +257,7 @@
                         for (const rowId of rssFeedTable.selectedRows) {
                             const selectedPath = rssFeedTable.getRow(rowId).full_data.dataPath;
                             for (const row of rssFeedTable.getRowValues()) {
-                                if ((row.full_data.dataPath.slice(0, selectedPath.length) === selectedPath) && (row.full_data.dataUid !== ""))
+                                if (containsPath(selectedPath, row.full_data.dataPath) && (row.full_data.dataUid !== ""))
                                     feedsToUpdate.add(row);
                             }
                         }
@@ -273,7 +278,7 @@
                             .map(rowID => rssFeedTable.getRow(rowID).full_data.dataPath);
                         // filter children
                         const reducedDatapaths = selectedDatapaths.filter((path) =>
-                            selectedDatapaths.filter(innerPath => path.startsWith(innerPath)).length === 1
+                            selectedDatapaths.filter(innerPath => containsPath(innerPath, path)).length === 1
                         );
                         removeItem(reducedDatapaths);
                     },
@@ -467,7 +472,7 @@
 
             const childFeeds = new Set();
             for (const row of rssFeedTable.getRowValues()) {
-                if ((row.full_data.dataPath.slice(0, path.length) === path) && (row.full_data.dataUid !== ""))
+                if (containsPath(path, row.full_data.dataPath) && (row.full_data.dataUid !== ""))
                     childFeeds.add(row.full_data.dataUid);
             }
 
@@ -715,7 +720,7 @@
 
                         // find all parents (and self) and add unread difference
                         for (const row of rssFeedTable.getRowValues()) {
-                            if (r.fullName.slice(0, row.full_data.dataPath.length) === row.full_data.dataPath)
+                            if (containsPath(row.full_data.dataPath, r.fullName))
                                 row.full_data.unread += unreadDifference;
                         }
 
@@ -725,7 +730,7 @@
                         feedData[r.uid] = r.articles;
 
                         // if feed that is open changed, reload
-                        if ((openedFeedPath !== undefined) && (r.fullName.slice(0, openedFeedPath.length) === openedFeedPath))
+                        if ((openedFeedPath !== undefined) && containsPath(openedFeedPath, r.fullName))
                             showRssFeed(r.fullName);
                     }
                     else {
@@ -746,12 +751,12 @@
                             needsUpdate = true;
                             // find all items that contain this rss feed and add read difference
                             for (const row of rssFeedTable.getRowValues()) {
-                                if (r.fullName.slice(0, row.full_data.dataPath.length) === row.full_data.dataPath)
+                                if (containsPath(row.full_data.dataPath, r.fullName))
                                     row.full_data.unread += readDifference;
                             }
 
                             // if feed that is opened changed update dynamically
-                            if ((openedFeedPath !== undefined) && (r.fullName.slice(0, openedFeedPath.length) === openedFeedPath)) {
+                            if ((openedFeedPath !== undefined) && containsPath(openedFeedPath, r.fullName)) {
                                 for (let i = 0; i < r.articles.length; ++i) {
                                     for (const row of rssArticleTable.getRowValues()) {
                                         if ((row.full_data.feedUid === r.uid) && (row.full_data.dataId === r.articles[i].id)) {
@@ -831,7 +836,7 @@
                         const numberOfUnread = dataEntry.articles.reduce(((count, article) => !article.isRead ? (count + 1) : count), 0);
                         // find all items that contain this rss feed and add unread count
                         for (const row of rssFeedTable.getRowValues()) {
-                            if (dataEntry.fullName.slice(0, row.full_data.dataPath.length) === row.full_data.dataPath)
+                            if (containsPath(row.full_data.dataPath, dataEntry.fullName))
                                 row.full_data.unread += numberOfUnread;
                         }
 
@@ -944,7 +949,7 @@
         const markItemAsRead = (path) => {
             // feed data mark as read
             for (const feedID in feedData) {
-                if (pathByFeedId.get(feedID).slice(0, path.length) === path) {
+                if (containsPath(path, pathByFeedId.get(feedID))) {
                     for (const el of feedData[feedID])
                         el.isRead = true;
                 }
@@ -956,7 +961,7 @@
 
             // find all children and set unread count to 0
             for (const row of rssFeedTable.getRowValues()) {
-                if ((row.full_data.dataPath.slice(0, path.length) === path) && (path !== row.full_data.dataPath))
+                if (containsPath(path, row.full_data.dataPath) && (path !== row.full_data.dataPath))
                     row.full_data.unread = 0;
             }
 
@@ -971,7 +976,7 @@
 
             // find all parents (and self) and subtract previous unread count
             for (const row of rssFeedTable.getRowValues()) {
-                if (path.slice(0, row.full_data.dataPath.length) === row.full_data.dataPath)
+                if (containsPath(row.full_data.dataPath, path))
                     row.full_data.unread -= prevUnreadCount;
             }
 
@@ -1016,7 +1021,7 @@
             if (!prevReadState) {
                 // find all items that contain this feed and subtract 1
                 for (const row of rssFeedTable.getRowValues()) {
-                    if (path.slice(0, row.full_data.dataPath.length) === row.full_data.dataPath)
+                    if (containsPath(row.full_data.dataPath, path))
                         row.full_data.unread -= 1;
                 }
 
@@ -1044,7 +1049,7 @@
                 .map((sRow) => rssFeedTable.getRow(sRow).full_data.dataPath);
             // filter children
             const reducedDatapaths = selectedDatapaths.filter((path) =>
-                selectedDatapaths.filter(innerPath => path.startsWith(innerPath)).length === 1
+                selectedDatapaths.filter(innerPath => containsPath(innerPath, path)).length === 1
             );
             for (const path of reducedDatapaths)
                 markItemAsRead(path);
