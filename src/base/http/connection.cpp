@@ -70,6 +70,10 @@ Http::Connection::Connection(QTcpSocket *socket, IRequestHandler *requestHandler
     connect(&m_responseWriter, &ResponseWriter::failed, m_socket, &QAbstractSocket::abort);
     connect(&m_responseWriter, &ResponseWriter::finished, this, [this]
     {
+        // a response sent at once has its next request processed already, whose response may still be streaming
+        if (!m_responseWriter.isFinished())
+            return;
+
         m_isProcessingRequest = false;
         if (!m_receivedData.isEmpty())
             processRequest(); // try to fetch next request
