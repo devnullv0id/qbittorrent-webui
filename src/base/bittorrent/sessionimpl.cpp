@@ -1195,6 +1195,7 @@ bool SessionImpl::setCategoryOptions(const QString &categoryName, const Category
         }
     }
 
+    const QHash<TorrentImpl *, ShareLimits> oldShareLimits = effectiveShareLimitsOfTorrents();
     currentOptions = options;
     storeCategories();
     updateShareLimitsTimer();
@@ -1205,6 +1206,7 @@ bool SessionImpl::setCategoryOptions(const QString &categoryName, const Category
             torrent->handleCategoryOptionsChanged();
     }
 
+    notifyShareLimitsChanged(oldShareLimits);
     emit categoryOptionsChanged(categoryName);
     return true;
 }
@@ -1369,6 +1371,7 @@ void SessionImpl::setShareLimits(ShareLimits shareLimits)
 
     if (shareLimits != m_shareLimits)
     {
+        const QHash<TorrentImpl *, ShareLimits> oldShareLimits = effectiveShareLimitsOfTorrents();
         m_shareLimits = shareLimits;
 
         m_globalMaxRatio = shareLimits.ratioLimit;
@@ -1378,6 +1381,7 @@ void SessionImpl::setShareLimits(ShareLimits shareLimits)
         m_shareLimitsMode = shareLimits.mode;
 
         updateShareLimitsTimer();
+        notifyShareLimitsChanged(oldShareLimits);
     }
 }
 
@@ -5487,6 +5491,30 @@ void SessionImpl::updateShareLimitsTimer()
     {
         m_seedingLimitTimer->start();
     }
+}
+
+QHash<TorrentImpl *, ShareLimits> SessionImpl::effectiveShareLimitsOfTorrents() const
+{
+    QHash<TorrentImpl *, ShareLimits> shareLimits;
+    shareLimits.reserve(m_torrents.size());
+    for (TorrentImpl *const torrent : asConst(m_torrents))
+        shareLimits.insert(torrent, torrent->effectiveShareLimits());
+    return shareLimits;
+}
+
+// the torrents aren't told when the global or category share limits they use change
+void SessionImpl::notifyShareLimitsChanged(const QHash<TorrentImpl *, ShareLimits> &oldShareLimits)
+{
+    QList<Torrent *> updatedTorrents;
+    for (auto it = oldShareLimits.cbegin(); it != oldShareLimits.cend(); ++it)
+    {
+        TorrentImpl *const torrent = it.key();
+        if (torrent->effectiveShareLimits() != it.value())
+            updatedTorrents.append(torrent);
+    }
+
+    if (!updatedTorrents.isEmpty())
+        emit torrentsUpdated(updatedTorrents);
 }
 
 void SessionImpl::backupTorrentFile(const Torrent *torrent, const TorrentDescriptor &torrentDescr)
