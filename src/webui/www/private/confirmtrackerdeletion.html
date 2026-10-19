@@ -45,6 +45,8 @@
                         if (!response.ok)
                             return;
 
+                        window.parent.updateMainData();
+                        window.parent.qBittorrent.Filters.clearTrackerFilter();
                         window.parent.qBittorrent.Client.closeFrameWindow(window);
                     });
             });

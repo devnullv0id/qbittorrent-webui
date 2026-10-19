@@ -1239,8 +1239,7 @@ const initializeWindows = () => {
             maximizable: false,
             padding: 10,
             width: window.qBittorrent.Dialog.limitWidthToViewport(424),
-            height: 100,
-            onCloseComplete: trackerRemoved
+            height: 100
         });
     };
 
