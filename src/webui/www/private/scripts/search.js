@@ -351,7 +351,9 @@ window.qBittorrent.Search ??= (() => {
         searchState.delete(oldSearchId);
 
         updateTabTitle(searchId);
-        searchResultsTable.clear();
+        // the table holds the shown tab's results, which may be another tab's by now
+        if (searchId === getSelectedSearchId())
+            searchResultsTable.clear();
         updateSearchResultsData(searchId);
     };
 
