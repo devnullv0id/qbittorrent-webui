@@ -28,18 +28,22 @@
 
 #pragma once
 
+#include <QStringList>
+
 #include "base/exceptions.h"
 #include "response.h"
 
 class HTTPError : public RuntimeError
 {
 public:
-    HTTPError(Http::ResponseStatus responseStatus, const QString &message = {});
+    HTTPError(Http::ResponseStatus responseStatus, const QString &message = {}, Http::HeaderMap headers = {});
 
     const Http::ResponseStatus &status() const;
+    const Http::HeaderMap &headers() const;  // to be sent along with the error
 
 private:
     Http::ResponseStatus m_responseStatus;
+    Http::HeaderMap m_headers;
 };
 
 class BadRequestHTTPError : public HTTPError
@@ -69,7 +73,7 @@ public:
 class MethodNotAllowedHTTPError : public HTTPError
 {
 public:
-    explicit MethodNotAllowedHTTPError(const QString &message = {});
+    explicit MethodNotAllowedHTTPError(const QStringList &allowedMethods = {}, const QString &message = {});
 };
 
 class ConflictHTTPError : public HTTPError

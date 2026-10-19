@@ -455,7 +455,7 @@ void WebApplication::processAPIRequest(const QString &endpoint, const Http::Head
     }
 
     // Filter HTTP methods
-    const QSet<QString> defaultAllowedMethods {
+    const QStringList defaultAllowedMethods {
             Http::HEADER_REQUEST_METHOD_GET,
             Http::HEADER_REQUEST_METHOD_POST,
             Http::HEADER_REQUEST_METHOD_HEAD};
@@ -464,12 +464,12 @@ void WebApplication::processAPIRequest(const QString &endpoint, const Http::Head
     {
         // by default allow GET, POST and HEAD methods
         if (!defaultAllowedMethods.contains(m_request.method))
-            throw MethodNotAllowedHTTPError();
+            throw MethodNotAllowedHTTPError(defaultAllowedMethods);
     }
     else
     {
         if (*allowedMethodIter != m_request.method)
-            throw MethodNotAllowedHTTPError();
+            throw MethodNotAllowedHTTPError(QStringList {*allowedMethodIter});
     }
 
     QHash<QString, QString> params;
@@ -871,6 +871,7 @@ void WebApplication::processRequest(const Http::Request &request, const Http::En
     {
         const Http::ResponseStatus &errorStatus = error.status();
         Http::Response response {.status = errorStatus, .headers = commonHeaders};
+        response.headers.insert(error.headers());
         response.headers.insert(Http::HEADER_CONTENT_TYPE, Http::CONTENT_TYPE_TXT);
         response.content = (!error.message().isEmpty() ? error.message() : errorStatus.text).toUtf8();
         responseWriter.setResponse(response);

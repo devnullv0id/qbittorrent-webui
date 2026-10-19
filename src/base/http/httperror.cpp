@@ -28,17 +28,25 @@
 
 #include "httperror.h"
 
+#include "constants.h"
+
 using namespace Qt::Literals::StringLiterals;
 
-HTTPError::HTTPError(Http::ResponseStatus responseStatus, const QString &message)
+HTTPError::HTTPError(Http::ResponseStatus responseStatus, const QString &message, Http::HeaderMap headers)
     : RuntimeError {message}
     , m_responseStatus {std::move(responseStatus)}
+    , m_headers {std::move(headers)}
 {
 }
 
 const Http::ResponseStatus &HTTPError::status() const
 {
     return m_responseStatus;
+}
+
+const Http::HeaderMap &HTTPError::headers() const
+{
+    return m_headers;
 }
 
 BadRequestHTTPError::BadRequestHTTPError(const QString &message)
@@ -61,8 +69,9 @@ NotFoundHTTPError::NotFoundHTTPError(const QString &message)
 {
 }
 
-MethodNotAllowedHTTPError::MethodNotAllowedHTTPError(const QString &message)
-    : HTTPError({.code = 405, .text = u"Method Not Allowed"_s}, message)
+MethodNotAllowedHTTPError::MethodNotAllowedHTTPError(const QStringList &allowedMethods, const QString &message)
+    : HTTPError({.code = 405, .text = u"Method Not Allowed"_s}, message
+        , (!allowedMethods.isEmpty() ? Http::HeaderMap {{Http::HEADER_ALLOW, allowedMethods.join(u", ")}} : Http::HeaderMap {}))
 {
 }
 

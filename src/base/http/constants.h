@@ -36,6 +36,7 @@ using namespace Qt::Literals::StringLiterals;
 namespace Http
 {
     inline const QString HEADER_ACCEPT_RANGES = u"accept-ranges"_s;
+    inline const QString HEADER_ALLOW = u"allow"_s;
     inline const QString HEADER_AUTHORIZATION = u"authorization"_s;
     inline const QString HEADER_CACHE_CONTROL = u"cache-control"_s;
     inline const QString HEADER_CONNECTION = u"connection"_s;
