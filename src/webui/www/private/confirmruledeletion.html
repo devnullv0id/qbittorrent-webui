@@ -31,6 +31,7 @@
                 e.stopPropagation();
 
                 let completionCount = 0;
+                let failed = false;
                 const rules = new URLSearchParams(window.location.search).get("rules").split("|");
                 for (const rule of rules) {
                     fetch("api/v2/rss/removeRule", {
@@ -40,8 +41,14 @@
                             })
                         })
                         .then((response) => {
-                            if (!response.ok)
+                            if (!response.ok) {
+                                // once for all failed removals
+                                if (!failed) {
+                                    failed = true;
+                                    alert("QBT_TR(Unable to remove the selected download rules.)QBT_TR[CONTEXT=HttpServer]");
+                                }
                                 return;
+                            }
 
                             ++completionCount;
                             if (completionCount === rules.length) {

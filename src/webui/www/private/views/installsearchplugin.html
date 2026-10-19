@@ -74,8 +74,10 @@
                         })
                     })
                     .then((response) => {
-                        if (!response.ok)
+                        if (!response.ok) {
+                            alert("QBT_TR(Unable to install plugin.)QBT_TR[CONTEXT=HttpServer]");
                             return;
+                        }
 
                         window.qBittorrent.Client.closeWindow(document.getElementById("installSearchPlugin"));
                     });
