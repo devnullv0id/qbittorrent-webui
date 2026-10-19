@@ -117,6 +117,7 @@ let saveWindowSize = () => {};
 let loadWindowWidth = () => {};
 let loadWindowHeight = () => {};
 let showDownloadPage = () => {};
+let showRssDownloader = () => {};
 let globalLimitFN = () => {};
 let uploadLimitFN = () => {};
 let shareRatioFN = () => {};
@@ -304,6 +305,48 @@ const initializeWindows = () => {
             })
         });
     });
+
+    // guided: open Modern's guided new rule once the page has loaded
+    let wizardPending = false;
+    // here, so that Options can open it while the RSS reader is hidden
+    showRssDownloader = (guided = false) => {
+        const id = "rssdownloaderpage";
+        // the window's page is already set up
+        const loaded = (document.getElementById("rssWizardNext") !== null);
+        // a window still loading keeps the options it was opened with
+        if (guided && !loaded)
+            wizardPending = true;
+        new MochaUI.Window({
+            id: id,
+            icon: "images/qbittorrent-tray.svg",
+            title: "QBT_TR(Rss Downloader)QBT_TR[CONTEXT=AutomatedRssDownloader]",
+            loadMethod: "xhr",
+            contentURL: "views/rssDownloader.html?v=${CACHEID}",
+            maximizable: false,
+            // in Modern, on screens 1100px wide or more, wide enough for the rules beside the rule's two columns
+            width: loadWindowWidth(id, ((window.qBittorrent.Responsive.isModern() && window.matchMedia("(width >= 1100px)").matches) ? 1000 : 800), false),
+            height: loadWindowHeight(id, 650, false),
+            onContentLoaded: () => {
+                if (!wizardPending)
+                    return;
+                wizardPending = false;
+                window.qBittorrent.RssDownloader.startWizard();
+            },
+            // a page still loading arrives even after its window closed
+            onClose: () => {
+                wizardPending = false;
+            },
+            onResize: window.qBittorrent.Misc.createDebounceHandler(500, (e) => {
+                saveWindowSize(id);
+            }),
+            resizeLimit: {
+                x: [800, 2500],
+                y: [500, 2000]
+            }
+        });
+        if (guided && loaded)
+            window.qBittorrent.RssDownloader.startWizard();
+    };
 
     document.querySelector("#uploadButton #fileselectButton").addEventListener("click", function(event) {
         // clear the value so that reselecting the same file(s) still triggers the 'change' event
