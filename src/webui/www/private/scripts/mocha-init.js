@@ -475,8 +475,10 @@ const initializeWindows = () => {
                     })
                 })
                 .then((response) => {
-                    if (!response.ok)
+                    if (!response.ok) {
+                        alert("QBT_TR(Unable to toggle sequential download.)QBT_TR[CONTEXT=HttpServer]");
                         return;
+                    }
 
                     updateMainData();
                 });
@@ -493,8 +495,10 @@ const initializeWindows = () => {
                     })
                 })
                 .then((response) => {
-                    if (!response.ok)
+                    if (!response.ok) {
+                        alert("QBT_TR(Unable to toggle first and last piece priority.)QBT_TR[CONTEXT=HttpServer]");
                         return;
+                    }
 
                     updateMainData();
                 });
@@ -512,8 +516,10 @@ const initializeWindows = () => {
                     })
                 })
                 .then((response) => {
-                    if (!response.ok)
+                    if (!response.ok) {
+                        alert("QBT_TR(Unable to set super seeding.)QBT_TR[CONTEXT=HttpServer]");
                         return;
+                    }
 
                     updateMainData();
                 });
@@ -531,8 +537,10 @@ const initializeWindows = () => {
                     })
                 })
                 .then((response) => {
-                    if (!response.ok)
+                    if (!response.ok) {
+                        alert("QBT_TR(Unable to force start torrents.)QBT_TR[CONTEXT=HttpServer]");
                         return;
+                    }
 
                     updateMainData();
                 });
@@ -648,8 +656,10 @@ const initializeWindows = () => {
                     })
                 })
                 .then((response) => {
-                    if (!response.ok)
+                    if (!response.ok) {
+                        alert("QBT_TR(Unable to stop torrents.)QBT_TR[CONTEXT=HttpServer]");
                         return;
+                    }
 
                     updateMainData();
                 });
@@ -666,8 +676,10 @@ const initializeWindows = () => {
                     })
                 })
                 .then((response) => {
-                    if (!response.ok)
+                    if (!response.ok) {
+                        alert("QBT_TR(Unable to start torrents.)QBT_TR[CONTEXT=HttpServer]");
                         return;
+                    }
 
                     updateMainData();
                 });
@@ -775,8 +787,10 @@ const initializeWindows = () => {
                     })
                 })
                 .then((response) => {
-                    if (!response.ok)
+                    if (!response.ok) {
+                        alert("QBT_TR(Unable to reannounce torrents.)QBT_TR[CONTEXT=HttpServer]");
                         return;
+                    }
 
                     updateMainData();
                 });
@@ -1163,8 +1177,10 @@ const initializeWindows = () => {
                 })
             })
             .then((response) => {
-                if (!response.ok)
+                if (!response.ok) {
+                    alert(isSet ? "QBT_TR(Unable to add tag.)QBT_TR[CONTEXT=HttpServer]" : "QBT_TR(Unable to remove tags.)QBT_TR[CONTEXT=HttpServer]");
                     return;
+                }
 
                 updateMainData();
             });
@@ -1184,8 +1200,10 @@ const initializeWindows = () => {
                     })
                 })
                 .then((response) => {
-                    if (!response.ok)
+                    if (!response.ok) {
+                        alert("QBT_TR(Unable to remove tags.)QBT_TR[CONTEXT=HttpServer]");
                         return;
+                    }
 
                     updateMainData();
                 });
@@ -1223,8 +1241,10 @@ const initializeWindows = () => {
                 })
             })
             .then((response) => {
-                if (!response.ok)
+                if (!response.ok) {
+                    alert("QBT_TR(Unable to delete tags.)QBT_TR[CONTEXT=HttpServer]");
                     return;
+                }
 
                 window.qBittorrent.Filters.clearTagFilter();
             });
@@ -1243,8 +1263,10 @@ const initializeWindows = () => {
                 })
             })
             .then((response) => {
-                if (!response.ok)
+                if (!response.ok) {
+                    alert("QBT_TR(Unable to delete tags.)QBT_TR[CONTEXT=HttpServer]");
                     return;
+                }
 
                 window.qBittorrent.Filters.clearTagFilter();
             });
@@ -1401,8 +1423,10 @@ const initializeWindows = () => {
                     })
                 })
                 .then((response) => {
-                    if (!response.ok)
+                    if (!response.ok) {
+                        alert("QBT_TR(Unable to stop torrents.)QBT_TR[CONTEXT=HttpServer]");
                         return;
+                    }
 
                     updateMainData();
                 });
@@ -1421,8 +1445,10 @@ const initializeWindows = () => {
                     })
                 })
                 .then((response) => {
-                    if (!response.ok)
+                    if (!response.ok) {
+                        alert("QBT_TR(Unable to start torrents.)QBT_TR[CONTEXT=HttpServer]");
                         return;
+                    }
 
                     updateMainData();
                 });
@@ -1493,8 +1519,10 @@ const initializeWindows = () => {
                     })
                 })
                 .then((response) => {
-                    if (!response.ok)
+                    if (!response.ok) {
+                        alert("QBT_TR(Unable to change the queue position.)QBT_TR[CONTEXT=HttpServer]");
                         return;
+                    }
 
                     updateMainData();
                 });
