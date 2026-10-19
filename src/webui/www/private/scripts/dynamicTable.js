@@ -105,7 +105,8 @@ window.qBittorrent.DynamicTable ??= (() => {
             this.fixedTableHeaderColgroup = document.createElement("colgroup");
             this.fixedTableHeader.closest("table").prepend(this.fixedTableHeaderColgroup);
             this.tableBody = this.table.querySelector("tbody");
-            this.densityRowHeight = (clientData.get("display_density") === "compact") ? 22 : 26;
+            // the density the page is styled with, which Classic doesn't give a dialog's frame
+            this.densityRowHeight = document.documentElement.classList.contains("compact") ? 22 : 26;
             this.rows = new Map();
             this.renderedRows = [];
             // the last result of sortRows(), which the next one starts from
