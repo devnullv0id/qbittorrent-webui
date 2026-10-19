@@ -115,8 +115,6 @@ window.qBittorrent.PropWebseeds ??= (() => {
                 addWebseedFN();
             },
             EditWebSeed: (element, ref) => {
-                // only allow editing of one row
-                element.firstElementChild.click();
                 editWebSeedFN(element);
             },
             RemoveWebSeed: (element, ref) => {
