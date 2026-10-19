@@ -603,7 +603,6 @@ window.qBittorrent.Search ??= (() => {
             if (!pattern || !category || !plugins)
                 return;
 
-            searchText.pattern = pattern;
             startSearch(pattern, category, plugins);
         }
         else {
