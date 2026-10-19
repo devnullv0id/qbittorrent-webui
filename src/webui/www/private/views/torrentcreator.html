@@ -209,6 +209,9 @@
         };
 
         const syncTaskData = () => {
+            if (document.hidden)
+                return;
+
             fetch("api/v2/torrentcreator/status", {
                 method: "GET",
                 cache: "no-store"
@@ -274,6 +277,12 @@
                     syncTaskWithInterval(serverSyncMainDataInterval);
             });
         };
+
+        // polling stops while the page is hidden, resume it while the window is open
+        document.addEventListener("visibilitychange", (event) => {
+            if (!document.hidden && (table !== null))
+                load();
+        });
 
         return exports();
     })();
