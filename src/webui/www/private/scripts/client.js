@@ -250,8 +250,15 @@ window.qBittorrent.Client ??= (() => {
     };
 
     let resolveAddTorrentsPrompt = null;
+    let lastAddTorrentsPrompt = Promise.resolve();
 
+    // a batch picked while the prompt is open waits for its answer
     const showAddTorrentsPrompt = (count) => {
+        lastAddTorrentsPrompt = lastAddTorrentsPrompt.then(() => openAddTorrentsPrompt(count));
+        return lastAddTorrentsPrompt;
+    };
+
+    const openAddTorrentsPrompt = (count) => {
         return new Promise((resolve) => {
             resolveAddTorrentsPrompt = resolve;
 
