@@ -383,6 +383,9 @@
         const load = () => {
             clearTimeout(feedRefreshTimer);
             const timer = setTimeout(async () => {
+                if (document.hidden)
+                    return;
+
                 const hasChanges = await updateRssFeedList().catch(() => false);
                 // unloaded or restarted meanwhile
                 if (feedRefreshTimer !== timer)
