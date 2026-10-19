@@ -115,6 +115,7 @@
                             const limit = isAllFirstLimit ? Math.round(firstLimit / 1024) : 0;
 
                             setupSlider(limit, ((globalLimit > 0) ? globalLimit : 1000));
+                            applyButton.disabled = false;
                         });
                 });
 
@@ -134,7 +135,7 @@
             <input type="range" id="limitSliderInput" min="0" value="0" style="width: 100%;" aria-label="QBT_TR(Speed limit)QBT_TR[CONTEXT=SpeedLimit]">
         </div>
         <div class="dialogFooter">
-            <input type="button" id="applyButton" value="QBT_TR(Apply)QBT_TR[CONTEXT=HttpServer]">
+            <input type="button" id="applyButton" value="QBT_TR(Apply)QBT_TR[CONTEXT=HttpServer]" disabled>
         </div>
     </div>
 </body>
