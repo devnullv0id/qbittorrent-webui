@@ -1482,6 +1482,10 @@ const initializeWindows = () => {
                         return;
 
                     const shutdownMessage = "QBT_TR(%1 has been shutdown)QBT_TR[CONTEXT=HttpServer]".replace("%1", window.qBittorrent.Client.mainTitle());
+                    // end the windows' and tabs' refreshes, which would outlive the page replaced below
+                    MochaUI.closeAll();
+                    window.qBittorrent.Rss?.unload();
+                    window.qBittorrent.Log?.unload();
                     document.write(`<!doctype html><html lang="${LANG}"><head> <meta charset="UTF-8"> <meta name="color-scheme" content="light dark"> <title>${shutdownMessage}</title> <style>* {font-family: Arial, Helvetica, sans-serif;}</style></head><body> <h1 style="text-align: center;">${shutdownMessage}</h1></body></html>`);
                     document.close();
                     window.stop();
