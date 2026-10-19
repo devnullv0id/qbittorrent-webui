@@ -241,6 +241,7 @@ window.qBittorrent.AddTorrent ??= (() => {
         }
     };
 
+    let freeSpaceRequestId = 0;
     const showFreeSpace = (path) => {
         if (path === "")
             return;
@@ -250,12 +251,18 @@ window.qBittorrent.AddTorrent ??= (() => {
             path: path
         });
 
+        const requestId = ++freeSpaceRequestId;
         fetch(url, {
                 method: "GET",
                 cache: "no-store"
             })
             .then(async (response) => {
-                freeSpaceBytes = Number(await response.text());
+                const freeSpace = Number(await response.text());
+                // the answer for an earlier path may come last
+                if (requestId !== freeSpaceRequestId)
+                    return;
+
+                freeSpaceBytes = freeSpace;
                 updateDiskInfo();
             })
             .catch(error => {});
