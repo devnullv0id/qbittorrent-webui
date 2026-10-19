@@ -1170,6 +1170,14 @@ bool WebApplication::validateHostHeader() const
     const QUrl hostHeader = urlFromHostHeader(m_request.headers[Http::HEADER_HOST]);
     const QString requestHost = hostHeader.host();
 
+    // try matching host header with domain list, whatever the port: a forwarded port (e.g. Docker's) is not the local one
+    const bool hasMatch = std::ranges::any_of(asConst(m_serverDomains), [&requestHost](const QRegularExpression &expr)
+    {
+        return requestHost.contains(expr);
+    });
+    if (hasMatch)
+        return true;
+
     // (if present) try matching host header's port with local port
     const int requestPort = hostHeader.port();
     if ((requestPort != -1) && (m_env.localPort != requestPort))
@@ -1184,14 +1192,6 @@ bool WebApplication::validateHostHeader() const
     // try matching host header with local address
     const bool sameAddr = m_env.localAddress.isEqual(QHostAddress(requestHost));
     if (sameAddr)
-        return true;
-
-    // try matching host header with domain list
-    const bool hasMatch = std::ranges::any_of(asConst(m_serverDomains), [&requestHost](const QRegularExpression &expr)
-    {
-        return requestHost.contains(expr);
-    });
-    if (hasMatch)
         return true;
 
     LogMsg(tr("WebUI: Invalid Host header. Request source IP: '%1'. Received Host header: '%2'")
