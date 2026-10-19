@@ -2772,6 +2772,12 @@ window.qBittorrent.DynamicTable ??= (() => {
 
         populateTable(root) {
             this.fileTree.setRoot(root);
+            // rows of nodes the new tree doesn't have, e.g. after files were moved to another folder; the caller updates
+            // the table
+            for (const rowId of this.getRowIds()) {
+                if (this.getNode(rowId) === null)
+                    this.rows.delete(rowId);
+            }
             for (const node of root.children)
                 this.#addNodeToTable(node, 0, root);
         }

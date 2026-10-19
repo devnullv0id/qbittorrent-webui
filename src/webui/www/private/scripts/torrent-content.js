@@ -356,7 +356,7 @@ window.qBittorrent.TorrentContent ??= (() => {
         torrentFilesTable.updateTable();
 
         if (selectedFiles.length > 0)
-            torrentFilesTable.reselectRows(selectedFiles);
+            torrentFilesTable.reselectRows(selectedFiles.filter((rowId) => torrentFilesTable.getNode(rowId) !== null));
     };
 
     const filesPriorityMenuClicked = (priority) => {
