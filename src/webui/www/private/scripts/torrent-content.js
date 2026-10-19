@@ -39,8 +39,7 @@ window.qBittorrent.TorrentContent ??= (() => {
             updateDownloadCheckbox: updateDownloadCheckbox,
             createPriorityCombo: createPriorityCombo,
             updatePriorityCombo: updatePriorityCombo,
-            updateData: updateData,
-            clearFilterInputTimer: clearFilterInputTimer
+            updateData: updateData
         };
     };
 
@@ -576,11 +575,6 @@ window.qBittorrent.TorrentContent ??= (() => {
         });
 
         return torrentFilesTable;
-    };
-
-    const clearFilterInputTimer = () => {
-        clearTimeout(torrentFilesFilterInputTimer);
-        torrentFilesFilterInputTimer = -1;
     };
 
     const getSelectedFilesURL = () => {

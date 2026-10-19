@@ -109,8 +109,6 @@ window.qBittorrent.PropFiles ??= (() => {
                 previousResponseText = responseText;
                 const files = JSON.parse(responseText);
 
-                window.qBittorrent.TorrentContent.clearFilterInputTimer();
-
                 if (files.length === 0) {
                     torrentFilesTable.clear();
                 }
