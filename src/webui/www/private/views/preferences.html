@@ -3753,7 +3753,8 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
             });
 
             document.getElementById("webUIAPIKeyRotateButton").addEventListener("click", (e) => {
-                const hasKey = e.target.parentElement.dataset.hasKey === "true";
+                // the button, also when the click didn't land on its image or came from the keyboard
+                const hasKey = e.currentTarget.dataset.hasKey === "true";
                 const title = hasKey
                     ? "QBT_TR(Rotate API key)QBT_TR[CONTEXT=OptionsDialog]"
                     : "QBT_TR(Generate API key)QBT_TR[CONTEXT=OptionsDialog]";
