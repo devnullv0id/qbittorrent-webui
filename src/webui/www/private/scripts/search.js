@@ -833,7 +833,8 @@ window.qBittorrent.Search ??= (() => {
                 if (!response.ok)
                     return;
 
-                const responseJSON = await response.json();
+                const responseText = await response.text();
+                const responseJSON = JSON.parse(responseText);
 
                 const createOption = (text, value, disabled = false) => {
                     const option = document.createElement("option");
@@ -844,8 +845,9 @@ window.qBittorrent.Search ??= (() => {
                     return option;
                 };
 
-                if (prevSearchPluginsResponse !== responseJSON) {
-                    prevSearchPluginsResponse = responseJSON;
+                // compare the text: two parsed answers are never the same object
+                if (prevSearchPluginsResponse !== responseText) {
+                    prevSearchPluginsResponse = responseText;
                     searchPlugins.length = 0;
                     for (const plugin of responseJSON)
                         searchPlugins.push(plugin);
