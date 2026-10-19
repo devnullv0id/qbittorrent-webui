@@ -28,9 +28,11 @@
 
 #pragma once
 
+#include <utility>
 #include <variant>
 
 #include <QtContainerFwd>
+#include <QList>
 #include <QObject>
 #include <QString>
 #include <QVariant>
@@ -39,7 +41,8 @@
 #include "base/path.h"
 #include "apistatus.h"
 
-using DataMap = QHash<QString, QByteArray>;
+// uploaded files in request order; their names need not be unique
+using DataMap = QList<std::pair<QString, QByteArray>>;
 using StringMap = QHash<QString, QString>;
 
 struct RegularAPIResult

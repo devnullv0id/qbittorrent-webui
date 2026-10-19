@@ -488,8 +488,9 @@ void WebApplication::processAPIRequest(const QString &endpoint, const Http::Head
     }
 
     DataMap data;
+    data.reserve(request().files.size());
     for (const Http::UploadedFile &torrent : request().files)
-        data[torrent.filename] = torrent.data;
+        data.append({torrent.filename, torrent.data});
 
     try
     {
