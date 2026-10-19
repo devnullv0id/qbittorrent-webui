@@ -384,6 +384,11 @@ window.qBittorrent.Misc ??= (() => {
                 fileName = fileNameHeader.substring(fileNamePrefix.length);
                 if (fileName.startsWith("\"") && fileName.endsWith("\""))
                     fileName = fileName.slice(1, -1);
+
+                // a name that isn't plain ASCII comes percent-encoded in `filename*`, after an ASCII stand-in
+                const encodedFileName = fileNameHeader.match(/; filename\*=UTF-8''([^;]+)$/);
+                if (encodedFileName !== null)
+                    fileName = decodeURIComponent(encodedFileName[1]);
             }
 
             const link = document.createElement("a");
