@@ -1481,7 +1481,8 @@ const initializeWindows = () => {
                     if (!response.ok)
                         return;
 
-                    const shutdownMessage = "QBT_TR(%1 has been shutdown)QBT_TR[CONTEXT=HttpServer]".replace("%1", window.qBittorrent.Client.mainTitle());
+                    // a function, so that "$&" and the like in the instance name aren't expanded
+                    const shutdownMessage = "QBT_TR(%1 has been shutdown)QBT_TR[CONTEXT=HttpServer]".replace("%1", () => window.qBittorrent.Client.mainTitle());
                     // end the windows' and tabs' refreshes, which would outlive the page replaced below
                     MochaUI.closeAll();
                     window.qBittorrent.Rss?.unload();
