@@ -2069,7 +2069,6 @@ window.addEventListener("DOMContentLoaded", async (event) => {
                 if (event.target.isContentEditable)
                     return;
 
-                event.preventDefault();
                 const modalInstances = Object.values(MochaUI.Windows.instances);
                 if (modalInstances.length <= 0)
                     return;
@@ -2078,8 +2077,11 @@ window.addEventListener("DOMContentLoaded", async (event) => {
                 const focusedModal = modalInstances.find((modal) => {
                     return modal.windowEl.hasClass("isFocused");
                 });
-                if (focusedModal !== undefined)
+                if (focusedModal !== undefined) {
+                    // only then, so that Escape still clears a search box
+                    event.preventDefault();
                     focusedModal.close();
+                }
                 break;
             }
 
