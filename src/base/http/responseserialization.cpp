@@ -147,11 +147,6 @@ QByteArray Http::serializeResponseHead(const Http::ResponseStatus &responseStatu
 
 QByteArray Http::serializeResponse(const Http::Response &response, const Http::Request &request)
 {
-    // [RFC 9110] 15.4.5. 304 Not Modified: no content, and no Content-Length, which would describe the content the
-    // client has
-    if (response.status.code == 304)
-        return serializeResponseHead(response.status, response.headers);
-
     const qsizetype responseContentSize = response.content.size();
 
     Q_ASSERT(responseContentSize >= 0);
@@ -164,6 +159,14 @@ QByteArray Http::serializeResponse(const Http::Response &response, const Http::R
     // the encoding of such a response depends on the request's Accept-Encoding
     if (isCompressible)
         responseHeaders.insert(Http::HEADER_VARY, u"Accept-Encoding"_s);
+
+    // [RFC 9110] 15.4.5. 304 Not Modified: the headers a 200 would have, Vary included, but no content and nothing
+    // that describes it, such as Content-Length, which would describe the content the client has
+    if (response.status.code == 304)
+    {
+        responseHeaders.remove(Http::HEADER_CONTENT_TYPE);
+        return serializeResponseHead(response.status, responseHeaders);
+    }
 
     if (isCompressible && acceptsGzipEncoding(request.headers.value(u"accept-encoding"_s)))
     {
