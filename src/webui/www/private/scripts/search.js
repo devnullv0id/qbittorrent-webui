@@ -509,8 +509,10 @@ window.qBittorrent.Search ??= (() => {
                 })
             })
             .then(async (response) => {
-                if (!response.ok)
+                if (!response.ok) {
+                    alert(await response.text());
                     return;
+                }
 
                 const responseJSON = await response.json();
                 const searchId = responseJSON.id;
@@ -540,8 +542,10 @@ window.qBittorrent.Search ??= (() => {
                 })
             })
             .then(async (response) => {
-                if (!response.ok)
+                if (!response.ok) {
+                    alert(await response.text());
                     return;
+                }
 
                 const responseJSON = await response.json();
                 const searchId = responseJSON.id;
