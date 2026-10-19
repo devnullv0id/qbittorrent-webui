@@ -729,9 +729,9 @@
                         // update data
                         feedData[r.uid] = r.articles;
 
-                        // if feed that is open changed, reload
+                        // if the open feed or folder has this feed, reload it
                         if ((openedFeedPath !== undefined) && containsPath(openedFeedPath, r.fullName))
-                            showRssFeed(r.fullName);
+                            showRssFeed(openedFeedPath);
                     }
                     else {
                         // calculate read difference and update feed data
