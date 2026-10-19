@@ -416,25 +416,6 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
             input.click();
         };
 
-        document.getElementById("rssRulesFileInput").addEventListener("change", (event) => {
-            const file = document.getElementById("rssRulesFileInput").files[0];
-            if (!file)
-                return;
-
-            const formData = new FormData();
-            formData.append("rules", file, "rules");
-            fetch("api/v2/rss/importRules", {
-                    method: "POST",
-                    body: formData
-                })
-                .then(async (response) => {
-                    if (!response.ok)
-                        throw new Error(await response.text());
-                    updateRulesList();
-                })
-                .catch((error) => alert(error.message));
-        });
-
         const setup = () => {
             const pref = window.parent.qBittorrent.Cache.preferences.get();
 
@@ -526,6 +507,24 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
             loadFeeds();
             document.getElementById("savetoDifferentDir").addEventListener("click", (event) => {
                 document.getElementById("saveToText").disabled = !event.target.checked;
+            });
+            document.getElementById("rssRulesFileInput").addEventListener("change", (event) => {
+                const file = document.getElementById("rssRulesFileInput").files[0];
+                if (file === undefined)
+                    return;
+
+                const formData = new FormData();
+                formData.append("rules", file, "rules");
+                fetch("api/v2/rss/importRules", {
+                        method: "POST",
+                        body: formData
+                    })
+                    .then(async (response) => {
+                        if (!response.ok)
+                            throw new Error(await response.text());
+                        updateRulesList();
+                    })
+                    .catch((error) => alert(error.message));
             });
             setupModern();
             updateRulesList();
