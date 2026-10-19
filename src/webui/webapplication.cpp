@@ -29,6 +29,9 @@
 
 #include "webapplication.h"
 
+#include <algorithm>
+
+#include <QCryptographicHash>
 #include <QDateTime>
 #include <QDebug>
 #include <QDir>
@@ -39,6 +42,7 @@
 #include <QMimeType>
 #include <QNetworkCookie>
 #include <QRegularExpression>
+#include <QStringTokenizer>
 #include <QThread>
 #include <QUrl>
 
@@ -150,6 +154,48 @@ namespace
         }
 
         return u"no-store"_s;
+    }
+
+    // [RFC 9110] 8.8.3. ETag: a weak one, since the content is sent compressed or not
+    QString entityTag(const QByteArray &content)
+    {
+        const QByteArray hash = QCryptographicHash::hash(content, QCryptographicHash::Sha256)
+            .toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
+        return u"W/\"%1\""_s.arg(QString::fromLatin1(hash));
+    }
+
+    // [RFC 9110] 13.1.2. If-None-Match: the entity tags are compared the weak way
+    bool isEntityTagMatched(const QStringView ifNoneMatch, const QStringView entityTag)
+    {
+        if (ifNoneMatch.trimmed() == u"*")
+            return true;
+
+        const auto opaqueTag = [](QStringView tag) -> QStringView
+        {
+            tag = tag.trimmed();
+            return tag.startsWith(u"W/") ? tag.sliced(2) : tag;
+        };
+
+        return std::ranges::any_of(qTokenize(ifNoneMatch, u',', Qt::SkipEmptyParts)
+                , [&opaqueTag, tag = opaqueTag(entityTag)](const QStringView entry)
+        {
+            return opaqueTag(entry) == tag;
+        });
+    }
+
+    // a request for content the client has gets a 304 response, [RFC 9110] 15.4.5. 304 Not Modified
+    void sendFileContent(Http::Response &response, const QString &etag, const Http::Request &request, Http::ResponseWriter &responseWriter)
+    {
+        response.headers.insert(Http::HEADER_ETAG, etag);
+        if (((request.method == Http::HEADER_REQUEST_METHOD_GET) || (request.method == Http::HEADER_REQUEST_METHOD_HEAD))
+            && isEntityTagMatched(request.headers.value(Http::HEADER_IF_NONE_MATCH), etag))
+        {
+            response.status = {.code = 304, .text = u"Not Modified"_s};
+            response.headers.remove(Http::HEADER_CONTENT_TYPE);
+            response.content.clear();
+        }
+
+        responseWriter.setResponse(response);
     }
 
     QString createLanguagesOptionsHtml()
@@ -634,7 +680,7 @@ void WebApplication::sendFile(const Path &path, const Http::HeaderMap &commonHea
         response.headers.insert(Http::HEADER_CONTENT_TYPE, it->mimeType);
         response.headers.insert(Http::HEADER_CACHE_CONTROL, getCachingInterval(it->mimeType));
         response.content = it->data;
-        responseWriter.setResponse(response);
+        sendFileContent(response, it->etag, request(), responseWriter);
         return;
     }
 
@@ -679,13 +725,16 @@ void WebApplication::sendFile(const Path &path, const Http::HeaderMap &commonHea
             dataStr.replace(u"${LANGUAGE_OPTIONS}"_s, createLanguagesOptionsHtml());
 
         data = dataStr.toUtf8();
-        m_translatedFiles[path] = {data, mimeType.name(), lastModified}; // caching translated file
     }
+
+    const QString etag = entityTag(data);
+    if (isTranslatable)
+        m_translatedFiles[path] = {data, mimeType.name(), lastModified, etag}; // caching translated file
 
     response.headers.insert(Http::HEADER_CONTENT_TYPE, mimeType.name());
     response.headers.insert(Http::HEADER_CACHE_CONTROL, getCachingInterval(mimeType.name()));
     response.content = data;
-    responseWriter.setResponse(response);
+    sendFileContent(response, etag, request(), responseWriter);
 }
 
 void WebApplication::processRequest(const Http::Request &request, const Http::Environment &env, Http::ResponseWriter &responseWriter)
