@@ -22,6 +22,9 @@
 * `app/cookies` endpoint returns cookie values as `app/setCookies` stored them, instead of garbling non-ASCII characters
 * `search/enablePlugin` and `search/uninstallPlugin` endpoints respond with a 404 naming the first plugin that is not installed, and change none of the given plugins
 * `search/start` endpoint responds with a 400 when the pattern is empty
+* WebAPI accepts a `Host` header whose domain is in the server domains on any port
+* WebAPI responds with a 405 that includes the `Allow` header when an endpoint does not take the request's method
+* WebAPI responds with a 403 instead of a 401 when the cross-site request check or the Host header validation refuses a request
 * [#24955](https://github.com/qbittorrent/qBittorrent/pull/24955)
   * `search/results` endpoint includes `engineFullName` (string) data as the display name of the engine
 

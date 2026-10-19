@@ -833,7 +833,7 @@ void WebApplication::processRequest(const Http::Request &request, const Http::En
         if ((!isUsingApiKey && m_isCSRFProtectionEnabled && !isWebRoot && isCrossSiteRequest(m_request))
             || (m_isHostHeaderValidationEnabled && !validateHostHeader()))
         {
-            throw UnauthorizedHTTPError();
+            throw ForbiddenHTTPError();
         }
 
         // reverse proxy resolve client address
