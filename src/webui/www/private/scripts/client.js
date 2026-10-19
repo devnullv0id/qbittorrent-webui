@@ -398,6 +398,8 @@ window.qBittorrent.Client.setup();
 
 // TODO: move global functions/variables into some namespace/scope
 const localPreferences = new window.qBittorrent.LocalPreferences.LocalPreferences();
+// before the stored filters below are read
+window.qBittorrent.LocalPreferences.upgrade();
 
 this.torrentsTable = new window.qBittorrent.DynamicTable.TorrentsTable();
 
@@ -446,9 +448,6 @@ let setStatusFilter = () => {};
 let toggleFilterDisplay = () => {};
 
 window.addEventListener("DOMContentLoaded", async (event) => {
-    // execute this first
-    window.qBittorrent.LocalPreferences.upgrade();
-
     await window.qBittorrent.Client.initializeClientData();
     window.qBittorrent.ColorScheme.applyClientData();
     document.documentElement.classList.toggle("compact", clientData.get("display_density") === "compact");
