@@ -1390,25 +1390,23 @@ const initializeWindows = () => {
         torrentsTable.selectInverse();
     });
 
-    for (const item of ["stop", "start", "recheck"]) {
-        addClickEvent(item, (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+    addClickEvent("stop", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        stopFN();
+    });
 
-            const hashes = torrentsTable.selectedRowsIds();
-            if (hashes.length > 0) {
-                for (const hash of hashes) {
-                    fetch(`api/v2/torrents/${item}`, {
-                        method: "POST",
-                        body: new URLSearchParams({
-                            hashes: hash
-                        })
-                    });
-                }
-                updateMainData();
-            }
-        });
-    }
+    addClickEvent("start", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        startFN();
+    });
+
+    addClickEvent("recheck", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        recheckFN();
+    });
 
     for (const item of ["decreasePrio", "increasePrio", "topPrio", "bottomPrio"]) {
         addClickEvent(item, (e) => {
