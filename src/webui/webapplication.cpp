@@ -259,7 +259,10 @@ void WebApplication::sendWebUIFile(const Http::HeaderMap &commonHeaders, Http::R
 
 void WebApplication::translateDocument(QString &data) const
 {
-    data.replace(u"${LANG}"_s, m_currentLocale.left(2));
+    // a language tag, e.g. zh_TW -> zh-TW, sr@latin -> sr-Latn
+    QString languageTag = m_currentLocale;
+    languageTag.replace(u"@latin"_s, u"@Latn"_s).replace(u'@', u'-').replace(u'_', u'-');
+    data.replace(u"${LANG}"_s, languageTag);
     data.replace(u"${CACHEID}"_s, m_cacheID);
 
     qsizetype i = 0;
