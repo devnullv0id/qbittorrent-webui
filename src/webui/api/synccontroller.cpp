@@ -812,6 +812,14 @@ void SyncController::torrentPeersAction()
     if (!torrent)
         throw APIError(APIErrorType::NotFound);
 
+    // the kept responses are of another torrent's peers, so this one gets a full update
+    if (id != m_lastPeersTorrentID)
+    {
+        m_lastPeersTorrentID = id;
+        m_lastPeersResponse.clear();
+        m_lastAcceptedPeersResponse.clear();
+    }
+
     QVariantMap data;
     QVariantHash peers;
 
