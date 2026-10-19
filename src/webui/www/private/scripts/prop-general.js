@@ -116,6 +116,12 @@ window.qBittorrent.PropGeneral ??= (() => {
                 }
 
                 const data = await response.json();
+                // another torrent was selected while the request ran
+                if (currentID !== torrentsTable.getCurrentTorrentID()) {
+                    clearTimeout(loadTorrentDataTimer);
+                    loadTorrentDataTimer = setTimeout(loadTorrentData, 5000);
+                    return;
+                }
                 if (data) {
                     // Update Torrent data
 
@@ -280,6 +286,12 @@ window.qBittorrent.PropGeneral ??= (() => {
                 }
 
                 const data = await response.json();
+                // another torrent was selected while the request ran
+                if (currentID !== torrentsTable.getCurrentTorrentID()) {
+                    clearTimeout(loadTorrentDataTimer);
+                    loadTorrentDataTimer = setTimeout(loadTorrentData, 5000);
+                    return;
+                }
                 if (data)
                     piecesBar.setPieces(data);
                 else
@@ -308,6 +320,9 @@ window.qBittorrent.PropGeneral ??= (() => {
                     return;
 
                 const data = await response.json();
+                // another torrent was selected while the request ran
+                if (currentID !== torrentsTable.getCurrentTorrentID())
+                    return;
                 if (data)
                     availabilityBar.setAvailability(data);
             }, (error) => {

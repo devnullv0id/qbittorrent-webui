@@ -77,6 +77,9 @@ window.qBittorrent.PropWebseeds ??= (() => {
                 const selectedWebseeds = torrentWebseedsTable.selectedRowsIds();
 
                 const webseeds = await response.json();
+                // another torrent was selected while the request ran
+                if (new_hash !== torrentsTable.getCurrentTorrentID())
+                    return;
 
                 const rows = new Map();
                 if (webseeds instanceof Array) {

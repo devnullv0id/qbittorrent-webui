@@ -99,8 +99,11 @@ window.qBittorrent.PropFiles ??= (() => {
                 if (!response.ok)
                     return;
 
-                // rebuild the tree only when the files changed
                 const responseText = await response.text();
+                // another torrent was selected while the request ran
+                if (new_hash !== torrentsTable.getCurrentTorrentID())
+                    return;
+                // rebuild the tree only when the files changed
                 if (!loadedNewTorrent && (responseText === previousResponseText))
                     return;
                 previousResponseText = responseText;

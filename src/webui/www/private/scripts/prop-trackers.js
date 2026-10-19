@@ -99,6 +99,9 @@ window.qBittorrent.PropTrackers ??= (() => {
                 const selectedTrackers = torrentTrackersTable.selectedRowsIds();
 
                 const trackers = await response.json();
+                // another torrent was selected while the request ran
+                if (new_hash !== torrentsTable.getCurrentTorrentID())
+                    return;
                 if (trackers) {
                     const notApplicable = "QBT_TR(N/A)QBT_TR[CONTEXT=TrackerListWidget]";
                     const rows = new Map();
