@@ -2092,7 +2092,7 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
         const changeWatchFolderSelect = (item) => {
             if (item.value === "other") {
                 item.nextElementSibling.hidden = false;
-                item.nextElementSibling.value = "QBT_TR(Type folder here)QBT_TR[CONTEXT=ScanFoldersModel]";
+                item.nextElementSibling.value = "";
                 item.nextElementSibling.select();
             }
             else {
@@ -2123,6 +2123,7 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
                 other = elt.options[elt.selectedIndex].textContent;
             }
             document.getElementById(`cb_watch_txt_${pos}`).value = other;
+            document.getElementById(`cb_watch_txt_${pos}`).placeholder = "QBT_TR(Type folder here)QBT_TR[CONTEXT=ScanFoldersModel]";
 
             // hide previous img
             if (pos > 0)
