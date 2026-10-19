@@ -430,7 +430,8 @@ window.addEventListener("DOMContentLoaded", async (event) => {
         const filters_width = document.getElementById("Filters").getSize().x;
         if (!drawer.matches && (filters_width > 0))
             localPreferences.set("filters_width", filters_width);
-        if (!small.matches) {
+        // a collapsed panel would store 0
+        if (!small.matches && (Number.parseInt(document.getElementById("propertiesPanel").style.height, 10) !== 0)) {
             const properties_height_rel = document.getElementById("propertiesPanel").getSize().y / Window.getSize().y;
             localPreferences.set("properties_height_rel", properties_height_rel);
         }
