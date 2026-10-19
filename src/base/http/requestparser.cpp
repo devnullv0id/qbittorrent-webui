@@ -112,6 +112,18 @@ RequestParser::ParseResult RequestParser::doParse(const QByteArrayView data)
 
     const qsizetype headerLength = headerEnd + EOH.length();
 
+    // [rfc9112] 6.1. Transfer-Encoding
+    // where such a request ends can't be found without decoding its body, which isn't supported
+    if (m_request.headers.contains(HEADER_TRANSFER_ENCODING))
+    {
+        const QString codings = m_request.headers.value(HEADER_TRANSFER_ENCODING);
+        qWarning() << Q_FUNC_INFO << "unsupported transfer coding:" << codings;
+
+        // [rfc9112] 6.3. Message Body Length: a request whose final coding isn't "chunked" is malformed
+        const bool isChunked = (QStringView(codings).split(u',').last().trimmed().compare(u"chunked", Qt::CaseInsensitive) == 0);
+        return {(isChunked ? ParseStatus::UnsupportedTransferCoding : ParseStatus::BadRequest), Request(), 0};
+    }
+
     // handle supported methods
     if ((m_request.method == HEADER_REQUEST_METHOD_GET) || (m_request.method == HEADER_REQUEST_METHOD_HEAD))
         return {ParseStatus::OK, m_request, headerLength};

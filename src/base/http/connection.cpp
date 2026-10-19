@@ -161,6 +161,13 @@ bool Http::Connection::processRequest()
         }
         break;
 
+    case RequestParser::ParseStatus::UnsupportedTransferCoding:
+        qWarning("%s", qUtf8Printable(tr("Bad Http request, closing socket. IP: %1")
+                .arg(m_socket->peerAddress().toString())));
+
+        abort({501, u"Not Implemented"_s});
+        break;
+
     case RequestParser::ParseStatus::BadMethod:
         qWarning("%s", qUtf8Printable(tr("Bad Http request method, closing socket. IP: %1. Method: \"%2\"")
                 .arg(m_socket->peerAddress().toString(), result.request.method)));
