@@ -8,6 +8,9 @@
 * WebAPI sends `100 Continue` to a request with `Expect: 100-continue`
 * `torrents/add` and `torrents/parseMetadata` endpoints accept a file part that is named only by `filename*`
 * WebAPI responds with a 415 to a request body that is neither form-encoded nor multipart, instead of a 400
+* `torrents/add` and `torrents/parseMetadata` endpoints keep every uploaded file, also when several have the same file name
+* `torrents/parseMetadata` endpoint responds in the order of the files in the request
+* `torrents/add` endpoint checks every uploaded file before adding anything, so a request answered with a 415 adds no torrent
 * [#24955](https://github.com/qbittorrent/qBittorrent/pull/24955)
   * `search/results` endpoint includes `engineFullName` (string) data as the display name of the engine
 

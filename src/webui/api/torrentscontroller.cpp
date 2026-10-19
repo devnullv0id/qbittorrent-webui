@@ -1252,6 +1252,17 @@ void TorrentsController::addAction()
     };
 
 
+    // every file is checked before anything is added
+    QList<BitTorrent::TorrentDescriptor> torrentDescrs;
+    torrentDescrs.reserve(torrents.size());
+    for (const auto &[fileName, fileData] : torrents)
+    {
+        const auto loadResult = BitTorrent::TorrentDescriptor::load(fileData);
+        if (!loadResult)
+            throw APIError(APIErrorType::BadData, tr("Error: '%1' is not a valid torrent file.").arg(fileName));
+        torrentDescrs.append(loadResult.value());
+    }
+
     int pending = 0;
     int failure = 0;
     QList<BitTorrent::TorrentID> addedTorrentIDs;
@@ -1330,23 +1341,15 @@ void TorrentsController::addAction()
     }
 
     // process uploaded .torrent files
-    for (const auto &[fileName, fileData] : torrents)
+    for (const BitTorrent::TorrentDescriptor &torrentDescr : asConst(torrentDescrs))
     {
-        if (const auto loadResult = BitTorrent::TorrentDescriptor::load(fileData))
+        if (BitTorrent::Session::instance()->addTorrent(torrentDescr, addTorrentParams))
         {
-            const BitTorrent::TorrentDescriptor &torrentDescr = loadResult.value();
-            if (BitTorrent::Session::instance()->addTorrent(torrentDescr, addTorrentParams))
-            {
-                addedTorrentIDs.append(torrentDescr.infoHash().toTorrentID());
-            }
-            else
-            {
-                ++failure;
-            }
+            addedTorrentIDs.append(torrentDescr.infoHash().toTorrentID());
         }
         else
         {
-            throw APIError(APIErrorType::BadData, tr("Error: '%1' is not a valid torrent file.").arg(fileName));
+            ++failure;
         }
     }
 
