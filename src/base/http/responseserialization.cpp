@@ -143,6 +143,11 @@ QByteArray Http::serializeResponseHead(const Http::ResponseStatus &responseStatu
 
 QByteArray Http::serializeResponse(const Http::Response &response, const Http::Request &request)
 {
+    // [RFC 9110] 15.4.5. 304 Not Modified: no content, and no Content-Length, which would describe the content the
+    // client has
+    if (response.status.code == 304)
+        return serializeResponseHead(response.status, response.headers);
+
     const qsizetype responseContentSize = response.content.size();
 
     Q_ASSERT(responseContentSize >= 0);

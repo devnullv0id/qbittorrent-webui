@@ -247,6 +247,7 @@ private:
         QByteArray data;
         QString mimeType;
         QDateTime lastModified;
+        QString etag;
     };
     QHash<Path, TranslatedFile> m_translatedFiles;
     const QRegularExpression m_trRegex;
