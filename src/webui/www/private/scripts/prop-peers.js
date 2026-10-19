@@ -46,7 +46,8 @@ window.qBittorrent.PropPeers ??= (() => {
         if (document.hidden)
             return;
         if (document.getElementById("propPeers").classList.contains("invisible")
-            || document.getElementById("propertiesPanel_collapseToggle").classList.contains("panel-expand")) {
+            || document.getElementById("propertiesPanel_collapseToggle").classList.contains("panel-expand")
+            || document.getElementById("mainColumn").classList.contains("invisible")) {
             syncTorrentPeersLastResponseId = 0;
             torrentPeersTable.clear();
             return;

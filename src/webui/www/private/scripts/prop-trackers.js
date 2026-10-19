@@ -66,7 +66,8 @@ window.qBittorrent.PropTrackers ??= (() => {
         if (document.hidden)
             return;
         if (document.getElementById("propTrackers").classList.contains("invisible")
-            || document.getElementById("propertiesPanel_collapseToggle").classList.contains("panel-expand")) {
+            || document.getElementById("propertiesPanel_collapseToggle").classList.contains("panel-expand")
+            || document.getElementById("mainColumn").classList.contains("invisible")) {
             // Tab changed, don't do anything
             return;
         }

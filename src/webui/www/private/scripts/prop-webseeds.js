@@ -46,7 +46,8 @@ window.qBittorrent.PropWebseeds ??= (() => {
         if (document.hidden)
             return;
         if (document.getElementById("propWebSeeds").classList.contains("invisible")
-            || document.getElementById("propertiesPanel_collapseToggle").classList.contains("panel-expand")) {
+            || document.getElementById("propertiesPanel_collapseToggle").classList.contains("panel-expand")
+            || document.getElementById("mainColumn").classList.contains("invisible")) {
             // Tab changed, don't do anything
             return;
         }
