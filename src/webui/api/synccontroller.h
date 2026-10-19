@@ -56,8 +56,10 @@ private slots:
     void torrentPeersAction();
 
 private:
+    struct MaindataClient;
+
     void makeMaindataSnapshot();
-    QJsonObject generateMaindataSyncData(int id, bool fullUpdate);
+    QJsonObject generateMaindataSyncData(int id, MaindataClient &client, bool fullUpdate);
 
     void onCategoryAdded(const QString &categoryName);
     void onCategoryRemoved(const QString &categoryName);
@@ -116,8 +118,16 @@ private:
         QVariantMap serverState;
     };
 
+    // a client of the session, such as a browser tab: the response it accepted, and the changes it hasn't got
+    struct MaindataClient
+    {
+        int acceptedID = 0;
+        int lastSentID = 0;
+        MaindataSyncBuf syncBuf;  // since the accepted response
+        MaindataSyncBuf unsentBuf;  // since the last response sent to it
+    };
+
     MaindataSyncBuf m_maindataSnapshot;
-    MaindataSyncBuf m_maindataSyncBuf;
+    QList<MaindataClient> m_maindataClients;
     int m_maindataLastSentID = 0;
-    int m_maindataAcceptedID = -1;
 };
