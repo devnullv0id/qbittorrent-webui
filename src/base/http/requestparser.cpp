@@ -85,6 +85,22 @@ namespace
         const QString value = QString::fromLatin1(line.sliced(i + 1).trimmed());
         return {{name, value}};
     }
+
+    std::optional<QString> decodeExtValue(const QStringView value)
+    {
+        // [rfc8187] 3.2.1. Parameter Value Character Set and Language Information
+        // ext-value = charset "'" [ language ] "'" value-chars
+        const QList<QStringView> parts = value.split(u'\'');
+        if (parts.size() != 3)
+            return std::nullopt;
+
+        const QByteArray bytes = QByteArray::fromPercentEncoding(parts[2].toLatin1());
+        if (parts[0].compare(u"UTF-8", Qt::CaseInsensitive) == 0)
+            return QString::fromUtf8(bytes);
+        if (parts[0].compare(u"ISO-8859-1", Qt::CaseInsensitive) == 0)  // [rfc5987] 3.2.1
+            return QString::fromLatin1(bytes);
+        return std::nullopt;
+    }
 }
 
 RequestParser::ParseResult RequestParser::parse(const QByteArray &data)
@@ -387,7 +403,16 @@ bool RequestParser::parseFormData(const QByteArrayView data)
 
     // pick data
     const QString filename = u"filename"_s;
+    const QString filenameExt = u"filename*"_s;
     const QString name = u"name"_s;
+
+    // [rfc7578] 4.2. Content-Disposition Header Field for Each Part
+    // "filename*" must not be used, but some clients send only that one
+    if (!headersMap.contains(filename) && headersMap.contains(filenameExt))
+    {
+        const QString value = headersMap[filenameExt];
+        headersMap[filename] = decodeExtValue(value).value_or(value);  // a value that can't be decoded is kept as sent
+    }
 
     if (headersMap.contains(filename))
     {
