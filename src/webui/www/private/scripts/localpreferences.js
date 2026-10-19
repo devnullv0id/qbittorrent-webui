@@ -72,7 +72,7 @@ window.qBittorrent.LocalPreferences ??= (() => {
     const localPreferences = new LocalPreferences();
 
     const upgrade = () => {
-        const MIGRATION_VERSION = 1;
+        const MIGRATION_VERSION = 2;
         const MIGRATION_VERSION_KEY = "MigrationVersion";
 
         // clean start
@@ -86,6 +86,8 @@ window.qBittorrent.LocalPreferences ??= (() => {
         if (version !== MIGRATION_VERSION) {
             if (version < 1)
                 resetSideFilters();
+            if (version < 2)
+                renameStatusFilters();
 
             localPreferences.set(MIGRATION_VERSION_KEY, MIGRATION_VERSION);
         }
@@ -101,6 +103,17 @@ window.qBittorrent.LocalPreferences ??= (() => {
         clear("selected_category");
         clear("selected_tag");
         clear("selected_tracker");
+    };
+
+    const renameStatusFilters = () => {
+        // "Paused" and "Resumed" became "Stopped" and "Running"
+        const renamed = new Map([
+            ["paused", "stopped"],
+            ["resumed", "running"]
+        ]);
+        const filter = localPreferences.get("selected_filter");
+        if (renamed.has(filter))
+            localPreferences.set("selected_filter", renamed.get(filter));
     };
 
     return exports();
