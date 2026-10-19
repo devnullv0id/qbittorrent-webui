@@ -105,6 +105,9 @@ void SearchController::startAction()
         throw APIError(APIErrorType::Conflict, tr("Python must be installed to use the Search Engine."));
 
     const QString pattern = params()[u"pattern"_s].trimmed();
+    if (pattern.isEmpty())
+        throw APIError(APIErrorType::BadParams, tr("Search pattern cannot be empty"));
+
     const QString category = params()[u"category"_s].trimmed();
     const QStringList plugins = params()[u"plugins"_s].split(u'|');
 
