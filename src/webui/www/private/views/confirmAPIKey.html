@@ -44,7 +44,9 @@
             switch (e.key) {
                 case "Enter":
                     e.stopPropagation();
-                    confirmButton.click();
+                    // a focused button handles Enter itself
+                    if (e.target.type !== "button")
+                        confirmButton.click();
                     break;
                 case "Escape":
                     e.stopPropagation();
