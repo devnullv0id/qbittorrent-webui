@@ -143,7 +143,7 @@ void RSSController::markAsReadAction()
 
     RSS::Item *item = RSS::Session::instance()->itemByPath(itemPath);
     if (!item)
-        return;
+        throw APIError(APIErrorType::Conflict, tr("Item doesn't exist: %1.").arg(itemPath));
 
     if (!articleId.isNull())
     {
@@ -169,8 +169,10 @@ void RSSController::refreshItemAction()
 
     const QString itemPath {params()[u"itemPath"_s]};
     RSS::Item *item = RSS::Session::instance()->itemByPath(itemPath);
-    if (item)
-        item->refresh();
+    if (!item)
+        throw APIError(APIErrorType::Conflict, tr("Item doesn't exist: %1.").arg(itemPath));
+
+    item->refresh();
 
     setResult(QString());
 }
@@ -218,7 +220,11 @@ void RSSController::renameRuleAction()
     const QString ruleName {params()[u"ruleName"_s]};
     const QString newRuleName {params()[u"newRuleName"_s]};
 
-    RSS::AutoDownloader::instance()->renameRule(ruleName, newRuleName);
+    RSS::AutoDownloader *autoDownloader = RSS::AutoDownloader::instance();
+    if (!autoDownloader->hasRule(ruleName))
+        throw APIError(APIErrorType::Conflict, tr("Rule doesn't exist: %1.").arg(ruleName));
+    if (!autoDownloader->renameRule(ruleName, newRuleName))
+        throw APIError(APIErrorType::Conflict, tr("A rule with this name already exists: %1.").arg(newRuleName));
 
     setResult(QString());
 }
@@ -230,7 +236,11 @@ void RSSController::cloneRuleAction()
     const QString sourceName {params()[u"sourceName"_s]};
     const QString cloneName {params()[u"cloneName"_s]};
 
-    RSS::AutoDownloader::instance()->cloneRule(sourceName, cloneName);
+    RSS::AutoDownloader *autoDownloader = RSS::AutoDownloader::instance();
+    if (!autoDownloader->hasRule(sourceName))
+        throw APIError(APIErrorType::Conflict, tr("Rule doesn't exist: %1.").arg(sourceName));
+    if (!autoDownloader->cloneRule(sourceName, cloneName))
+        throw APIError(APIErrorType::Conflict, tr("A rule with this name already exists: %1.").arg(cloneName));
 
     setResult(QString());
 }
