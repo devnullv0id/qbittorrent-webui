@@ -144,8 +144,9 @@ namespace
     {
         contentType = contentType.toLower();
 
+        // checked with its ETag on every load, since an image's URL carries no cache ID
         if (contentType.startsWith(u"image/"))
-            return u"private, max-age=604800"_s;  // 1 week
+            return u"private, no-cache"_s;
 
         // MIME databases differ in which name of a type is the main one, e.g. text/javascript or application/javascript
         const QMimeDatabase mimeDatabase;
