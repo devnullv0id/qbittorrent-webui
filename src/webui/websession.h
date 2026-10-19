@@ -96,7 +96,7 @@ public:
     bool hasExpired(std::chrono::milliseconds duration) const override;
 
     bool shouldRefreshCookie() const;
-    void setCookieRefreshTime(std::chrono::seconds timeout);
+    std::chrono::seconds setCookieRefreshTime(std::chrono::seconds timeout);
 
 private:
     QDeadlineTimer m_cookieRefreshTimer;

@@ -888,8 +888,10 @@ void WebApplication::setSessionCookie(Http::HeaderMap &headers)
     {
         // 'Permanent Cookie' still require an expiration date so set it to a date in the distant future
         const std::chrono::seconds cookieExpireDuration = (m_sessionTimeout > 0s) ? m_sessionTimeout : std::chrono::years(1);
+        // the cookie isn't renewed with every request, so it outlasts the session by the time until its renewal
+        const std::chrono::seconds cookieRefreshTime = currentSession->setCookieRefreshTime(cookieExpireDuration);
         QNetworkCookie cookie {m_sessionCookieName.toLatin1(), currentSession->id().toLatin1()};
-        cookie.setExpirationDate(QDateTime::currentDateTime().addDuration(cookieExpireDuration));
+        cookie.setExpirationDate(QDateTime::currentDateTime().addDuration(cookieExpireDuration + cookieRefreshTime));
         cookie.setHttpOnly(true);
         cookie.setSecure(m_isSecureCookieEnabled && isOriginTrustworthy());  // [rfc6265] 4.1.2.5. The Secure Attribute
         cookie.setPath(u"/"_s);
@@ -898,7 +900,6 @@ void WebApplication::setSessionCookie(Http::HeaderMap &headers)
         else if (cookie.isSecure())
             cookie.setSameSitePolicy(QNetworkCookie::SameSite::None);
         headers.insert(Http::HEADER_SET_COOKIE, QString::fromLatin1(cookie.toRawForm()));
-        currentSession->setCookieRefreshTime(cookieExpireDuration);
     }
 }
 
