@@ -20,6 +20,8 @@
 * `rss/markAsRead` and `rss/refreshItem` endpoints respond with a 409 when the item does not exist
 * `app/setPreferences` endpoint responds with a 400 when `json` is not a JSON object
 * `app/cookies` endpoint returns cookie values as `app/setCookies` stored them, instead of garbling non-ASCII characters
+* `search/enablePlugin` and `search/uninstallPlugin` endpoints respond with a 404 naming the first plugin that is not installed, and change none of the given plugins
+* `search/start` endpoint responds with a 400 when the pattern is empty
 * [#24955](https://github.com/qbittorrent/qBittorrent/pull/24955)
   * `search/results` endpoint includes `engineFullName` (string) data as the display name of the engine
 
