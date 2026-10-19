@@ -35,6 +35,12 @@
                     alert("QBT_TR(Name cannot be empty)QBT_TR[CONTEXT=HttpServer]");
                     return;
                 }
+                // setRule would replace that rule
+                const rules = [...window.parent.qBittorrent.RssDownloader.rssDownloaderRulesTable.getRowValues()];
+                if (rules.some((row) => row.full_data.name === name)) {
+                    alert("QBT_TR(A rule with this name already exists, please choose another name.)QBT_TR[CONTEXT=AutomatedRssDownloader]");
+                    return;
+                }
                 document.getElementById("submitButton").disabled = true;
 
                 fetch("api/v2/rss/setRule", {
