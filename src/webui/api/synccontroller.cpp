@@ -645,8 +645,11 @@ QJsonObject SyncController::generateMaindataSyncData(const int id, const bool fu
 
     for (const QString &tag : asConst(m_addedTags))
     {
-        m_maindataSyncBuf.tags.append(tag);
-        m_maindataSnapshot.tags.append(tag);
+        // a tag removed and added again since the last update is already listed
+        if (!m_maindataSyncBuf.tags.contains(tag))
+            m_maindataSyncBuf.tags.append(tag);
+        if (!m_maindataSnapshot.tags.contains(tag))
+            m_maindataSnapshot.tags.append(tag);
     }
     m_addedTags.clear();
 
