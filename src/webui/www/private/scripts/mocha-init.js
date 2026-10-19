@@ -1201,6 +1201,10 @@ const initializeWindows = () => {
             || (trackerHost === TRACKERS_WARNING))
             return;
 
+        // a sync may have removed the tracker while its menu was open
+        if (!trackerMap.has(trackerHost))
+            return;
+
         const urls = [...trackerMap.get(trackerHost).keys()].map(encodeURIComponent).join("|");
 
         const trackerRemoved = () => {
