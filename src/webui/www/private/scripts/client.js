@@ -746,7 +746,8 @@ window.addEventListener("DOMContentLoaded", async (event) => {
         const counts = torrentsTable.getStatusFilterCounts(filters.map(([filter]) => filter));
         for (const [filter, filterTitle] of filters)
             updateFilter(filter, filterTitle, counts.get(filter));
-        if (useAutoHideZeroStatusFilters && document.getElementById(`${selectedStatus}_filter`).classList.contains("invisible"))
+        // the stored filter may not exist, e.g. one renamed since it was chosen
+        if (useAutoHideZeroStatusFilters && (document.getElementById(`${selectedStatus}_filter`)?.classList.contains("invisible") === true))
             window.qBittorrent.Filters.clearStatusFilter();
     };
 
