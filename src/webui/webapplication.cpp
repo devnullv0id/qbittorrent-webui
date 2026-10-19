@@ -482,6 +482,8 @@ void WebApplication::processAPIRequest(const QString &endpoint, const Http::Head
     }
     else
     {
+        if (m_request.hasUnsupportedContent)
+            throw UnsupportedMediaTypeHTTPError();
         params = m_request.posts;
     }
 

@@ -352,8 +352,10 @@ bool RequestParser::parsePostMessage(const QByteArrayView data)
         });
     }
 
+    // its length is known, so the connection can go on: the request handler refuses it
     qWarning() << Q_FUNC_INFO << "unknown content type:" << contentType;
-    return false;
+    m_request.hasUnsupportedContent = true;
+    return true;
 }
 
 bool RequestParser::parseFormData(const QByteArrayView data)

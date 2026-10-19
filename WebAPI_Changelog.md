@@ -6,6 +6,8 @@
 * WebAPI responds with a 413 to a request whose body is over the size limit, instead of a 400
 * WebAPI responds with a 501 to a request with a chunked body, and with a 400 to one whose final transfer coding is not `chunked`
 * WebAPI sends `100 Continue` to a request with `Expect: 100-continue`
+* `torrents/add` and `torrents/parseMetadata` endpoints accept a file part that is named only by `filename*`
+* WebAPI responds with a 415 to a request body that is neither form-encoded nor multipart, instead of a 400
 * [#24955](https://github.com/qbittorrent/qBittorrent/pull/24955)
   * `search/results` endpoint includes `engineFullName` (string) data as the display name of the engine
 
