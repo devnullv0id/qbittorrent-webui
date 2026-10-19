@@ -175,6 +175,8 @@
             document.getElementById("optimizeAlignmentHidden").value = document.getElementById("optimizeAlignment").checked ? "true" : "false";
 
             document.getElementById("download_spinner").style.display = "block";
+            // a second click while the task is being added would add a second one
+            document.getElementById("createTorrentButton").disabled = true;
 
             const formData = new FormData(document.getElementById("createTorrentForm"));
             if (formData.has("trackers"))
@@ -188,6 +190,7 @@
             }).then((response) => {
                 if (!response.ok) {
                     document.getElementById("download_spinner").style.display = "none";
+                    document.getElementById("createTorrentButton").disabled = false;
                     alert("QBT_TR(Unable to create torrent.)QBT_TR[CONTEXT=TorrentCreator]");
                     return;
                 }
@@ -195,6 +198,7 @@
             }, (error) => {
                 console.error(error);
                 document.getElementById("download_spinner").style.display = "none";
+                document.getElementById("createTorrentButton").disabled = false;
                 alert("QBT_TR(Unable to create torrent.)QBT_TR[CONTEXT=TorrentCreator]");
             });
 
