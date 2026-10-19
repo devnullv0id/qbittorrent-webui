@@ -740,13 +740,8 @@ window.qBittorrent.ContextMenu ??= (() => {
 
     class SearchPluginsTableContextMenu extends ContextMenu {
         updateMenuItems() {
-            const enabledColumnIndex = () => {
-                const columns = document.querySelectorAll("#searchPluginsTableFixedHeaderRow th");
-                return Array.prototype.findIndex.call(columns, (column => column.textContent === "Enabled"));
-            };
-
             this.showItem("Enabled");
-            this.setItemChecked("Enabled", (this.options.element.children[enabledColumnIndex()].textContent === "Yes"));
+            this.setItemChecked("Enabled", window.qBittorrent.Search.getPlugin(this.options.element.rowId).enabled);
 
             this.showItem("Uninstall");
         }
