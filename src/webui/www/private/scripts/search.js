@@ -1046,6 +1046,8 @@ window.qBittorrent.Search ??= (() => {
                     if ((searchId === getSelectedSearchId()) && ((newRows.length > 0) || (state.rows.length === 0))) {
                         for (const row of newRows)
                             searchResultsTable.updateRowData(row);
+                        // shown results are not unread
+                        state.lastSeenCount = state.rows.length;
 
                         searchResultsTable.updateTable();
 
