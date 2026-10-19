@@ -109,7 +109,7 @@ private:
     void sendFile(const Path &path, const Http::HeaderMap &commonHeaders, Http::ResponseWriter &responseWriter);
     void sendWebUIFile(const Http::HeaderMap &commonHeaders, Http::ResponseWriter &responseWriter);
 
-    void translateDocument(QString &data) const;
+    void translateDocument(QString &data, bool isScript) const;
 
     // Session management
     QString generateSid() const;

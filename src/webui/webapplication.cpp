@@ -343,13 +343,17 @@ void WebApplication::sendWebUIFile(const Http::HeaderMap &commonHeaders, Http::R
     sendFile(localPath, commonHeaders, responseWriter);
 }
 
-void WebApplication::translateDocument(QString &data) const
+void WebApplication::translateDocument(QString &data, const bool isScript) const
 {
     // a language tag, e.g. zh_TW -> zh-TW, sr@latin -> sr-Latn
     QString languageTag = m_currentLocale;
     languageTag.replace(u"@latin"_s, u"@Latn"_s).replace(u'@', u'-').replace(u'_', u'-');
     data.replace(u"${LANG}"_s, languageTag);
     data.replace(u"${CACHEID}"_s, m_cacheID);
+
+    // a string in a script file or in a `<script>` element is in JS, any other one in HTML
+    bool isInScript = isScript;
+    qsizetype scriptTag = isScript ? -1 : data.indexOf(u"<script"_s, 0, Qt::CaseInsensitive);
 
     qsizetype i = 0;
     bool found = true;
@@ -359,6 +363,12 @@ void WebApplication::translateDocument(QString &data) const
         i = data.indexOf(m_trRegex, i, &regexMatch);
         if (i >= 0)
         {
+            while ((scriptTag >= 0) && (scriptTag < i))
+            {
+                isInScript = !isInScript;
+                scriptTag = data.indexOf((isInScript ? u"</script"_s : u"<script"_s), scriptTag, Qt::CaseInsensitive);
+            }
+
             const QStringView sourceText = regexMatch.capturedView(1);
             const QStringView context = regexMatch.capturedView(3);
 
@@ -369,13 +379,15 @@ void WebApplication::translateDocument(QString &data) const
             // it should fallback to `sourceText`
             QString translation = loadedText.isEmpty() ? sourceText.toString() : loadedText;
 
-            // Escape quotes to workaround issues with HTML attributes
+            // Escape quotes to workaround issues with HTML attributes and JS strings
             // FIXME: this is a dirty workaround to deal with broken translation strings:
-            // 1. Translation strings is the culprit of the issue, they should be fixed instead
-            // 2. The escaped quote/string is wrong for JS. JS use backslash to escape the quote: "\""
-            translation.replace(u'"', u"&#34;"_s);
+            // Translation strings is the culprit of the issue, they should be fixed instead
+            // Backslashes stay, as the translations of JS strings use JS escapes such as `\n`
+            translation.replace(u'"', (isInScript ? u"\\\""_s : u"&#34;"_s));
 
             data.replace(i, regexMatch.capturedLength(), translation);
+            if (scriptTag >= 0)
+                scriptTag += (translation.length() - regexMatch.capturedLength());
             i += translation.length();
         }
         else
@@ -776,7 +788,7 @@ void WebApplication::sendFile(const Path &path, const Http::HeaderMap &commonHea
 
         auto dataStr = QString::fromUtf8(data);
         // Translate the file
-        translateDocument(dataStr);
+        translateDocument(dataStr, mimeType.inherits(Http::CONTENT_TYPE_JS));
 
         // Add the language options
         if (path == (m_rootFolder / Path(PRIVATE_FOLDER) / Path(u"views/preferences.html"_s)))
