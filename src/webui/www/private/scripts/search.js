@@ -1060,7 +1060,8 @@ window.qBittorrent.Search ??= (() => {
 
                 clearTimeout(state.loadResultsTimer);
                 state.loadResultsTimer = loadSearchResultsData.delay(2000, this, searchId);
-            }, (error) => {
+            })
+            .catch((error) => {
                 console.error(error);
 
                 clearTimeout(state.loadResultsTimer);
