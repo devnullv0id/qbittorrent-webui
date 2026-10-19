@@ -570,7 +570,7 @@ const initializeWindows = () => {
     deleteSelectedTorrentsFN = (forceDeleteFiles = false) => {
         const hashes = torrentsTable.selectedRowsIds();
         if (hashes.length > 0) {
-            if (window.qBittorrent.Cache.preferences.get().confirm_torrent_deletion) {
+            if (window.qBittorrent.Cache.preferences.get().confirm_torrent_deletion !== false) {
                 new MochaUI.Modal({
                     ...window.qBittorrent.Dialog.baseModalOptions,
                     id: "confirmDeletionPage",
@@ -707,7 +707,7 @@ const initializeWindows = () => {
     recheckFN = () => {
         const hashes = torrentsTable.selectedRowsIds();
         if (hashes.length > 0) {
-            if (window.qBittorrent.Cache.preferences.get().confirm_torrent_recheck) {
+            if (window.qBittorrent.Cache.preferences.get().confirm_torrent_recheck !== false) {
                 new MochaUI.Modal({
                     ...window.qBittorrent.Dialog.baseModalOptions,
                     id: "confirmRecheckDialog",
@@ -899,7 +899,7 @@ const initializeWindows = () => {
     deleteVisibleTorrentsFN = () => {
         const hashes = torrentsTable.getFilteredTorrentsHashes(selectedStatus, selectedCategory, selectedTag, selectedTracker);
         if (hashes.length > 0) {
-            if (window.qBittorrent.Cache.preferences.get().confirm_torrent_deletion) {
+            if (window.qBittorrent.Cache.preferences.get().confirm_torrent_deletion !== false) {
                 new MochaUI.Modal({
                     ...window.qBittorrent.Dialog.baseModalOptions,
                     id: "confirmDeletionPage",
@@ -1132,7 +1132,7 @@ const initializeWindows = () => {
     torrentRemoveAllTagsFN = () => {
         const hashes = torrentsTable.selectedRowsIds();
         if (hashes.length) {
-            if (window.qBittorrent.Cache.preferences.get().confirm_remove_all_tags
+            if ((window.qBittorrent.Cache.preferences.get().confirm_remove_all_tags !== false)
                 && !confirm("QBT_TR(Remove all tags from selected torrents?)QBT_TR[CONTEXT=TransferListWidget]"))
                 return;
 
@@ -1212,7 +1212,7 @@ const initializeWindows = () => {
             window.qBittorrent.Filters.clearTrackerFilter();
         };
 
-        if (!window.qBittorrent.Cache.preferences.get().confirm_remove_tracker_from_all_torrents) {
+        if (window.qBittorrent.Cache.preferences.get().confirm_remove_tracker_from_all_torrents === false) {
             fetch("api/v2/torrents/removeTrackers", {
                     method: "POST",
                     body: new URLSearchParams({
