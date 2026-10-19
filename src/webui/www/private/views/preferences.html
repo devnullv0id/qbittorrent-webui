@@ -2221,6 +2221,9 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
                     }
 
                     showNotification("QBT_TR(Attempted to send test email.<br>Check your inbox to confirm success.<br>Check the Execution Log for errors.)QBT_TR[CONTEXT=OptionsDialog]", 300, 80, 5000);
+                })
+                .catch((error) => {
+                    showNotification("QBT_TR(Could not contact qBittorrent.)QBT_TR[CONTEXT=OptionsDialog]", 300, 60, 5000);
                 });
         };
 
