@@ -81,6 +81,7 @@
         let table;
         let contextMenu;
         let timer = -1;
+        let errorShown = false;
 
         const init = () => {
             table = new window.qBittorrent.DynamicTable.TorrentCreationTasksTable();
@@ -199,6 +200,7 @@
             timer = -1;
             table = null;
             contextMenu = null;
+            errorShown = false;
         };
 
         const syncTaskWithInterval = (interval) => {
@@ -212,6 +214,11 @@
                 cache: "no-store"
             }).then(async (response) => {
                 if (!response.ok) {
+                    // the window was closed meanwhile, or the error is shown already
+                    if ((table === null) || errorShown)
+                        return;
+
+                    errorShown = true;
                     let error = "QBT_TR(Unable to load torrent creation tasks)QBT_TR[CONTEXT=TorrentCreator]";
                     const responseText = await response.text();
                     if (responseText.length > 0)
@@ -219,6 +226,8 @@
                     alert(error);
                     return;
                 }
+
+                errorShown = false;
 
                 // Awaiting the json before clearing the table to prevent flickering
                 const responseJSON = await response.json();
