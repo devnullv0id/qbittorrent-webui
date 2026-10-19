@@ -132,7 +132,7 @@
         };
 
         const formatUrls = (urls) => {
-            return urls.split("\n").map(encodeURIComponent).join("|");
+            return urls.split("\n").join("|");
         };
 
         const createSizeOption = (size) => {

@@ -32,7 +32,6 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QStringList>
-#include <QUrl>
 
 #include "base/global.h"
 #include "base/bittorrent/torrentcreationmanager.h"
@@ -94,12 +93,7 @@ namespace
     QStringList parseUrls(const QString &urlsParam)
     {
         // Empty lines are preserved because they indicate new tracker tier and will be ignored in url seeds.
-        const QStringList encodedUrls = urlsParam.split(u'|');
-        QStringList urls;
-        urls.reserve(encodedUrls.size());
-        for (const QString &urlStr : encodedUrls)
-            urls << QUrl::fromPercentEncoding(urlStr.toLatin1());
-        return urls;
+        return urlsParam.split(u'|');
     }
 
     QString taskStatusString(const std::shared_ptr<BitTorrent::TorrentCreationTask> task)

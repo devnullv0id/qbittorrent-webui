@@ -11,6 +11,7 @@
 * `torrents/add` and `torrents/parseMetadata` endpoints keep every uploaded file, also when several have the same file name
 * `torrents/parseMetadata` endpoint responds in the order of the files in the request
 * `torrents/add` endpoint checks every uploaded file before adding anything, so a request answered with a 415 adds no torrent
+* `torrents/removeTrackers`, `torrents/reannounce` and `torrentcreator/addTask` endpoints take URLs as sent, as `torrents/addTrackers` does, instead of percent-decoding them once more
 * [#24955](https://github.com/qbittorrent/qBittorrent/pull/24955)
   * `search/results` endpoint includes `engineFullName` (string) data as the display name of the engine
 

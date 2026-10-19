@@ -1284,7 +1284,7 @@ const initializeWindows = () => {
         if (!trackerMap.has(trackerHost))
             return;
 
-        const urls = [...trackerMap.get(trackerHost).keys()].map(encodeURIComponent).join("|");
+        const urls = [...trackerMap.get(trackerHost).keys()].join("|");
 
         const trackerRemoved = () => {
             updateMainData();

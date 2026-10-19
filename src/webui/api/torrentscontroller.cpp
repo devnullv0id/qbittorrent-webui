@@ -1471,12 +1471,7 @@ void TorrentsController::removeTrackersAction()
     if (hash == u"*"_s)
         hash = u"all"_s;
     const QStringList idStrings = hash.split(u'|', Qt::SkipEmptyParts);
-    const QStringList urlsParam = params()[u"urls"_s].split(u'|', Qt::SkipEmptyParts);
-
-    QStringList urls;
-    urls.reserve(urlsParam.size());
-    for (const QString &urlStr : urlsParam)
-        urls << QUrl::fromPercentEncoding(urlStr.toLatin1());
+    const QStringList urls = params()[u"urls"_s].split(u'|', Qt::SkipEmptyParts);
 
     applyToTorrents(idStrings, [&urls](BitTorrent::Torrent *const torrent) { torrent->removeTrackers(urls); });
 }
@@ -1917,11 +1912,7 @@ void TorrentsController::reannounceAction()
 
     const QStringList hashes {params()[u"hashes"_s].split(u'|')};
     const QStringList urlsParam {params()[u"urls"_s].split(u'|', Qt::SkipEmptyParts)};
-
-    QSet<QString> urls;
-    urls.reserve(urlsParam.size());
-    for (const QString &urlStr : urlsParam)
-        urls << QUrl::fromPercentEncoding(urlStr.toLatin1());
+    const QSet<QString> urls {urlsParam.cbegin(), urlsParam.cend()};
 
     applyToTorrents(hashes, [&urls](BitTorrent::Torrent *const torrent)
     {

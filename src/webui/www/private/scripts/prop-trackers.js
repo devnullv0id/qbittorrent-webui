@@ -297,7 +297,7 @@ window.qBittorrent.PropTrackers ??= (() => {
                 method: "POST",
                 body: new URLSearchParams({
                     hash: hashes,
-                    urls: torrentTrackersTable.selectedRowsIds().map(encodeURIComponent).join("|")
+                    urls: torrentTrackersTable.selectedRowsIds().join("|")
                 })
             })
             .then((response) => {
@@ -316,7 +316,7 @@ window.qBittorrent.PropTrackers ??= (() => {
             hashes: current_hash
         });
         if (trackers.length > 0)
-            body.set("urls", trackers.map(encodeURIComponent).join("|"));
+            body.set("urls", trackers.join("|"));
 
         fetch("api/v2/torrents/reannounce", {
                 method: "POST",
