@@ -3123,8 +3123,10 @@ Use ';' to split multiple entries. Can use wildcard '*'.)QBT_TR[CONTEXT=OptionsD
 
             // Connection tab
             // Listening Port
-            const listenPort = Number(document.getElementById("portValue").value);
-            if (Number.isNaN(listenPort) || (listenPort < 0) || (listenPort > 65535)) {
+            const listenPortText = document.getElementById("portValue").value.trim();
+            const listenPort = Number(listenPortText);
+            // Number() reads an empty field as 0, which picks a random port
+            if ((listenPortText === "") || !Number.isInteger(listenPort) || (listenPort < 0) || (listenPort > 65535)) {
                 alert("QBT_TR(The port used for incoming connections must be between 0 and 65535.)QBT_TR[CONTEXT=HttpServer]");
                 return;
             }
