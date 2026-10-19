@@ -56,10 +56,8 @@ window.qBittorrent.PropFiles ??= (() => {
                     priority: priority
                 })
             })
-            .then((response) => {
-                if (!response.ok)
-                    return;
-
+            .finally(() => {
+                clearTimeout(loadTorrentFilesDataTimer);
                 loadTorrentFilesDataTimer = loadTorrentFilesData.delay(1000);
             });
     };
