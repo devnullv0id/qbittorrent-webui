@@ -103,11 +103,12 @@ bool CookieBasedWebSession::shouldRefreshCookie() const
     return m_cookieRefreshTimer.hasExpired();
 }
 
-void CookieBasedWebSession::setCookieRefreshTime(const std::chrono::seconds timeout)
+std::chrono::seconds CookieBasedWebSession::setCookieRefreshTime(const std::chrono::seconds timeout)
 {
     // Safari browser does not persist cookies for more than 7 days, so we refresh cookies older than 1 day
     const std::chrono::seconds time = std::min((timeout / 2), std::chrono::duration_cast<std::chrono::seconds>(std::chrono::days(1)));
     m_cookieRefreshTimer.setRemainingTime(time);
+    return time;
 }
 
 WebSessionType APIKeyBasedWebSession::type() const
