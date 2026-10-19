@@ -40,6 +40,7 @@ window.qBittorrent.PropPeers ??= (() => {
     const torrentPeersTable = new window.qBittorrent.DynamicTable.TorrentPeersTable();
     let loadTorrentPeersTimer = -1;
     let syncTorrentPeersLastResponseId = 0;
+    let syncTorrentPeersHash = "";
     let show_flags = true;
 
     const loadTorrentPeersData = () => {
@@ -59,6 +60,12 @@ window.qBittorrent.PropPeers ??= (() => {
             clearTimeout(loadTorrentPeersTimer);
             return;
         }
+        if (current_hash !== syncTorrentPeersHash) {
+            // the response ID belongs to the previous torrent
+            syncTorrentPeersLastResponseId = 0;
+            torrentPeersTable.clear();
+            syncTorrentPeersHash = current_hash;
+        }
         const url = new URL("api/v2/sync/torrentPeers", window.location);
         url.search = new URLSearchParams({
             hash: current_hash,
@@ -73,6 +80,9 @@ window.qBittorrent.PropPeers ??= (() => {
                     return;
 
                 const responseJSON = await response.json();
+                // another torrent was selected while the request ran
+                if (current_hash !== torrentsTable.getCurrentTorrentID())
+                    return;
 
                 if (responseJSON) {
                     const full_update = (responseJSON["full_update"] === true);
