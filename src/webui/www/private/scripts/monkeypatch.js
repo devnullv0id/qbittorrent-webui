@@ -110,8 +110,17 @@ window.qBittorrent.MonkeyPatch ??= (() => {
                 };
 
                 switch (source.match(/(\.\w+)(?:\?v=\w+)?$/)[1]) {
-                    case ".js":
-                        return Asset.javascript(source, properties);
+                    case ".js": {
+                        const script = Asset.javascript(source, properties);
+                        // a script that fails to load would keep whatever requires it from ever loading:
+                        // go on without it, and load it again when it's required again
+                        script.addEventListener("error", (event) => {
+                            delete MUI.files[source];
+                            if (typeof oldonload === "function")
+                                oldonload();
+                        });
+                        return script;
+                    }
                     case ".css":
                         return Asset.css(source, properties);
                     case ".jpg":
