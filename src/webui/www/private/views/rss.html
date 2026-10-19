@@ -293,11 +293,6 @@
             });
 
             rssFeedContextMenu.addTarget(document.getElementById("rssFeedTableDiv"));
-            // deselect feed when clicking on empty part of table
-            document.getElementById("rssFeedTableDiv").addEventListener("click", (e) => {
-                rssFeedTable.deselectAll();
-                rssFeedTable.deselectRow();
-            });
             document.getElementById("rssFeedTableDiv").addEventListener("contextmenu", (e) => {
                 if (e.target.nodeName === "DIV") {
                     rssFeedTable.deselectAll();
