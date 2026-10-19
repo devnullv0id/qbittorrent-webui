@@ -65,11 +65,17 @@
                 .then((response) => {
                     if (!response.ok) {
                         alertDialog("QBT_TR(Unable to clone the selected rule.)QBT_TR[CONTEXT=RSSCloneRule]");
+                        // to let the user try again
+                        cloneButton.disabled = false;
                         return;
                     }
 
                     window.parent.qBittorrent.RssDownloader.updateRulesList();
                     window.qBittorrent.Client.closeWindow(windowEl);
+                })
+                .catch((error) => {
+                    alertDialog("QBT_TR(Unable to clone the selected rule.)QBT_TR[CONTEXT=RSSCloneRule]");
+                    cloneButton.disabled = false;
                 });
         });
 
