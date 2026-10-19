@@ -980,7 +980,7 @@ void TorrentsController::trackersAction()
 // Returns the web seeds for a torrent in JSON format.
 // The return value is a JSON-formatted list of dictionaries.
 // The dictionary keys are:
-//   - "url": Web seed URL
+//   - "url": Web seed URL, percent-encoded
 void TorrentsController::webseedsAction()
 {
     requireParams({u"hash"_s});
@@ -995,7 +995,7 @@ void TorrentsController::webseedsAction()
     {
         webSeedList.append(QJsonObject
         {
-            {KEY_WEBSEED_URL, webseed.toString()}
+            {KEY_WEBSEED_URL, webseed.toString(QUrl::FullyEncoded)}
         });
     }
 
