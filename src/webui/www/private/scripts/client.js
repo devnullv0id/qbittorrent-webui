@@ -1603,6 +1603,8 @@ window.addEventListener("DOMContentLoaded", async (event) => {
 
         customSyncMainDataInterval = null;
         syncData(100);
+        // its refresh stopped if the page was hidden on another tab
+        updatePropertiesPanel();
 
         hideSearchTab();
         hideRssTab();
@@ -1910,6 +1912,9 @@ window.addEventListener("DOMContentLoaded", async (event) => {
         onContentLoaded: function() {
             this.panelHeaderCollapseBoxEl.addEvent("click", (event) => {
                 localPreferences.set("properties_panel_collapsed", this.isCollapsed.toString());
+                // the tabs stop refreshing while collapsed
+                if (!this.isCollapsed)
+                    updatePropertiesPanel();
             });
 
             const togglePropertiesPanel = () => {
