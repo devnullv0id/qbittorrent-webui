@@ -79,11 +79,17 @@ namespace
             return false;
         };
 
-        return std::ranges::any_of(qTokenize(encodings, u',', Qt::SkipEmptyParts)
-                , [&matchEncoding](QStringView encodingEntry)
+        // "*" only stands for the encodings that aren't listed, so a listed "gzip" decides on its own
+        auto encodingEntries = qTokenize(encodings, u',', Qt::SkipEmptyParts);
+        const bool isGzipListed = std::ranges::any_of(encodingEntries, [](const QStringView encodingEntry)
         {
-            encodingEntry = encodingEntry.trimmed();
-            return matchEncoding(encodingEntry, u"gzip") || matchEncoding(encodingEntry, u"*");
+            return encodingEntry.trimmed().startsWith(u"gzip");
+        });
+        const QStringView encoding = isGzipListed ? u"gzip" : u"*";
+
+        return std::ranges::any_of(encodingEntries, [&matchEncoding, encoding](const QStringView encodingEntry)
+        {
+            return matchEncoding(encodingEntry.trimmed(), encoding);
         });
     }
 
