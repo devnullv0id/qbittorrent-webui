@@ -241,6 +241,7 @@ private:
     };
     bool m_isAltUIUsed = false;
     Path m_rootFolder;
+    QByteArray m_rootFolderDigest;
 
     struct TranslatedFile
     {
