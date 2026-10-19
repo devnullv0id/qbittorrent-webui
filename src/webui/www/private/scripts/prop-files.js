@@ -70,7 +70,8 @@ window.qBittorrent.PropFiles ??= (() => {
         if (document.hidden)
             return;
         if (document.getElementById("propFiles").classList.contains("invisible")
-            || document.getElementById("propertiesPanel_collapseToggle").classList.contains("panel-expand")) {
+            || document.getElementById("propertiesPanel_collapseToggle").classList.contains("panel-expand")
+            || document.getElementById("mainColumn").classList.contains("invisible")) {
             // Tab changed, don't do anything
             return;
         }
