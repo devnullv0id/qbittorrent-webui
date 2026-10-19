@@ -571,6 +571,10 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
 
                     const responseJSON = await response.json();
 
+                    // the rows get new ids, keep the same rules selected
+                    const selectedRules = rssDownloaderRulesTable.selectedRows.map((sRow) =>
+                        rssDownloaderRulesTable.getRow(sRow).full_data.name);
+                    const ruleRowIds = new Map();
                     rssDownloaderRulesTable.clear();
                     let rowID = -1;
                     for (const rule in responseJSON) {
@@ -581,9 +585,20 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
                             checked: responseJSON[rule].enabled,
                             name: rule
                         });
+                        ruleRowIds.set(rule, `${rowID}`);
                     }
                     rssDownloaderRulesTable.updateTable(false);
                     rulesList = responseJSON;
+
+                    // saveSettings() saves the editor into the last selected rule
+                    const editedRule = selectedRules.at(-1);
+                    if ((editedRule !== undefined) && !ruleRowIds.has(editedRule)) {
+                        showRule("");
+                        return;
+                    }
+                    rssDownloaderRulesTable.reselectRows(selectedRules
+                        .filter((rule) => ruleRowIds.has(rule))
+                        .map((rule) => ruleRowIds.get(rule)));
                 });
         };
 
