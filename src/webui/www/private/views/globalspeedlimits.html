@@ -85,6 +85,10 @@
                         return;
 
                     const limits = await response.json();
+                    // the window was closed while the request ran
+                    if (!uploadValue.isConnected)
+                        return;
+
                     setupSlider("uploadSlider", uploadValue, (limits.up_limit / 1024));
                     setupSlider("downloadSlider", downloadValue, (limits.dl_limit / 1024));
                     setupSlider("altUploadSlider", altUploadValue, (limits.alt_up_limit / 1024));
