@@ -405,6 +405,8 @@ void SearchJobManager::removeAllResultFiles() const
 void SearchJobManager::onPreferencesChanged()
 {
     const auto *pref = Preferences::instance();
+    // results are stored only while jobs are too
+    const bool wasStoringResults = m_storeSearchJobs && m_storeSearchJobResults;
 
     const bool storeSearchJobs = pref->storeSearchJobs();
     if (storeSearchJobs != m_storeSearchJobs)
@@ -417,18 +419,17 @@ void SearchJobManager::onPreferencesChanged()
     if (storeSearchJobResults != m_storeSearchJobResults)
     {
         m_storeSearchJobResults = storeSearchJobResults;
-        if (m_storeSearchJobResults && m_storeSearchJobs)
-        {
-            // Save results for all completed searches
-            for (const JobInfo &job : asConst(m_jobs))
-            {
-                if (!job.active)
-                    saveSearchResults(job.id);
-            }
-        }
-        else
-        {
+        if (!m_storeSearchJobResults || !m_storeSearchJobs)
             removeAllResultFiles();
+    }
+
+    if (m_storeSearchJobs && m_storeSearchJobResults && !wasStoringResults)
+    {
+        // Save results for all completed searches
+        for (const JobInfo &job : asConst(m_jobs))
+        {
+            if (!job.active)
+                saveSearchResults(job.id);
         }
     }
 }
