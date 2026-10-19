@@ -116,6 +116,9 @@ window.qBittorrent.MultiRename ??= (() => {
                 return result;
             };
 
+            // rows that no longer match show no new name, also when they are drawn again later
+            for (const row of this.matchedFiles)
+                row.renamed = "";
             this.matchedFiles = [];
 
             // Ignore empty searches
