@@ -197,6 +197,9 @@ window.qBittorrent.Search ??= (() => {
                             if (event.target.value.trim() !== "")
                                 document.getElementById("startSearchButton").click();
                             break;
+                        case "startSearchButton":
+                            startStopSearch();
+                            break;
                     }
 
                     break;
