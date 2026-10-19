@@ -18,6 +18,7 @@
 * `torrents/setLocation`, `torrents/setSavePath` and `torrents/setDownloadPath` endpoints create the folder of a relative path where each torrent will use it, instead of in the working directory
 * `rss/renameRule` and `rss/cloneRule` endpoints respond with a 409 when the rule does not exist or the new name is taken
 * `rss/markAsRead` and `rss/refreshItem` endpoints respond with a 409 when the item does not exist
+* `app/setPreferences` endpoint responds with a 400 when `json` is not a JSON object
 * [#24955](https://github.com/qbittorrent/qBittorrent/pull/24955)
   * `search/results` endpoint includes `engineFullName` (string) data as the display name of the engine
 

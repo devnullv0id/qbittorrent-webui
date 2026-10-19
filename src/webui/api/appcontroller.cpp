@@ -547,7 +547,14 @@ void AppController::setPreferencesAction()
 
     auto *pref = Preferences::instance();
     auto *session = BitTorrent::Session::instance();
-    const QVariantHash m = QJsonDocument::fromJson(params()[u"json"_s].toUtf8()).toVariant().toHash();
+
+    QJsonParseError jsonError;
+    const auto jsonDocument = QJsonDocument::fromJson(params()[u"json"_s].toUtf8(), &jsonError);
+    if (jsonError.error != QJsonParseError::NoError)
+        throw APIError(APIErrorType::BadParams, jsonError.errorString());
+    if (!jsonDocument.isObject())
+        throw APIError(APIErrorType::BadParams, tr("json must be an object"));
+    const QVariantHash m = jsonDocument.toVariant().toHash();
 
     QVariantHash::ConstIterator it;
     const auto hasKey = [&it, &m](const QString &key) -> bool
