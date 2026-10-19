@@ -714,6 +714,14 @@ td.noWrap {
     margin-top: 0;
 }
 
+/* fit the file rows into the virtual list's row height */
+#torrentFilesTableDiv td input[type="checkbox"],
+#addTorrentFilesTableDiv td input[type="checkbox"],
+#bulkRenameFilesTableDiv td input[type="checkbox"] {
+    margin-bottom: 0;
+    vertical-align: top;
+}
+
 .filesTableCollapseIcon {
     cursor: pointer;
     height: var(--icon-size, 15px);
