@@ -199,9 +199,8 @@ namespace
         if (((request.method == Http::HEADER_REQUEST_METHOD_GET) || (request.method == Http::HEADER_REQUEST_METHOD_HEAD))
             && isEntityTagMatched(request.headers.value(Http::HEADER_IF_NONE_MATCH), etag))
         {
+            // the content stays for the headers it decides, such as Vary: a 304 is serialized without it
             response.status = {.code = 304, .text = u"Not Modified"_s};
-            response.headers.remove(Http::HEADER_CONTENT_TYPE);
-            response.content.clear();
         }
 
         responseWriter.setResponse(response);
