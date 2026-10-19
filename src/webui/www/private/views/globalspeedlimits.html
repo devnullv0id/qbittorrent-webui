@@ -68,7 +68,7 @@
                     if (!response.ok)
                         alert("QBT_TR(Failed to set speed limits)QBT_TR[CONTEXT=SpeedLimit]");
 
-                    window.parent.updateMainData();
+                    updateMainData();
                     // Modern also shows the page in a popup, which closes itself
                     const pageWindow = document.getElementById("globalSpeedLimitsPage");
                     if (pageWindow !== null)
