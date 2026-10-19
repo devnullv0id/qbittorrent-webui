@@ -359,6 +359,7 @@
 
             url.searchParams.set("last_known_id", tableInfo[curTab].last_id);
             tableInfo[curTab].progress = true;
+            const requestedLevels = selectedLogLevels;
 
             fetch(url, {
                     method: "GET",
@@ -386,6 +387,13 @@
                     }
 
                     const responseJSON = await response.json();
+                    // the levels changed meanwhile, so the next request fetches the log again
+                    if ((curTab === "main") && (requestedLevels !== selectedLogLevels)) {
+                        tableInfo[curTab].progress = false;
+                        syncLogWithInterval(getSyncLogDataInterval());
+                        return;
+                    }
+
                     if (responseJSON.length > 0) {
                         clearTimeout(logFilterTimer);
                         logFilterTimer = -1;
