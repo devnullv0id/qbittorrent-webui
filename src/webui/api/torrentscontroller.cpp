@@ -224,6 +224,30 @@ namespace
         }
     }
 
+    // where a torrent in manual mode is moved, as TorrentImpl resolves a relative path: from the default path, or the
+    // category's
+    Path resolveSavePath(const BitTorrent::Torrent *torrent, const Path &path)
+    {
+        if (path.isAbsolute())
+            return path;
+
+        const BitTorrent::Session *session = BitTorrent::Session::instance();
+        const Path basePath = session->useCategoryPathsInManualMode()
+            ? session->categorySavePath(torrent->category()) : session->savePath();
+        return basePath / path;
+    }
+
+    Path resolveDownloadPath(const BitTorrent::Torrent *torrent, const Path &path)
+    {
+        if (path.isEmpty() || path.isAbsolute())
+            return path;
+
+        const BitTorrent::Session *session = BitTorrent::Session::instance();
+        const Path basePath = session->useCategoryPathsInManualMode()
+            ? session->categoryDownloadPath(torrent->category()) : session->downloadPath();
+        return basePath / path;
+    }
+
     std::optional<Tag> getOptionalTag(const StringMap &params, const QString &name)
     {
         const std::optional<QString> optionalValue = Utils::Dict::get(params, name);
@@ -1809,17 +1833,25 @@ void TorrentsController::setLocationAction()
     if (newLocation.isEmpty())
         throw APIError(APIErrorType::BadParams, tr("Save path cannot be empty"));
 
-    // try to create the location if it does not exist
-    if (!Utils::Fs::mkpath(newLocation))
-        throw APIError(APIErrorType::Conflict, tr("Cannot make save path"));
+    const QList<BitTorrent::Torrent *> torrents = findTorrents(hashes);
+    QSet<Path> locations;
+    for (const BitTorrent::Torrent *torrent : torrents)
+        locations.insert(resolveSavePath(torrent, newLocation));
 
-    applyToTorrents(hashes, [newLocation](BitTorrent::Torrent *const torrent)
+    // try to create the location if it does not exist
+    for (const Path &location : asConst(locations))
+    {
+        if (!Utils::Fs::mkpath(location))
+            throw APIError(APIErrorType::Conflict, tr("Cannot make save path"));
+    }
+
+    for (BitTorrent::Torrent *const torrent : torrents)
     {
         LogMsg(tr("WebUI Set location: moving \"%1\", from \"%2\" to \"%3\"")
             .arg(torrent->name(), torrent->savePath().toString(), newLocation.toString()));
         torrent->setAutoTMMEnabled(false);
         torrent->setSavePath(newLocation);
-    });
+    }
 
     setResult(QString());
 }
@@ -1836,14 +1868,20 @@ void TorrentsController::setSavePathAction()
 
     const QList<BitTorrent::Torrent *> torrents = findTorrents(ids);
     requireManualMode(torrents);
+    QSet<Path> paths;
+    for (const BitTorrent::Torrent *torrent : torrents)
+        paths.insert(resolveSavePath(torrent, newPath));
 
-    // try to create the directory if it does not exist
-    if (!Utils::Fs::mkpath(newPath))
-        throw APIError(APIErrorType::Conflict, tr("Cannot create target directory"));
+    for (const Path &path : asConst(paths))
+    {
+        // try to create the directory if it does not exist
+        if (!Utils::Fs::mkpath(path))
+            throw APIError(APIErrorType::Conflict, tr("Cannot create target directory"));
 
-    // check permissions
-    if (!Utils::Fs::isWritable(newPath))
-        throw APIError(APIErrorType::AccessDenied, tr("Cannot write to directory"));
+        // check permissions
+        if (!Utils::Fs::isWritable(path))
+            throw APIError(APIErrorType::AccessDenied, tr("Cannot write to directory"));
+    }
 
     for (BitTorrent::Torrent *const torrent : torrents)
         torrent->setSavePath(newPath);
@@ -1863,13 +1901,20 @@ void TorrentsController::setDownloadPathAction()
 
     if (!newPath.isEmpty())
     {
-        // try to create the directory if it does not exist
-        if (!Utils::Fs::mkpath(newPath))
-            throw APIError(APIErrorType::Conflict, tr("Cannot create target directory"));
+        QSet<Path> paths;
+        for (const BitTorrent::Torrent *torrent : torrents)
+            paths.insert(resolveDownloadPath(torrent, newPath));
 
-        // check permissions
-        if (!Utils::Fs::isWritable(newPath))
-            throw APIError(APIErrorType::AccessDenied, tr("Cannot write to directory"));
+        for (const Path &path : asConst(paths))
+        {
+            // try to create the directory if it does not exist
+            if (!Utils::Fs::mkpath(path))
+                throw APIError(APIErrorType::Conflict, tr("Cannot create target directory"));
+
+            // check permissions
+            if (!Utils::Fs::isWritable(path))
+                throw APIError(APIErrorType::AccessDenied, tr("Cannot write to directory"));
+        }
     }
 
     for (BitTorrent::Torrent *const torrent : torrents)

@@ -14,6 +14,8 @@
 * `torrents/removeTrackers`, `torrents/reannounce` and `torrentcreator/addTask` endpoints take URLs as sent, as `torrents/addTrackers` does, instead of percent-decoding them once more
 * `transfer/setUploadLimit`, `transfer/setDownloadLimit`, `transfer/setSpeedLimits`, `torrents/setUploadLimit` and `torrents/setDownloadLimit` endpoints respond with a 400 to a limit that is not an integer, instead of setting no limit
 * `transfer/setSpeedLimits` endpoint sets none of the limits when one of them is invalid
+* `torrents/setSavePath` and `torrents/setDownloadPath` endpoints respond with a 409 listing the torrents in Automatic Torrent Management mode, and change none of the given torrents
+* `torrents/setLocation`, `torrents/setSavePath` and `torrents/setDownloadPath` endpoints create the folder of a relative path where each torrent will use it, instead of in the working directory
 * [#24955](https://github.com/qbittorrent/qBittorrent/pull/24955)
   * `search/results` endpoint includes `engineFullName` (string) data as the display name of the engine
 
