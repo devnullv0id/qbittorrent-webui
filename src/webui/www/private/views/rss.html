@@ -144,7 +144,7 @@
             </button>
             <div id="rssFilterToolbar" class="alignRight">
                 <input type="search" id="rssFilterInput" placeholder="QBT_TR(Filter feed items...)QBT_TR[CONTEXT=MainWindow]" aria-label="QBT_TR(Filter feed items...)QBT_TR[CONTEXT=MainWindow]" autocorrect="off" autocapitalize="none">
-                <button type="button" id="rssDownloaderButton" onclick="qBittorrent.Rss.openRssDownloader()">
+                <button type="button" id="rssDownloaderButton" onclick="showRssDownloader()">
                     <img alt="QBT_TR(RSS Downloader...)QBT_TR[CONTEXT=RSSWidget]" src="images/downloading.svg" width="16" height="16">QBT_TR(RSS Downloader...)QBT_TR[CONTEXT=RSSWidget]
                 </button>
             </div>
@@ -222,7 +222,6 @@
                 moveItem: moveItem,
                 addRSSFeed: addRSSFeed,
                 markSelectedAsRead: markSelectedAsRead,
-                openRssDownloader: openRssDownloader,
                 rssFeedTable: rssFeedTable,
                 rssArticleTable: rssArticleTable
             };
@@ -1043,50 +1042,9 @@
                 markItemAsRead(path);
         };
 
-        // guided: open Modern's guided new rule once the page has loaded
-        let wizardPending = false;
-        const openRssDownloader = (guided = false) => {
-            const id = "rssdownloaderpage";
-            // the window's page is already set up
-            const loaded = (document.getElementById("rssWizardNext") !== null);
-            // a window still loading keeps the options it was opened with
-            if (guided && !loaded)
-                wizardPending = true;
-            new MochaUI.Window({
-                id: id,
-                icon: "images/qbittorrent-tray.svg",
-                title: "QBT_TR(Rss Downloader)QBT_TR[CONTEXT=AutomatedRssDownloader]",
-                loadMethod: "xhr",
-                contentURL: "views/rssDownloader.html?v=${CACHEID}",
-                maximizable: false,
-                // in Modern, on screens 1100px wide or more, wide enough for the rules beside the rule's two columns
-                width: loadWindowWidth(id, ((window.qBittorrent.Responsive.isModern() && window.matchMedia("(width >= 1100px)").matches) ? 1000 : 800), false),
-                height: loadWindowHeight(id, 650, false),
-                onContentLoaded: () => {
-                    if (!wizardPending)
-                        return;
-                    wizardPending = false;
-                    window.qBittorrent.RssDownloader.startWizard();
-                },
-                // a page still loading arrives even after its window closed
-                onClose: () => {
-                    wizardPending = false;
-                },
-                onResize: window.qBittorrent.Misc.createDebounceHandler(500, (e) => {
-                    saveWindowSize(id);
-                }),
-                resizeLimit: {
-                    x: [800, 2500],
-                    y: [500, 2000]
-                }
-            });
-            if (guided && loaded)
-                window.qBittorrent.RssDownloader.startWizard();
-        };
-
         // Modern's additions (modern.js)
         const { setupModern, modernDescriptionStyle } = window.qBittorrent.Modern.rssPage({
-            openRssDownloader: openRssDownloader,
+            openRssDownloader: showRssDownloader,
             rssArticleTable: rssArticleTable,
             rssFeedTable: rssFeedTable
         });
