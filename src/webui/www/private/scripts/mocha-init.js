@@ -905,8 +905,7 @@ const initializeWindows = () => {
                     id: "confirmDeletionPage",
                     title: "QBT_TR(Remove torrent(s))QBT_TR[CONTEXT=confirmDeletionDlg]",
                     data: {
-                        hashes: hashes,
-                        isDeletingVisibleTorrents: true
+                        hashes: hashes
                     },
                     contentURL: "views/confirmdeletion.html?v=${CACHEID}",
                     onContentLoaded: (w) => {
