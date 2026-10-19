@@ -31,6 +31,7 @@
                 e.stopPropagation();
 
                 let completionCount = 0;
+                let failed = false;
                 const paths = new URLSearchParams(window.location.search).get("paths").split("|");
                 for (const path of paths) {
                     fetch("api/v2/rss/removeItem", {
@@ -40,8 +41,14 @@
                             })
                         })
                         .then((response) => {
-                            if (!response.ok)
+                            if (!response.ok) {
+                                // once for all failed removals
+                                if (!failed) {
+                                    failed = true;
+                                    alert("QBT_TR(Unable to delete the selected RSS feeds.)QBT_TR[CONTEXT=HttpServer]");
+                                }
                                 return;
+                            }
 
                             ++completionCount;
                             if (completionCount === paths.length) {
