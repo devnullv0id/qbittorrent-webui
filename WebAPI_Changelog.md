@@ -29,6 +29,9 @@
 * `torrents/info` endpoint responds to an unknown `filter` with a 400
 * `torrents/info` endpoint accepts `paused` and `resumed` as `filter`, meaning `stopped` and `running`
 * `torrentcreator/addTask` endpoint responds with a 400 to an unknown `format`, and to a `pieceSize` or `paddedFileSizeLimit` that isn't an integer
+* `torrents/downloadFile` endpoint responds to a range that ends at or past the end of the file with a 206 and the rest of the file, instead of a 416
+* `torrents/downloadFile` endpoint responds to `bytes=-0` with a 416, instead of a 400
+* `torrents/downloadFile` endpoint responds to a `Range` header it cannot serve with a 200 and the whole file, instead of a 400
 * [#24955](https://github.com/qbittorrent/qBittorrent/pull/24955)
   * `search/results` endpoint includes `engineFullName` (string) data as the display name of the engine
 

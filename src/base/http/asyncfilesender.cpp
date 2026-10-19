@@ -207,21 +207,8 @@ private:
 
     void run() override
     {
-        std::optional<RangeRequest> rangeRequest;
-        if (const QString rangeHeader = m_request.headers.value(HEADER_RANGE); !rangeHeader.isEmpty())
-        {
-            const std::optional<RangeRequest> parseRangeResult = parseRangeHeader(rangeHeader);
-            if (!parseRangeResult)
-            {
-                const QByteArray data = serializeResponse(
-                        {.status = {.code = 400, .text = u"Bad Request"_s}, .headers = m_responseHeaders}
-                        , m_request);
-                m_dataPipe->write(data);
-                return;
-            }
-
-            rangeRequest = parseRangeResult;
-        }
+        // [rfc9110] 14.2. Range: the whole file answers a Range that is invalid or asks for several ranges
+        const std::optional<RangeRequest> rangeRequest = parseRangeHeader(m_request.headers.value(HEADER_RANGE));
 
         QFile file {m_filePath.data()};
 
