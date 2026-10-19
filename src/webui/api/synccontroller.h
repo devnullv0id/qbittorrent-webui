@@ -83,6 +83,7 @@ private:
 
     qint64 m_freeDiskSpace = 0;
 
+    BitTorrent::TorrentID m_lastPeersTorrentID;
     QVariantMap m_lastPeersResponse;
     QVariantMap m_lastAcceptedPeersResponse;
 
