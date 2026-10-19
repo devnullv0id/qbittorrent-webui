@@ -136,6 +136,7 @@ bool Http::Connection::processRequest()
 #else
             m_receivedData.remove(0, result.frameSize);
 #endif
+            m_isContinueSent = false;
 
             const Environment env {m_socket->localAddress(), m_socket->localPort(), m_socket->peerAddress(), m_socket->peerPort()};
 
@@ -147,6 +148,14 @@ bool Http::Connection::processRequest()
         return true;
 
     case RequestParser::ParseStatus::Incomplete:
+        // [rfc9110] 10.1.1. Expect: an HTTP/1.1 client may wait for this before it sends the body
+        if (!m_isContinueSent && (result.request.version == u"1.1")
+            && (result.request.headers.value(HEADER_EXPECT).compare(u"100-continue", Qt::CaseInsensitive) == 0))
+        {
+            m_socket->write("HTTP/1.1 100 Continue\r\n\r\n");
+            m_isContinueSent = true;
+        }
+
         if (const long bufferLimit = RequestParser::MAX_CONTENT_SIZE * 1.1; m_receivedData.size() > bufferLimit)  // some margin for headers
         {
             qWarning("%s", qUtf8Printable(tr("Http request size exceeds limitation, closing socket. Limit: %1, IP: %2")

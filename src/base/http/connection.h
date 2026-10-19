@@ -64,6 +64,7 @@ namespace Http
         IRequestHandler *m_requestHandler = nullptr;
         QByteArray m_receivedData;
         QElapsedTimer m_idleTimer;
+        bool m_isContinueSent = false;
         bool m_isProcessingRequest = false;
         bool m_isReadyRead = false;
         bool m_isRefused = false;

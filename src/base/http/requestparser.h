@@ -49,7 +49,8 @@ namespace Http
 
         struct ParseResult
         {
-            // when `status != ParseStatus::OK`, `request` & `frameSize` are undefined
+            // when `status != ParseStatus::OK`, `request` & `frameSize` are undefined,
+            // except that `request` holds the head of an `Incomplete` request once the head is complete
             ParseStatus status = ParseStatus::BadRequest;
             Request request;
             qsizetype frameSize = 0;  // http request frame size (bytes)
