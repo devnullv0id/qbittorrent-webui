@@ -722,7 +722,9 @@ Supports the formats: S01E01, 1x1, 2017.12.31 and 31.12.2017 (Date formats also 
                 .map((row) => row.full_data.url);
 
             rulesList[rule].torrentParams.category = document.getElementById("assignCategoryCombobox").value;
-            rulesList[rule].torrentParams.tags = document.getElementById("ruleAddTags").value.split(",");
+            rulesList[rule].torrentParams.tags = document.getElementById("ruleAddTags").value.split(",")
+                .map((tag) => tag.trim())
+                .filter((tag) => (tag.length > 0));
             if (document.getElementById("savetoDifferentDir").checked) {
                 rulesList[rule].torrentParams.save_path = document.getElementById("saveToText").value;
                 rulesList[rule].torrentParams.use_auto_tmm = false;
