@@ -1446,7 +1446,13 @@ window.addEventListener("DOMContentLoaded", async (event) => {
                 }
 
                 alternativeSpeedLimits = !alternativeSpeedLimits;
+                // a click made meanwhile changed the icon too
+                updateAltSpeedIcon(alternativeSpeedLimits);
                 updateMainData();
+            })
+            .catch((error) => {
+                // Restore icon in case of failure
+                updateAltSpeedIcon(alternativeSpeedLimits);
             });
     });
 
