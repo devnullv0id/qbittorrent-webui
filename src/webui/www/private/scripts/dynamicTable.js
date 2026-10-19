@@ -750,6 +750,11 @@ window.qBittorrent.DynamicTable ??= (() => {
                 if (updateCellData)
                     column.updateTd(td, this.rows.get(tr.rowId));
             }
+            // rows the virtual list keeps for reuse: their data is updated when they are shown again, their columns aren't
+            for (const tr of this.cachedElements) {
+                if ((tr !== undefined) && (tr.parentElement !== this.tableBody))
+                    this.getRowCells(tr)[pos].classList[action]("invisible");
+            }
         }
 
         getSortedColumn() {
