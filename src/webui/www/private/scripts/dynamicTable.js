@@ -1969,11 +1969,12 @@ window.qBittorrent.DynamicTable ??= (() => {
         getFilteredTorrentsHashes(filterName, category, tag, tracker) {
             const rowsHashes = [];
             const useRegex = document.getElementById("torrentsFilterRegexBox").checked;
-            const filterText = document.getElementById("torrentsFilterInput").value.trim().toLowerCase();
+            const filterText = document.getElementById("torrentsFilterInput").value.trim();
             let filterTerms;
             try {
+                // lowercasing a regex would change escapes like \D into \d, so it ignores case instead
                 filterTerms = (filterText.length > 0)
-                    ? (useRegex ? new RegExp(filterText) : filterText.split(" "))
+                    ? (useRegex ? new RegExp(filterText, "i") : filterText.toLowerCase().split(" "))
                     : null;
             }
             catch (e) { // SyntaxError: Invalid regex pattern
@@ -1992,11 +1993,12 @@ window.qBittorrent.DynamicTable ??= (() => {
             const filteredRows = [];
 
             const useRegex = document.getElementById("torrentsFilterRegexBox").checked;
-            const filterText = document.getElementById("torrentsFilterInput").value.trim().toLowerCase();
+            const filterText = document.getElementById("torrentsFilterInput").value.trim();
             let filterTerms;
             try {
+                // lowercasing a regex would change escapes like \D into \d, so it ignores case instead
                 filterTerms = (filterText.length > 0)
-                    ? (useRegex ? new RegExp(filterText) : filterText.split(" "))
+                    ? (useRegex ? new RegExp(filterText, "i") : filterText.toLowerCase().split(" "))
                     : null;
             }
             catch (e) { // SyntaxError: Invalid regex pattern
