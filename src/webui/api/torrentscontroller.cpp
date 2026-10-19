@@ -2306,7 +2306,7 @@ void TorrentsController::fetchMetadataAction()
             setStatus(APIStatus::Async);
         }
         // request torrent's metadata
-        else
+        else if (sourceTorrentDescr)
         {
             if (!BitTorrent::Session::instance()->downloadMetadata(sourceTorrentDescr.value())) [[unlikely]]
                 throw APIError(APIErrorType::BadParams, tr("Unable to download metadata for '%1'").arg(torrentID.toString()));
@@ -2314,6 +2314,14 @@ void TorrentsController::fetchMetadataAction()
             m_torrentMetadataCache.insert(torrentID, sourceTorrentDescr.value());
 
             setResult(serializeInfoHash(infoHash));
+            setStatus(APIStatus::Async);
+        }
+        // the metadata from this URL was dropped by an add, so the next request downloads it again
+        else
+        {
+            m_torrentSourceCache.remove(source);
+
+            setResult(QJsonObject {});
             setStatus(APIStatus::Async);
         }
     }
