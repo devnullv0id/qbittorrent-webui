@@ -137,7 +137,7 @@ RequestParser::ParseResult RequestParser::doParse(const QByteArrayView data)
         if (contentLength > MAX_CONTENT_SIZE)
         {
             qWarning() << Q_FUNC_INFO << "bad request: message too long";
-            return {ParseStatus::BadRequest, Request(), 0};
+            return {ParseStatus::PayloadTooLarge, Request(), 0};
         }
 
         if (contentLength > 0)

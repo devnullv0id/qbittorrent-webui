@@ -167,6 +167,13 @@ bool Http::Connection::processRequest()
 
         abort({400, u"Bad Request"_s});
         break;
+
+    case RequestParser::ParseStatus::PayloadTooLarge:
+        qWarning("%s", qUtf8Printable(tr("Http request size exceeds limitation, closing socket. Limit: %1, IP: %2")
+                .arg(QString::number(RequestParser::MAX_CONTENT_SIZE), m_socket->peerAddress().toString())));
+
+        abort({413, u"Payload Too Large"_s});
+        break;
     }
 
     return false;
