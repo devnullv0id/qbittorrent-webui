@@ -1064,6 +1064,11 @@ window.qBittorrent.Search ??= (() => {
             .catch((error) => {
                 console.error(error);
 
+                // the tab may have been closed, or refreshed, which moves this state to the new search id
+                const state = searchState.get(searchId);
+                if (state === undefined)
+                    return;
+
                 clearTimeout(state.loadResultsTimer);
                 state.loadResultsTimer = loadSearchResultsData.delay(3000, this, searchId);
             });
