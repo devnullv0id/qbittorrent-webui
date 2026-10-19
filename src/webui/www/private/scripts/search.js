@@ -315,6 +315,18 @@ window.qBittorrent.Search ??= (() => {
     };
 
     const refreshSearchTab = (oldSearchId, searchId, pattern) => {
+        const tab = document.getElementById(`${searchTabIdPrefix}${oldSearchId}`);
+        // the tab was closed while the new search started, which deleted the old search
+        if (tab === null) {
+            fetch("api/v2/search/delete", {
+                method: "POST",
+                body: new URLSearchParams({
+                    id: searchId
+                })
+            });
+            return;
+        }
+
         fetch("api/v2/search/delete", {
             method: "POST",
             body: new URLSearchParams({
@@ -323,7 +335,6 @@ window.qBittorrent.Search ??= (() => {
         });
 
         // update existing tab w/ new search id
-        const tab = document.getElementById(`${searchTabIdPrefix}${oldSearchId}`);
         tab.id = `${searchTabIdPrefix}${searchId}`;
 
         updateStatusIconElement(searchId, "QBT_TR(Searching...)QBT_TR[CONTEXT=SearchJobWidget]", "images/queued.svg");
