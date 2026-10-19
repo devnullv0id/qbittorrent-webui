@@ -63,8 +63,11 @@
                         })
                     })
                     .then((response) => {
-                        if (!response.ok)
+                        if (!response.ok) {
+                            alert("QBT_TR(Unable to rename the rule.)QBT_TR[CONTEXT=HttpServer]");
+                            document.getElementById("renameButton").disabled = false;
                             return;
+                        }
 
                         window.parent.qBittorrent.RssDownloader.updateRulesList();
                         window.parent.qBittorrent.Client.closeFrameWindow(window);
