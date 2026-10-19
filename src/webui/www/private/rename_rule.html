@@ -46,6 +46,13 @@
                     return;
                 }
 
+                // renameRule would leave both rules as they are
+                const rules = [...window.parent.qBittorrent.RssDownloader.rssDownloaderRulesTable.getRowValues()];
+                if (rules.some((row) => row.full_data.name === newName)) {
+                    alert("QBT_TR(A rule with this name already exists, please choose another name.)QBT_TR[CONTEXT=AutomatedRssDownloader]");
+                    return;
+                }
+
                 document.getElementById("renameButton").disabled = true;
 
                 fetch("api/v2/rss/renameRule", {
