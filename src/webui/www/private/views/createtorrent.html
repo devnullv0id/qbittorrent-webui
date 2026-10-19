@@ -187,10 +187,15 @@
                 body: formData
             }).then((response) => {
                 if (!response.ok) {
+                    document.getElementById("download_spinner").style.display = "none";
                     alert("QBT_TR(Unable to create torrent.)QBT_TR[CONTEXT=TorrentCreator]");
                     return;
                 }
                 window.qBittorrent.Client.closeWindow(document.getElementById("createTorrentPage"));
+            }, (error) => {
+                console.error(error);
+                document.getElementById("download_spinner").style.display = "none";
+                alert("QBT_TR(Unable to create torrent.)QBT_TR[CONTEXT=TorrentCreator]");
             });
 
         };
