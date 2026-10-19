@@ -988,8 +988,6 @@ window.qBittorrent.Search ??= (() => {
                     return;
                 }
 
-                document.getElementById("error_div").textContent = "";
-
                 // check if user stopped the search prior to receiving the response
                 if (!state || !state.running) {
                     if (state)

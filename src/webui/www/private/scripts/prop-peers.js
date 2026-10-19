@@ -73,7 +73,6 @@ window.qBittorrent.PropPeers ??= (() => {
 
                 const responseJSON = await response.json();
 
-                document.getElementById("error_div").textContent = "";
                 if (responseJSON) {
                     const full_update = (responseJSON["full_update"] === true);
                     if (full_update)
