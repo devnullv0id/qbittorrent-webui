@@ -1379,7 +1379,7 @@ void AppController::cookiesAction()
             {KEY_COOKIE_NAME, QString::fromLatin1(cookie.name())},
             {KEY_COOKIE_DOMAIN, cookie.domain()},
             {KEY_COOKIE_PATH, cookie.path()},
-            {KEY_COOKIE_VALUE, QString::fromLatin1(cookie.value())},
+            {KEY_COOKIE_VALUE, QString::fromUtf8(cookie.value())},
             {KEY_COOKIE_EXPIRATION_DATE, Utils::DateTime::toSecsSinceEpoch(cookie.expirationDate())},
         };
     }
