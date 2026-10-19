@@ -295,8 +295,9 @@ void SearchController::updatePluginsAction()
 {
     SearchPluginManager *const pluginManager = SearchPluginManager::instance();
 
-    connect(pluginManager, &SearchPluginManager::checkForUpdatesFinished, this, &SearchController::checkForUpdatesFinished);
-    connect(pluginManager, &SearchPluginManager::checkForUpdatesFailed, this, &SearchController::checkForUpdatesFailed);
+    // connected once, until the check ends, however often it is asked for meanwhile
+    connect(pluginManager, &SearchPluginManager::checkForUpdatesFinished, this, &SearchController::checkForUpdatesFinished, Qt::UniqueConnection);
+    connect(pluginManager, &SearchPluginManager::checkForUpdatesFailed, this, &SearchController::checkForUpdatesFailed, Qt::UniqueConnection);
     pluginManager->checkForUpdates();
 
     setResult(QString());
@@ -304,6 +305,8 @@ void SearchController::updatePluginsAction()
 
 void SearchController::checkForUpdatesFinished(const QHash<QString, SearchPluginVersion> &updateInfo)
 {
+    SearchPluginManager::instance()->disconnect(this);
+
     if (updateInfo.isEmpty())
     {
         LogMsg(tr("All plugins are already up to date."), Log::INFO);
@@ -324,6 +327,8 @@ void SearchController::checkForUpdatesFinished(const QHash<QString, SearchPlugin
 
 void SearchController::checkForUpdatesFailed(const QString &reason)
 {
+    SearchPluginManager::instance()->disconnect(this);
+
     LogMsg(tr("Failed to check for plugin updates: %1").arg(reason), Log::INFO);
 }
 
