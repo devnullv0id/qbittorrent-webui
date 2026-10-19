@@ -378,13 +378,18 @@
         const unload = () => {
             clearTimeout(feedRefreshTimer);
             feedRefreshTimer = -1;
+            // start over at the shortest interval when shown again
+            currentServerSyncRssDataInterval = serverSyncRssDataInterval;
         };
 
         const load = () => {
             clearTimeout(feedRefreshTimer);
             const timer = setTimeout(async () => {
-                if (document.hidden)
+                if (document.hidden) {
+                    // start over at the shortest interval when shown again
+                    currentServerSyncRssDataInterval = serverSyncRssDataInterval;
                     return;
+                }
 
                 const hasChanges = await updateRssFeedList().catch(() => false);
                 // unloaded or restarted meanwhile
