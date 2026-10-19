@@ -148,13 +148,13 @@ nonstd::expected<int, QString> SearchJobManager::startSearch(const QString &patt
 
     connect(searchHandler.get(), &SearchHandler::searchFinished, this, [this, id] { onSearchStopped(id); });
     connect(searchHandler.get(), &SearchHandler::searchFailed, this, [this, id] { onSearchStopped(id); });
-    connect(searchHandler.get(), &SearchHandler::newSearchResults, this, [this, id, handler = searchHandler.get()]
+    connect(searchHandler.get(), &SearchHandler::newSearchResults, this, [this, id](const QList<SearchResult> &results)
     {
         const auto jobIter = m_jobs.find(id);
         if (jobIter == m_jobs.end())
             return;
 
-        jobIter->results = handler->results();
+        jobIter->results.append(results);
     });
 
     m_searchHandlers.insert(id, searchHandler);
