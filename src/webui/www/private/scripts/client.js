@@ -2041,9 +2041,12 @@ window.addEventListener("DOMContentLoaded", async (event) => {
             case "a":
             case "A":
                 if (event.ctrlKey || event.metaKey) {
-                    if ((event.target.nodeName === "INPUT") || (event.target.nodeName === "TEXTAREA"))
+                    if ((event.target.nodeName === "INPUT") || (event.target.nodeName === "SELECT") || (event.target.nodeName === "TEXTAREA"))
                         return;
                     if (event.target.isContentEditable)
+                        return;
+                    // the transfer list is hidden while another tab is shown
+                    if (document.getElementById("mainColumn").classList.contains("invisible"))
                         return;
                     event.preventDefault();
                     torrentsTable.selectAll();
@@ -2051,9 +2054,12 @@ window.addEventListener("DOMContentLoaded", async (event) => {
                 break;
 
             case "Delete":
-                if ((event.target.nodeName === "INPUT") || (event.target.nodeName === "TEXTAREA"))
+                if ((event.target.nodeName === "INPUT") || (event.target.nodeName === "SELECT") || (event.target.nodeName === "TEXTAREA"))
                     return;
                 if (event.target.isContentEditable)
+                    return;
+                // the transfer list is hidden while another tab is shown
+                if (document.getElementById("mainColumn").classList.contains("invisible"))
                     return;
                 event.preventDefault();
                 deleteSelectedTorrentsFN(event.shiftKey);
