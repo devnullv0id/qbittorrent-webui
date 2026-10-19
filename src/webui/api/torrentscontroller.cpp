@@ -200,6 +200,30 @@ namespace
         }
     }
 
+    QList<BitTorrent::Torrent *> findTorrents(const QStringList &idList)
+    {
+        QList<BitTorrent::Torrent *> torrents;
+        applyToTorrents(idList, [&torrents](BitTorrent::Torrent *const torrent) { torrents.append(torrent); });
+        return torrents;
+    }
+
+    // a torrent in Automatic Torrent Management mode gets its paths from its category
+    void requireManualMode(const QList<BitTorrent::Torrent *> &torrents)
+    {
+        QStringList autoManagedIDs;
+        for (const BitTorrent::Torrent *torrent : torrents)
+        {
+            if (torrent->isAutoTMMEnabled())
+                autoManagedIDs.append(torrent->id().toString());
+        }
+
+        if (!autoManagedIDs.isEmpty())
+        {
+            throw APIError(APIErrorType::Conflict, TorrentsController::tr("Cannot set the path of torrents in Automatic Torrent Management mode: %1")
+                .arg(autoManagedIDs.join(u'|')));
+        }
+    }
+
     std::optional<Tag> getOptionalTag(const StringMap &params, const QString &name)
     {
         const std::optional<QString> optionalValue = Utils::Dict::get(params, name);
@@ -1810,6 +1834,9 @@ void TorrentsController::setSavePathAction()
     if (newPath.isEmpty())
         throw APIError(APIErrorType::BadParams, tr("Save path cannot be empty"));
 
+    const QList<BitTorrent::Torrent *> torrents = findTorrents(ids);
+    requireManualMode(torrents);
+
     // try to create the directory if it does not exist
     if (!Utils::Fs::mkpath(newPath))
         throw APIError(APIErrorType::Conflict, tr("Cannot create target directory"));
@@ -1818,11 +1845,8 @@ void TorrentsController::setSavePathAction()
     if (!Utils::Fs::isWritable(newPath))
         throw APIError(APIErrorType::AccessDenied, tr("Cannot write to directory"));
 
-    applyToTorrents(ids, [&newPath](BitTorrent::Torrent *const torrent)
-    {
-        if (!torrent->isAutoTMMEnabled())
-            torrent->setSavePath(newPath);
-    });
+    for (BitTorrent::Torrent *const torrent : torrents)
+        torrent->setSavePath(newPath);
 
     setResult(QString());
 }
@@ -1833,6 +1857,9 @@ void TorrentsController::setDownloadPathAction()
 
     const QStringList ids {params()[u"id"_s].split(u'|')};
     const Path newPath {params()[u"path"_s]};
+
+    const QList<BitTorrent::Torrent *> torrents = findTorrents(ids);
+    requireManualMode(torrents);
 
     if (!newPath.isEmpty())
     {
@@ -1845,11 +1872,8 @@ void TorrentsController::setDownloadPathAction()
             throw APIError(APIErrorType::AccessDenied, tr("Cannot write to directory"));
     }
 
-    applyToTorrents(ids, [&newPath](BitTorrent::Torrent *const torrent)
-    {
-        if (!torrent->isAutoTMMEnabled())
-            torrent->setDownloadPath(newPath);
-    });
+    for (BitTorrent::Torrent *const torrent : torrents)
+        torrent->setDownloadPath(newPath);
 
     setResult(QString());
 }
