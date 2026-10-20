@@ -31,6 +31,12 @@
 
 #include <algorithm>
 
+namespace
+{
+    // a client that keeps the cookie sends it with its next request, normally within seconds
+    const std::chrono::seconds PROVISIONAL_SESSION_TIMEOUT = 60s;
+}
+
 WebSession *WebSession::create(const WebSessionType type, const QString &sid)
 {
     switch (type)
@@ -91,6 +97,9 @@ WebSessionType CookieBasedWebSession::type() const
 
 bool CookieBasedWebSession::hasExpired(const std::chrono::milliseconds duration) const
 {
+    if (m_isProvisional && (timestamp().durationElapsed() > PROVISIONAL_SESSION_TIMEOUT))
+        return true;
+
     // don't expire for special values
     if (duration <= 0ms)
         return false;
@@ -109,6 +118,16 @@ std::chrono::seconds CookieBasedWebSession::setCookieRefreshTime(const std::chro
     const std::chrono::seconds time = std::min((timeout / 2), std::chrono::duration_cast<std::chrono::seconds>(std::chrono::days(1)));
     m_cookieRefreshTimer.setRemainingTime(time);
     return time;
+}
+
+bool CookieBasedWebSession::isProvisional() const
+{
+    return m_isProvisional;
+}
+
+void CookieBasedWebSession::setProvisional(const bool provisional)
+{
+    m_isProvisional = provisional;
 }
 
 WebSessionType APIKeyBasedWebSession::type() const
