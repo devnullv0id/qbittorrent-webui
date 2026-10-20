@@ -217,7 +217,7 @@ MUI.extend({
 		var contentEl = instance.contentEl;
 		var contentContainer = args.contentContainer;
 		var onContentLoaded = args.onContentLoaded;
-		new Request.HTML({
+		instance.contentRequest = new Request.HTML({
 			url: options.url,
 			update: contentContainer,
 			method: options.method != null ? options.method : 'get',
@@ -3279,6 +3279,9 @@ MUI.extend({
 
 		instance.isClosing = true;
 		instance.fireEvent('onClose', windowEl);
+
+		// A page still loading would run its scripts for the closed window
+		if (instance.contentRequest) instance.contentRequest.cancel();
 
 		if (instance.options.storeOnClose){
 			this.storeOnClose(instance, windowEl);
