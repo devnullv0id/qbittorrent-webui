@@ -41,6 +41,7 @@ window.qBittorrent.MonkeyPatch ??= (() => {
         patchMootoolsDocumentId();
         patchMochaGetAsset();
         patchMochaWindowOptions();
+        patchMochaFocusWindow();
     };
 
     const patchMootoolsDocumentId = () => {
@@ -133,6 +134,31 @@ window.qBittorrent.MonkeyPatch ??= (() => {
         options.shadowOffset = { x: 0, y: 0 };
         options.useCanvas = false;
         options.useCanvasControls = false;
+    };
+
+    /**
+     * Keep windows below menus: MochaUI raises the z-index by 2 for every focused window and never lowers it,
+     * so once it passes 1400, number the windows anew from 100 in their stacking order;
+     * modals and notifications keep their z-index of 11000 and 11001
+     */
+    const patchMochaFocusWindow = () => {
+        const focusWindow = MUI.focusWindow;
+        MUI.focusWindow = (windowEl, fireEvent) => {
+            focusWindow.call(MUI, windowEl, fireEvent);
+            if (MUI.Windows.indexLevel <= 1400)
+                return;
+
+            const windows = Object.values(MUI.Windows.instances)
+                .filter((instance) => (instance.options.type === "window"))
+                .map((instance) => instance.windowEl)
+                .sort((a, b) => (Number(a.style.zIndex) - Number(b.style.zIndex)));
+            MUI.Windows.indexLevel = 100;
+            for (const element of windows) {
+                MUI.Windows.indexLevel += 2;
+                element.style.zIndex = `${MUI.Windows.indexLevel}`;
+            }
+            document.getElementById("windowUnderlay").style.zIndex = `${MUI.Windows.indexLevel - 1}`;
+        };
     };
 
     return exports();
