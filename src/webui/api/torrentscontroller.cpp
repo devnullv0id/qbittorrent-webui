@@ -40,9 +40,11 @@
 #include <QJsonObject>
 #include <QList>
 #include <QRegularExpression>
+#include <QTimer>
 #include <QUrl>
 
 #include "base/addtorrentmanager.h"
+#include "base/algorithm.h"
 #include "base/bittorrent/categoryoptions.h"
 #include "base/bittorrent/downloadpriority.h"
 #include "base/bittorrent/infohash.h"
@@ -71,6 +73,11 @@
 #include "apierror.h"
 #include "apistatus.h"
 #include "serialize/serialize_torrent.h"
+
+// The Add Torrent dialog asks every second while the metadata is pending, but the timers of a hidden tab
+// may run only once a minute. A dialog that asks again after its download was cancelled starts it anew.
+const std::chrono::minutes METADATA_DOWNLOAD_IDLE_TIMEOUT {2};
+const std::chrono::seconds METADATA_DOWNLOAD_CHECK_INTERVAL {30};
 
 // Tracker keys
 const QString KEY_TRACKER_URL = u"url"_s;
@@ -620,8 +627,19 @@ namespace
 
 TorrentsController::TorrentsController(IApplication *app, QObject *parent)
     : APIController(app, parent)
+    , m_metadataDownloadTimer {new QTimer(this)}
 {
     connect(BitTorrent::Session::instance(), &BitTorrent::Session::metadataDownloaded, this, &TorrentsController::onMetadataDownloaded);
+
+    m_metadataDownloadTimer->setInterval(METADATA_DOWNLOAD_CHECK_INTERVAL);
+    connect(m_metadataDownloadTimer, &QTimer::timeout, this, &TorrentsController::cancelIdleMetadataDownloads);
+}
+
+TorrentsController::~TorrentsController()
+{
+    // nothing can add them once the session is gone
+    for (auto iter = m_metadataDownloadDeadlines.cbegin(); iter != m_metadataDownloadDeadlines.cend(); ++iter)
+        cancelMetadataDownload(iter.key());
 }
 
 void TorrentsController::countAction()
@@ -2302,6 +2320,9 @@ void TorrentsController::fetchMetadataAction()
         // check request cache
         else if (BitTorrent::Session::instance()->isKnownTorrent(infoHash))
         {
+            if (m_metadataDownloadDeadlines.contains(torrentID))
+                keepMetadataDownload(torrentID);
+
             setResult(serializeInfoHash(infoHash));
             setStatus(APIStatus::Async);
         }
@@ -2312,6 +2333,7 @@ void TorrentsController::fetchMetadataAction()
                 throw APIError(APIErrorType::BadParams, tr("Unable to download metadata for '%1'").arg(torrentID.toString()));
 
             m_torrentMetadataCache.insert(torrentID, sourceTorrentDescr.value());
+            keepMetadataDownload(torrentID);
 
             setResult(serializeInfoHash(infoHash));
             setStatus(APIStatus::Async);
@@ -2572,6 +2594,50 @@ void TorrentsController::cacheMagnetURI(const QString &source, const BitTorrent:
     if (!m_torrentMetadataCache.contains(torrentID) && !BitTorrent::Session::instance()->isKnownTorrent(infoHash))
     {
         if (BitTorrent::Session::instance()->downloadMetadata(torrentDescr))
+        {
             m_torrentMetadataCache.insert(torrentID, torrentDescr);
+            keepMetadataDownload(torrentID);
+        }
     }
+}
+
+void TorrentsController::keepMetadataDownload(const BitTorrent::TorrentID &torrentID)
+{
+    m_metadataDownloadDeadlines[torrentID].setRemainingTime(METADATA_DOWNLOAD_IDLE_TIMEOUT);
+    if (!m_metadataDownloadTimer->isActive())
+        m_metadataDownloadTimer->start();
+}
+
+void TorrentsController::cancelMetadataDownload(const BitTorrent::TorrentID &torrentID)
+{
+    // only while it is still pending here: an add, or the arrival of the metadata, ends that
+    const auto iter = m_torrentMetadataCache.constFind(torrentID);
+    if ((iter == m_torrentMetadataCache.cend()) || iter.value().info().has_value())
+        return;
+
+    BitTorrent::Session::instance()->cancelDownloadMetadata(torrentID);
+    m_torrentMetadataCache.erase(iter);
+    // a URL that led to it is downloaded again when it is asked for
+    Algorithm::removeIf(m_torrentSourceCache, [&torrentID](const QString &, const BitTorrent::InfoHash &infoHash)
+    {
+        return (infoHash.toTorrentID() == torrentID);
+    });
+}
+
+void TorrentsController::cancelIdleMetadataDownloads()
+{
+    for (auto iter = m_metadataDownloadDeadlines.begin(); iter != m_metadataDownloadDeadlines.end();)
+    {
+        if (!iter.value().hasExpired())
+        {
+            ++iter;
+            continue;
+        }
+
+        cancelMetadataDownload(iter.key());
+        iter = m_metadataDownloadDeadlines.erase(iter);
+    }
+
+    if (m_metadataDownloadDeadlines.isEmpty())
+        m_metadataDownloadTimer->stop();
 }
