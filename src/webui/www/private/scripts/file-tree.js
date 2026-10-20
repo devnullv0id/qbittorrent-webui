@@ -185,6 +185,7 @@ window.qBittorrent.FileTree ??= (() => {
                     visited.pop();
 
                     // process children
+                    const ownChecked = root.checked;
                     root.size = 0;
                     root.remaining = 0;
                     root.progress = 0;
@@ -215,7 +216,7 @@ window.qBittorrent.FileTree ??= (() => {
                         }
                     }
 
-                    root.checked = root.autoCalculateCheckedState ? root.checked : TriState.Checked;
+                    root.checked = root.autoCalculateCheckedState ? root.checked : ownChecked;
                     root.progress = (root.size > 0) ? (root.progress / root.size) : 0;
                     root.availability = (root.size > 0) ? (root.availability / root.size) : 0;
                 }
