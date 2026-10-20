@@ -38,6 +38,7 @@
 #include <QDirIterator>
 #include <QFileInfo>
 #include <QJsonDocument>
+#include <QMessageAuthenticationCode>
 #include <QMetaObject>
 #include <QMimeDatabase>
 #include <QMimeType>
@@ -89,6 +90,7 @@ const QString INDEX_HTML = u"/index.html"_s;
 
 const QString BASIC_AUTH = u"Basic"_s;
 const QString BEARER_AUTH = u"Bearer"_s;
+const std::chrono::seconds BASIC_AUTH_CACHE_TIMEOUT = 60s;
 
 const QString API_PATH = u"/api/v2/"_s;
 
@@ -257,12 +259,20 @@ namespace
 
         return languages.join(u'\n');
     }
+
+    QByteArray generateKey()
+    {
+        const quint32 tmp[] = {Utils::Random::rand(), Utils::Random::rand(), Utils::Random::rand(), Utils::Random::rand()
+                , Utils::Random::rand(), Utils::Random::rand(), Utils::Random::rand(), Utils::Random::rand()};
+        return {reinterpret_cast<const char *>(tmp), sizeof(tmp)};
+    }
 }
 
 WebApplication::WebApplication(IApplication *app, QObject *parent)
     : ApplicationComponent(app, parent)
     , m_trRegex {u"QBT_TR\\((([^\\)]|\\)(?!QBT_TR))+)\\)QBT_TR\\[CONTEXT=([a-zA-Z_][a-zA-Z0-9_]*)\\]"_s}
     , m_authController {new AuthController(this, app, this)}
+    , m_basicAuthKey {generateKey()}
     , m_torrentCreationManager {new BitTorrent::TorrentCreationManager(app, this)}
     , m_searchJobManager {new SearchJobManager(this)}
     , m_clientDataStorage {new ClientDataStorage(this)}
@@ -415,11 +425,13 @@ const Http::Environment &WebApplication::env() const
 void WebApplication::setUsername(const QString &username)
 {
     m_username = username;
+    m_basicAuthHash.clear();
 }
 
 void WebApplication::setPasswordHash(const QByteArray &passwordHash)
 {
     m_passwordHash = passwordHash;
+    m_basicAuthHash.clear();
 }
 
 void WebApplication::setHttpsEnabled(const bool enabled)
@@ -621,6 +633,7 @@ void WebApplication::configure()
     m_isLocalAuthEnabled = pref->isWebUILocalAuthEnabled();
     m_isAuthSubnetWhitelistEnabled = pref->isWebUIAuthSubnetWhitelistEnabled();
     m_authSubnetWhitelist = pref->getWebUIAuthSubnetWhitelist();
+    m_basicAuthHash.clear();
     m_sessionTimeout = std::chrono::seconds(pref->getWebUISessionTimeout());
     m_sessionsCountLimit = std::max(0, pref->getWebUISessionsCountLimit());
     m_sessionCookieName = SESSION_COOKIE_NAME_PREFIX + QString::number(pref->getWebUIPort());
@@ -1275,9 +1288,26 @@ bool WebApplication::validateBasicAuth(const QStringView credentials) const
     const auto usernamePassword = QStringView(decodedCredentials);
     if (const qsizetype idx = usernamePassword.indexOf(u':'); idx > 0)
     {
+        // verifying the password is slow, and a client using Basic auth sends it with every request
+        const QByteArray credentialsHash = QMessageAuthenticationCode::hash(decodedCredentials.toUtf8(), m_basicAuthKey, QCryptographicHash::Sha256);
+        if (m_basicAuthDeadline.hasExpired())
+        {
+            m_basicAuthHash.clear();
+        }
+        else if (!isBanned() && Utils::Password::slowEquals(credentialsHash, m_basicAuthHash))
+        {
+            m_clientFailedLogins.remove(clientId());
+            return true;
+        }
+
         const QStringView username = usernamePassword.first(idx);
         const QStringView password = usernamePassword.sliced(idx + 1);
-        return validateCredentials(username, password);
+        if (!validateCredentials(username, password))
+            return false;
+
+        m_basicAuthHash = credentialsHash;
+        m_basicAuthDeadline.setRemainingTime(BASIC_AUTH_CACHE_TIMEOUT);
+        return true;
     }
 
     return false;

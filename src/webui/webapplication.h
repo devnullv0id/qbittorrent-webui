@@ -268,6 +268,10 @@ private:
     QString m_apiKey;
     QString m_username;
     QByteArray m_passwordHash;
+    // the Basic auth credentials verified last, as a hash keyed with m_basicAuthKey, accepted for a short time
+    const QByteArray m_basicAuthKey;
+    mutable QByteArray m_basicAuthHash;
+    mutable QDeadlineTimer m_basicAuthDeadline;
 
     // security related
     QList<QRegularExpression> m_serverDomains;
