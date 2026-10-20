@@ -300,6 +300,22 @@ window.qBittorrent.Client ??= (() => {
         }
     };
 
+    // a refused upload names an invalid file by the dummy name it was sent with, so check each file alone to name it
+    const invalidTorrentFileNames = async (files) => {
+        const names = [];
+        for (const file of files) {
+            const formData = new FormData();
+            formData.append("file", file, "0");
+            const response = await fetch("api/v2/torrents/parseMetadata", {
+                method: "POST",
+                body: formData
+            });
+            if (response.status === 415)
+                names.push(file.name);
+        }
+        return names;
+    };
+
     const uploadTorrentFiles = async (files) => {
         let useSeparateDialogs = true;
         if (files.length > 1) {
@@ -323,7 +339,11 @@ window.qBittorrent.Client ??= (() => {
             })
             .then(async (response) => {
                 if (!response.ok) {
-                    alert(await response.text());
+                    const message = await response.text();
+                    const invalidNames = (response.status === 415) ? await invalidTorrentFileNames(files).catch(() => []) : [];
+                    alert((invalidNames.length > 0)
+                        ? invalidNames.map((name) => "QBT_TR('%1' is not a valid torrent file.)QBT_TR[CONTEXT=HttpServer]".replace("%1", () => name)).join("\n")
+                        : message);
                     return;
                 }
 
