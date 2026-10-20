@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include <QDeadlineTimer>
 #include <QHash>
 #include <QSet>
 
@@ -35,6 +36,7 @@
 #include "apicontroller.h"
 
 class QByteArray;
+class QTimer;
 
 namespace BitTorrent
 {
@@ -55,6 +57,7 @@ class TorrentsController : public APIController
 
 public:
     explicit TorrentsController(IApplication *app, QObject *parent = nullptr);
+    ~TorrentsController() override;
 
 private slots:
     void countAction();
@@ -126,10 +129,16 @@ private:
     void onSearchPluginTorrentDownloaded(const QString &source, const QString &data);
     void cacheTorrentFile(const QString &source, const QByteArray &data);
     void cacheMagnetURI(const QString &source, const BitTorrent::TorrentDescriptor &torrentDescr);
+    void keepMetadataDownload(const BitTorrent::TorrentID &torrentID);
+    void cancelMetadataDownload(const BitTorrent::TorrentID &torrentID);
+    void cancelIdleMetadataDownloads();
 
     QHash<QString, BitTorrent::InfoHash> m_torrentSourceCache;
     QHash<BitTorrent::TorrentID, BitTorrent::TorrentDescriptor> m_torrentMetadataCache;
     QSet<QString> m_requestedTorrentSource;
     QSet<QString> m_invalidTorrentSource;
     QHash<QString, QString> m_failedTorrentSource;
+    // the metadata downloads started here, each cancelled when nothing has asked for it until its deadline
+    QHash<BitTorrent::TorrentID, QDeadlineTimer> m_metadataDownloadDeadlines;
+    QTimer *m_metadataDownloadTimer = nullptr;
 };
