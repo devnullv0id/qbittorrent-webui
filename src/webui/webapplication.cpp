@@ -924,6 +924,12 @@ void WebApplication::cookieSessionInitialize(const QString &authScheme, const QS
             {
                 m_currentSession = session;
                 m_currentSession->updateTimestamp();
+                // its cookie came back: it joins the other sessions, making room among them first
+                if (auto *cookieSession = static_cast<CookieBasedWebSession *>(session); cookieSession->isProvisional())
+                {
+                    evictColdSessions(false);
+                    cookieSession->setProvisional(false);
+                }
             }
             else
             {
@@ -935,16 +941,17 @@ void WebApplication::cookieSessionInitialize(const QString &authScheme, const QS
 
     if (!m_currentSession)
     {
+        // provisional until a request carries its cookie: a client that doesn't keep cookies starts one with every request
         if (!isAuthNeeded())
         {
-            sessionStart();
+            sessionStartImpl(generateSid(), WebSessionType::CookieBased, true);
         }
         else if (authScheme.compare(BASIC_AUTH, Qt::CaseInsensitive) == 0)
         {
             if (!validateBasicAuth(authData))
                 throw UnauthorizedHTTPError();
 
-            sessionStart();
+            sessionStartImpl(generateSid(), WebSessionType::CookieBased, true);
         }
     }
 }
@@ -969,7 +976,7 @@ void WebApplication::apiKeySessionInitialize(const QString &apiKey)
         }
         else
         {
-            sessionStartImpl(apiKey, WebSessionType::APIKeyBased);
+            sessionStartImpl(apiKey, WebSessionType::APIKeyBased, false);
         }
     }
 }
@@ -1005,10 +1012,10 @@ bool WebApplication::isPublicAPI(const QString &scope, const QString &action) co
 
 void WebApplication::sessionStart()
 {
-    sessionStartImpl(generateSid(), WebSessionType::CookieBased);
+    sessionStartImpl(generateSid(), WebSessionType::CookieBased, false);
 }
 
-void WebApplication::sessionStartImpl(const QString &sessionId, const WebSessionType sessionType)
+void WebApplication::sessionStartImpl(const QString &sessionId, const WebSessionType sessionType, const bool provisional)
 {
     Q_ASSERT(!m_currentSession);
 
@@ -1024,21 +1031,11 @@ void WebApplication::sessionStartImpl(const QString &sessionId, const WebSession
         return false;
     });
 
-    if (m_sessionsCountLimit > 0)
-    {
-        while (m_sessions.size() >= m_sessionsCountLimit)
-        {
-            const auto coldSessionIter = std::ranges::min_element(m_sessions
-                    , [](const WebSession *lhs, const WebSession *rhs)
-            {
-                return lhs->timestamp() < rhs->timestamp();
-            });
-            delete *coldSessionIter;
-            m_sessions.erase(coldSessionIter);
-        }
-    }
+    evictColdSessions(provisional);
 
     m_currentSession = WebSession::create(sessionType, sessionId);
+    if (provisional)
+        static_cast<CookieBasedWebSession *>(m_currentSession)->setProvisional(true);
     m_sessions[m_currentSession->id()] = m_currentSession;
     if (sessionType == WebSessionType::CookieBased)
         m_cookieBasedSessionStateChange = SessionStateChange::Start;
@@ -1071,6 +1068,36 @@ void WebApplication::sessionStartImpl(const QString &sessionId, const WebSession
         connect(btSession, &BitTorrent::Session::freeDiskSpaceChecked, syncController, &SyncController::updateFreeDiskSpace);
         return syncController;
     });
+}
+
+// makes room for one more session among the provisional ones (cookie sessions whose cookie hasn't come back yet) or among
+// the others: each kind has the limit to itself and evicts only its own, so clients that don't keep the cookie can't log
+// others out, and new clients can't log each other out before their cookie comes back
+void WebApplication::evictColdSessions(const bool provisional)
+{
+    if (m_sessionsCountLimit <= 0)
+        return;
+
+    const auto isOfKind = [provisional](const WebSession *session) -> bool
+    {
+        const bool isProvisional = (session->type() == WebSessionType::CookieBased)
+            && static_cast<const CookieBasedWebSession *>(session)->isProvisional();
+        return (isProvisional == provisional);
+    };
+
+    while (std::ranges::count_if(m_sessions, isOfKind) >= m_sessionsCountLimit)
+    {
+        // the least recently used session of the kind
+        const auto coldSessionIter = std::ranges::min_element(m_sessions
+                , [&isOfKind](const WebSession *lhs, const WebSession *rhs)
+        {
+            if (isOfKind(lhs) != isOfKind(rhs))
+                return isOfKind(lhs);
+            return lhs->timestamp() < rhs->timestamp();
+        });
+        delete *coldSessionIter;
+        m_sessions.erase(coldSessionIter);
+    }
 }
 
 void WebApplication::sessionEnd()

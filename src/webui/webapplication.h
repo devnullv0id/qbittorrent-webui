@@ -98,7 +98,8 @@ private:
     QString clientId() const;
     ISession *session() override;
     void sessionStart() override;
-    void sessionStartImpl(const QString &sessionId, WebSessionType sessionType);
+    void sessionStartImpl(const QString &sessionId, WebSessionType sessionType, bool provisional);
+    void evictColdSessions(bool provisional);
     void sessionEnd() override;
 
     void processAPIRequest(const QString &endpoint, const Http::HeaderMap &commonHeaders, Http::ResponseWriter &responseWriter);

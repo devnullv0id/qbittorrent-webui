@@ -98,8 +98,13 @@ public:
     bool shouldRefreshCookie() const;
     std::chrono::seconds setCookieRefreshTime(std::chrono::seconds timeout);
 
+    // provisional: started for a request without a cookie, and no request has carried its cookie yet
+    bool isProvisional() const;
+    void setProvisional(bool provisional);
+
 private:
     QDeadlineTimer m_cookieRefreshTimer;
+    bool m_isProvisional = false;
 };
 
 class APIKeyBasedWebSession final : public WebSession
