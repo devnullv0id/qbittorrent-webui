@@ -159,8 +159,12 @@ window.qBittorrent.DynamicTable ??= (() => {
                 }
             });
 
+            // the fixed header is inside the table's div too: a press there leaves the rows alone
             this.dynamicTableDiv.addEventListener("click", (e) => {
                 const tr = e.target.closest("tr");
+                if (tr === this.fixedTableHeader)
+                    return;
+
                 if ((tr === null) || (tr.rowId === undefined)) {
                     // clicking on the table body deselects all rows
                     this.deselectAll();
@@ -188,7 +192,7 @@ window.qBittorrent.DynamicTable ??= (() => {
 
             this.dynamicTableDiv.addEventListener("contextmenu", (e) => {
                 const tr = e.target.closest("tr");
-                if (!tr)
+                if ((tr === null) || (tr === this.fixedTableHeader))
                     return;
 
                 if (!this.isRowSelected(tr.rowId)) {
@@ -199,7 +203,7 @@ window.qBittorrent.DynamicTable ??= (() => {
 
             this.dynamicTableDiv.addEventListener("touchstart", (e) => {
                 const tr = e.target.closest("tr");
-                if (!tr)
+                if ((tr === null) || (tr === this.fixedTableHeader))
                     return;
 
                 if (!this.isRowSelected(tr.rowId)) {
@@ -2546,7 +2550,7 @@ window.qBittorrent.DynamicTable ??= (() => {
             super.setupCommonEvents();
             this.dynamicTableDiv.addEventListener("dblclick", (e) => {
                 const tr = e.target.closest("tr");
-                if (!tr || (tr.rowId.startsWith("** [") || tr.rowId.startsWith("endpoint|")))
+                if ((tr === null) || (tr === this.fixedTableHeader) || (tr.rowId.startsWith("** [") || tr.rowId.startsWith("endpoint|")))
                     return;
 
                 window.qBittorrent.PropTrackers.editTracker(tr);
@@ -3444,7 +3448,7 @@ window.qBittorrent.DynamicTable ??= (() => {
             super.setupCommonEvents();
             this.dynamicTableDiv.addEventListener("dblclick", (e) => {
                 const tr = e.target.closest("tr");
-                if (!tr || (tr.rowId === "0"))
+                if ((tr === null) || (tr === this.fixedTableHeader) || (tr.rowId === "0"))
                     return;
 
                 window.qBittorrent.Rss.moveItem(this.getRow(tr.rowId).full_data.dataPath);
@@ -3493,7 +3497,7 @@ window.qBittorrent.DynamicTable ??= (() => {
             super.setupCommonEvents();
             this.dynamicTableDiv.addEventListener("dblclick", (e) => {
                 const tr = e.target.closest("tr");
-                if (!tr)
+                if ((tr === null) || (tr === this.fixedTableHeader))
                     return;
 
                 const { name, torrentURL } = this.getRow(tr.rowId).full_data;
@@ -3956,7 +3960,7 @@ window.qBittorrent.DynamicTable ??= (() => {
             super.setupCommonEvents();
             this.dynamicTableDiv.addEventListener("dblclick", (e) => {
                 const tr = e.target.closest("tr");
-                if (!tr)
+                if ((tr === null) || (tr === this.fixedTableHeader))
                     return;
 
                 this.deselectAll();
