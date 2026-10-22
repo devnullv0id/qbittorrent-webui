@@ -2953,7 +2953,9 @@
     display: none;
 }
 
-@media (width < 760px) {
+/* phones, and phones held sideways, where the panel under the list would have no room for a row: the properties only as
+    a sheet */
+@media (width < 760px), (pointer: coarse) and (height < 500px) {
     :root.modern #propertiesPanel_wrapper:not(.modernSheet),
     :root.modern #transferList_handle {
         display: none;
@@ -2966,7 +2968,9 @@
     :root.modern #transferList_wrapper {
         height: 100%;
     }
+}
 
+@media (width < 760px) {
     :root.modern #transferList #torrentsTableDiv {
         --progress-bar-height: 18px;
 
@@ -3070,7 +3074,9 @@
             white-space: nowrap;
         }
     }
+}
 
+@media (width < 760px), (pointer: coarse) and (height < 500px) {
     /* over the list, below windows */
     :root.modern #propertiesPanel_wrapper.modernSheet {
         animation: modern-sheet-in 0.18s ease-out;
@@ -3208,7 +3214,9 @@
         transition: none;
         user-select: none;
     }
+}
 
+@media (width < 760px) {
     /* Peer and tracker cards */
     :root.modern
         :where(#propertiesPanel)
