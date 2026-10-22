@@ -46,6 +46,9 @@ window.qBittorrent.ContextMenu ??= (() => {
     };
 
     let lastShownContextMenu = null;
+    // the touchend events that opened a menu: a long press, like a right click, opens the menu of the innermost target
+    // only, not also the menus of the targets around it
+    const menuTouchEnds = new WeakSet();
 
     // in Modern on touch screens and phones, menus open as sheets (not in dialog frames, which have no responsive.js)
     const responsive = window.qBittorrent.Responsive;
@@ -188,10 +191,14 @@ window.qBittorrent.ContextMenu ??= (() => {
                 if (touchStartEvent === null)
                     return;
 
+                if (menuTouchEnds.has(e))
+                    return;
+
                 const isTargetUnchanged = (Math.abs(e.changedTouches[0].pageX - touchStartEvent.changedTouches[0].pageX) <= 10) && (Math.abs(e.changedTouches[0].pageY - touchStartEvent.changedTouches[0].pageY) <= 10);
                 if (((now - touchStartAt) >= this.options.touchTimer) && isTargetUnchanged) {
                     // the click that follows the touch would close the menu again
                     e.preventDefault();
+                    menuTouchEnds.add(e);
                     this.triggerMenu(touchStartEvent, elem);
                 }
             });
