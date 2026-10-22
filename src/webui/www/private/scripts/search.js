@@ -160,7 +160,12 @@ window.qBittorrent.Search ??= (() => {
         searchResultsTable.setup("searchResultsTableDiv", "searchResultsTableFixedHeaderDiv", searchResultsTableContextMenu);
         getPlugins();
 
-        searchResultsTable.dynamicTableDiv.addEventListener("dblclick", (e) => { openDownloadWindow(); });
+        searchResultsTable.dynamicTableDiv.addEventListener("dblclick", (e) => {
+            if (e.target.closest("tr") === searchResultsTable.fixedTableHeader)
+                return;
+
+            openDownloadWindow();
+        });
 
         // listen for changes to searchInNameFilter
         let searchInNameFilterTimer = -1;

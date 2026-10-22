@@ -94,7 +94,12 @@
             });
             searchPluginsTable.setup("searchPluginsTableDiv", "searchPluginsTableFixedHeaderDiv", searchPluginsTableContextMenu);
 
-            searchPluginsTable.dynamicTableDiv.addEventListener("dblclick", (e) => { enablePlugin(); });
+            searchPluginsTable.dynamicTableDiv.addEventListener("dblclick", (e) => {
+                if (e.target.closest("tr") === searchPluginsTable.fixedTableHeader)
+                    return;
+
+                enablePlugin();
+            });
             setupModern();
 
             updateTable();
