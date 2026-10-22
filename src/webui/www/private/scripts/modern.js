@@ -718,8 +718,10 @@ window.qBittorrent.Modern ??= (() => {
         });
     };
 
-    // phones: a tap on a card opens its torrent's properties as a sheet over the list
+    // phones, and phones held sideways: a tap on a torrent opens its properties as a sheet over the list (the screens of
+    // modern.css's sheet rules)
     const SHEET_STEP_TIME = 450;
+    const sheetScreens = window.matchMedia("(width < 760px), (pointer: coarse) and (height < 500px)");
 
     const initPropertiesSheet = async () => {
         const wrapper = await responsive.whenElement("propertiesPanel_wrapper");
@@ -751,16 +753,16 @@ window.qBittorrent.Modern ??= (() => {
             else
                 localPreferences.set("properties_panel_collapsed", stored);
         };
-        // phones show the panel only as the sheet; hidden, it is collapsed, so that its tabs don't poll, and a wider screen
-        // gets it back
+        // these screens show the panel only as the sheet; hidden, it is collapsed, so that its tabs don't poll, and a
+        // larger screen gets it back
         let collapsedForPhone = false;
         const fitToPhone = () => {
             const collapsed = collapseToggle().classList.contains("panel-expand");
-            if (responsive.queries.phone.matches && (sheet === null) && !collapsed) {
+            if (sheetScreens.matches && (sheet === null) && !collapsed) {
                 pressCollapseToggle();
                 collapsedForPhone = true;
             }
-            else if (!responsive.queries.phone.matches && collapsedForPhone) {
+            else if (!sheetScreens.matches && collapsedForPhone) {
                 collapsedForPhone = false;
                 if (collapsed) {
                     pressCollapseToggle();
@@ -792,7 +794,8 @@ window.qBittorrent.Modern ??= (() => {
         };
 
         const open = (tr) => {
-            title.textContent = tr.querySelector("td[data-col='name']")?.textContent.trim() ?? "";
+            // the cells are tagged with their columns only on phones
+            title.textContent = window.torrentsTable.getRow(tr.rowId)?.full_data.name ?? "";
             if (sheet !== null)
                 return;
 
@@ -817,7 +820,7 @@ window.qBittorrent.Modern ??= (() => {
         tableDiv.addEventListener("click", (event) => {
             const tr = event.target.closest("tbody tr");
             // a click with Ctrl is a checkbox's
-            if (!responsive.queries.phone.matches || (tr === null) || event.ctrlKey)
+            if (!sheetScreens.matches || (tr === null) || event.ctrlKey)
                 return;
 
             open(tr);
@@ -828,7 +831,7 @@ window.qBittorrent.Modern ??= (() => {
             if ((sheet !== null) && (event.target.closest("#propertiesTabs li.selected") !== null))
                 event.stopPropagation();
         }, true);
-        responsive.queries.phone.addEventListener("change", (_event) => {
+        sheetScreens.addEventListener("change", (_event) => {
             close();
             fitToPhone();
         });
