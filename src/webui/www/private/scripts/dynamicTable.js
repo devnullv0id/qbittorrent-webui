@@ -383,12 +383,6 @@ window.qBittorrent.DynamicTable ??= (() => {
                     this.setSortedColumn(el.columnName);
             }.bind(this);
 
-            const onTouch = function(e) {
-                const column = e.target.columnName;
-                this.currentHeaderAction = "";
-                this.setSortedColumn(column);
-            }.bind(this);
-
             const onDoubleClick = function(e) {
                 e.preventDefault();
                 this.currentHeaderAction = "";
@@ -404,7 +398,9 @@ window.qBittorrent.DynamicTable ??= (() => {
             for (const th of this.getRowCells(this.fixedTableHeader)) {
                 th.addEventListener("mousemove", (event) => mouseMoveFn(event));
                 th.addEventListener("mouseout", (event) => mouseOutFn(event));
-                th.addEventListener("touchend", ((event) => onTouch(event)), { passive: true });
+                // MooTools' Drag sorts on a tap itself (onCancel); the mouse events a browser sends after the tap would
+                // make it sort again
+                th.addEventListener("touchend", (event) => event.preventDefault());
                 th.addEventListener("dblclick", (event) => onDoubleClick(event));
                 th.makeResizable({
                     modifiers: {
