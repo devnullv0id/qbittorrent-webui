@@ -144,12 +144,13 @@ window.qBittorrent.ContextMenu ??= (() => {
             elem.addEventListener("touchend", (e) => {
                 const now = performance.now();
                 const touchStartAt = this.touchStartAt;
-                const touchStartEvent = this.touchStartEvent;
+                // unset before the first touchstart
+                const touchStartEvent = this.touchStartEvent ?? null;
 
                 this.touchStartAt = null;
                 this.touchStartEvent = null;
 
-                if (!touchStartEvent)
+                if (touchStartEvent === null)
                     return;
 
                 const isTargetUnchanged = (Math.abs(e.changedTouches[0].pageX - touchStartEvent.changedTouches[0].pageX) <= 10) && (Math.abs(e.changedTouches[0].pageY - touchStartEvent.changedTouches[0].pageY) <= 10);
