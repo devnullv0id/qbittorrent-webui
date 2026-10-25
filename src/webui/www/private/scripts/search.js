@@ -977,6 +977,12 @@ window.qBittorrent.Search ??= (() => {
         if (!state)
             return;
 
+        // paused while the page is hidden, resumed when it shows again
+        if (document.hidden) {
+            state.loadResultsTimer = -1;
+            return;
+        }
+
         const maxResults = 500;
         const url = new URL("api/v2/search/results", window.location);
         url.search = new URLSearchParams({
@@ -1097,6 +1103,17 @@ window.qBittorrent.Search ??= (() => {
         clearTimeout(state.loadResultsTimer);
         state.loadResultsTimer = loadSearchResultsData.delay(500, this, searchId);
     };
+
+    document.addEventListener("visibilitychange", (event) => {
+        if (document.hidden)
+            return;
+
+        // resume the searches that paused while the page was hidden
+        for (const [searchId, state] of searchState) {
+            if (state.running && (state.loadResultsTimer === -1))
+                updateSearchResultsData(searchId);
+        }
+    });
 
     for (const element of document.getElementsByClassName("copySearchDataToClipboard")) {
         const setupClickEvent = (textFunc) => element.addEventListener("click", async (event) => await clipboardCopy(textFunc()));
