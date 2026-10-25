@@ -378,6 +378,10 @@ window.qBittorrent.DynamicTable ??= (() => {
             const onCancel = function(el) {
                 this.currentHeaderAction = "";
 
+                // a long press opens the column menu instead (a touch on the header hides it first)
+                if (this.headerContextMenu.menu.classList.contains("visible"))
+                    return;
+
                 // ignore click/touch events performed when on the column's resize area
                 if (!this.canResize)
                     this.setSortedColumn(el.columnName);
