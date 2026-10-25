@@ -31,8 +31,6 @@
                 e.stopPropagation();
 
                 const peers = document.getElementById("peers").value.trim().split(/[\r\n]+/);
-                if (peers.length === 0)
-                    return;
 
                 fetch("api/v2/torrents/addPeers", {
                         method: "POST",

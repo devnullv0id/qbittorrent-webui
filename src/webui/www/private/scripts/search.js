@@ -371,11 +371,6 @@ window.qBittorrent.Search ??= (() => {
         const searchId = getSearchIdFromTab(tab);
         resetSearchState(searchId);
 
-        const state = searchState.get(searchId);
-        // don't bother sending a stop request if already stopped
-        if (state && state.running)
-            stopSearch(searchId);
-
         tab.remove();
 
         fetch("api/v2/search/delete", {

@@ -98,7 +98,7 @@ window.qBittorrent.MonkeyPatch ??= (() => {
                 MUI.files[source] = "loading";
 
                 const properties = {
-                    onload: (onload !== "undefined") ? onload : $empty
+                    onload: onload
                 };
 
                 // Add to the onload function
